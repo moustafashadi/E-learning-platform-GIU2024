@@ -19,4 +19,4 @@ export class Note {
 }
 
 export type NoteDocument = Note & Document;
-export const NoteSchema = SchemaFactory.createForClass(Note);
+export const NotesSchema = SchemaFactory.createForClass(Note);
