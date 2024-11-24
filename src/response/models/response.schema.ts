@@ -18,5 +18,5 @@ export class Responses{
     @Prop({required:true})
     score: number;
 }
-export type responsesDocument = Responses & Document;
-export const responsesSchema = SchemaFactory.createForClass(Responses);
+export type responseDocument = Responses & Document;
+export const responseSchema = SchemaFactory.createForClass(Responses);
