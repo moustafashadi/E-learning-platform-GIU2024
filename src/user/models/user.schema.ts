@@ -20,7 +20,7 @@ export class User {
   @Prop({ type: String, default: null })
   profile_picture_url: string; 
 
-  @Prop({type : [ {type: MongooseSchema.Types.ObjectId, ref: Notification}] })
+  @Prop({type : [ {type: MongooseSchema.Types.ObjectId, ref: 'Notification'}] })
   Notifications: MongooseSchema.Types.ObjectId[];
 }
 
