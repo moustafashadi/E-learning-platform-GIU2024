@@ -5,7 +5,7 @@ export type CourseDocument = Course & Document;
 
 @Schema({ timestamps: true }) //date4creation und updates
 export class Course {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true }) //1
   course_id: string; 
 
   @Prop({ required: true })
