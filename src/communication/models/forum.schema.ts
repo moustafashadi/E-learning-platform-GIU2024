@@ -5,6 +5,12 @@ export type ForumDocument = Forum & Document;
 
 @Schema({ timestamps: true })
 export class Forum {
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Course' }], required: true })
+  courses: Types.ObjectId[];
+
+  @Prop({default : []})
+  Threads: String[];
+
   @Prop({ required: true })
   title: string;
 
