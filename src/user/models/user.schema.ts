@@ -1,12 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Schema as MongooseSchema } from 'mongoose';
 import { Document } from 'mongoose';
+import { Notification } from 'src/notification/models/notification.schema';
 
-export type UserDocument = User & Document;
-
-@Schema({ timestamps: true }) //date4creation und updates
+@Schema({ timestamps: true , discriminatorKey: 'role'} ) //date4creation und updates
 export class User {
-  @Prop({ required: true, unique: true })
-  user_id: string;
   @Prop({ required: true })
   name: string; 
 
@@ -20,8 +18,11 @@ export class User {
   role: string; 
 
   @Prop({ type: String, default: null })
-  profile_uicture_url: string; 
+  profile_picture_url: string; 
 
+  @Prop({type : [ {type: MongooseSchema.Types.ObjectId, ref: Notification}] })
+  Notifications: MongooseSchema.Types.ObjectId[];
 }
 
+export type UserDocument = User & Document;
 export const UserSchema = SchemaFactory.createForClass(User);
