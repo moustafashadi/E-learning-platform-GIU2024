@@ -1,13 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AdminModule } from './admin/admin.module';
 import { UserModule } from './user/user.module';
-import { InstructorModule } from './instructor/instructor.module';
-import { StudentModule } from './student/student.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { NotesModule } from './notes/notes.module';
+import { ProgressModule } from './progress/progress.module';
+import { ResponsesModule } from './response/response.module';
+import { ModulesModule } from './module/module.module';
+import { CommunicationModule } from './communication/communication.module';
+
 
 @Module({
-  imports: [AdminModule, UserModule, InstructorModule, StudentModule],
+  imports: [UserModule, AnalyticsModule,  NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule],
   controllers: [AppController],
   providers: [AppService],
 })
