@@ -9,6 +9,9 @@ import { ResponsesModule } from './response/response.module';
 import { ModulesModule } from './module/module.module';
 import { CommunicationModule } from './communication/communication.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Module({
   imports: [MongooseModule.forRoot(process.env.MONGO_URI),
