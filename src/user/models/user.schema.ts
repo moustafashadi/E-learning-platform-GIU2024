@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Schema as MongooseSchema } from 'mongoose';
 import { Document } from 'mongoose';
-import { Notification } from 'src/notification/models/notification.schema';
 
 @Schema({ timestamps: true , discriminatorKey: 'role'} ) //date4creation und updates
 export class User {
@@ -20,7 +19,7 @@ export class User {
   @Prop({ type: String, default: null })
   profile_picture_url: string; 
 
-  @Prop({type : [ {type: MongooseSchema.Types.ObjectId, ref: Notification}] })
+  @Prop({type : [ {type: MongooseSchema.Types.ObjectId, ref: 'Notification'}] })
   Notifications: MongooseSchema.Types.ObjectId[];
 }
 
