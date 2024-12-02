@@ -1,10 +1,17 @@
+import { IsEmail, IsString, IsNumber, IsArray, IsEnum } from 'class-validator';
 import { Course } from "../../course/models/course.schema";
 
 export class RegisterRequestDto {
+    @IsEmail()
     email: string;
-    name: string;
-    age: Number;
-    courses: Course[] = [];
+
+   @IsString()
     password: string;
-    roles: string[] = ["student"];
+
+    @IsString()
+    username: string;
+
+    @IsEnum(['admin', 'student', 'instructor'])
+    role: string = 'student';
+
 }

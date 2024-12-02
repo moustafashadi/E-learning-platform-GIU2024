@@ -11,7 +11,10 @@ export class User {
   password: string;
 
   @Prop({ required: true })
-  name: string;
+  username: string;
+
+  @Prop({ default: '' })
+  profilePicUrl: string;
 
   @Prop({enum: ['admin', 'student', 'instructor'], default: 'student' })
   role: String;
@@ -36,11 +39,14 @@ export const AdminSchema = SchemaFactory.createForClass(Admin);
 // Student Schema
 @Schema()
 export class Student extends User {
-  @Prop({ required: true, default: 0 })
-  gradeLevel: number; // Example: Student's grade level or year
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
   enrolledCourses: MongooseSchema.Types.ObjectId[]; // List of course IDs the student is enrolled in
+
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
+  completedCourses: MongooseSchema.Types.ObjectId[]; // List of course IDs the student completed
+
+
 }
 
 export type StudentDocument = Student & Document;

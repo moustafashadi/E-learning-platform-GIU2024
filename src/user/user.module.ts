@@ -17,4 +17,6 @@ import { UserService } from './services/user.service';
   providers: [UserService],
   exports: [UserService],
 })
-export class UserModule {}
+export class UserModule {} 
+
+//All endpoints except user creation require authentication, and most require admin privileges through the @Roles decorator.

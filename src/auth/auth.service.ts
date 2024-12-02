@@ -16,7 +16,15 @@ export class AuthService {
           throw new ConflictException('email already exists');
         }
         const hashedPassword = await bcrypt.hash(user.password, 10);
-        const newUser: RegisterRequestDto = { ...user, password: hashedPassword };
+        const newUser = {
+            ...user,
+            name: user.username,
+            password: hashedPassword,
+            roles: [user.role],
+            ...(user.role === 'student' && { gradeLevel: 0, enrolledCourses: [] }),
+            ...(user.role === 'instructor' && { expertise: '', coursesTaught: [] }),
+            ...(user.role === 'admin' && { permissions: [] })
+        };
         await this.usersService.create(newUser);
         return 'registered successfully';
       }
@@ -31,11 +39,11 @@ export class AuthService {
           console.log( await bcrypt.compare(password, user.password))
         if (!isPasswordValid) {
             throw new UnauthorizedException('Invalid credentials');
-          }
+        }
 
         const payload = { 
-            userid: user._id as unknown as Types.ObjectId, //Explicitly telling TypeScript that we're treating the _id as a Mongoose ObjectId
-            role: user.role[0]
+            userid: user._id as unknown as Types.ObjectId,
+            role: user.role.toLowerCase()
         };
 
         return {

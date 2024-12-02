@@ -19,15 +19,18 @@ export class UserService {
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const newUser = new this.userModel({
+    
+    const UserModel = this.userModel.discriminators[createUserDto.roles[0]] || this.userModel;
+    const newUser: UserDocument = new UserModel({
       ...createUserDto,
       password: hashedPassword,
     });
+    
     return newUser.save();
   }
 
-  async findAll(): Promise<UserDocument[]> {//findAll is a method that returns all the users in the database
-    return this.userModel.find().exec();//exec() is a method that executes the query and returns the result
+  async findAll(): Promise<UserDocument[]> {
+    return this.userModel.find().exec();
   }
 
   async findOne(id: string): Promise<UserDocument> {
