@@ -13,6 +13,7 @@ import * as dotenv from 'dotenv';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/guards/authentication.guard';
 import { authorizationGaurd } from './auth/guards/authorization.guard';
+import { JwtModule } from '@nestjs/jwt';
 
 dotenv.config();
 
