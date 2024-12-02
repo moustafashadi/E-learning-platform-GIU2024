@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 
-@Schema()
+// Base User Schema
+@Schema({ timestamps: true, discriminatorKey: 'role' })
 export class User {
   @Prop({ required: true, unique: true })
   email: string;
@@ -12,9 +13,57 @@ export class User {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ type: [String], default: ['user'] })
-  roles: string[];
+  @Prop({enum: ['admin', 'student', 'instructor'], default: 'student' })
+  role: String;
+
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Notification' }], default: [] })
+  notifications: MongooseSchema.Types.ObjectId[];
 }
 
 export type UserDocument = User & Document;
 export const UserSchema = SchemaFactory.createForClass(User);
+
+// Admin Schema
+@Schema()
+export class Admin extends User {
+  @Prop({ required: true, default: [] })
+  permissions: string[]; // e.g., ['manage-users', 'view-reports']
+}
+
+export type AdminDocument = Admin & Document;
+export const AdminSchema = SchemaFactory.createForClass(Admin);
+
+// Student Schema
+@Schema()
+export class Student extends User {
+  @Prop({ required: true, default: 0 })
+  gradeLevel: number; // Example: Student's grade level or year
+
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
+  enrolledCourses: MongooseSchema.Types.ObjectId[]; // List of course IDs the student is enrolled in
+}
+
+export type StudentDocument = Student & Document;
+export const StudentSchema = SchemaFactory.createForClass(Student);
+
+// Instructor Schema
+@Schema()
+export class Instructor extends User {
+  @Prop({ required: true })
+  expertise: string; // e.g., "Mathematics", "Physics"
+
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
+  coursesTaught: MongooseSchema.Types.ObjectId[]; // List of course IDs the instructor teaches
+}
+
+export type InstructorDocument = Instructor & Document;
+export const InstructorSchema = SchemaFactory.createForClass(Instructor);
+
+// NestJS Discriminator Registration
+export const schemas = [
+  { name: 'User', schema: UserSchema },
+  { name: 'Admin', schema: AdminSchema },
+  { name: 'Student', schema: StudentSchema },
+  { name: 'Instructor', schema: InstructorSchema },
+];
+

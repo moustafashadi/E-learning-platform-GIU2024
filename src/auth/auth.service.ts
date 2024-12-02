@@ -35,7 +35,7 @@ export class AuthService {
 
         const payload = { 
             userid: user._id as unknown as Types.ObjectId, //Explicitly telling TypeScript that we're treating the _id as a Mongoose ObjectId
-            role: user.roles[0]
+            role: user.role[0]
         };
 
         return {
