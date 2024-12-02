@@ -6,5 +6,5 @@ export class RegisterRequestDto {
     age: Number;
     courses: Course[] = [];
     password: string;
-    role: string = "student";
+    roles: string[] = ["student"];
 }
