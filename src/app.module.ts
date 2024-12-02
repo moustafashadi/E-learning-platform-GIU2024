@@ -19,7 +19,11 @@ dotenv.config();
 
 @Module({
   imports: [MongooseModule.forRoot(process.env.MONGO_URI),
-       UserModule, AnalyticsModule,  NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule],
+       UserModule, AnalyticsModule,  NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule,
+       JwtModule.register({
+         secret: process.env.JWT_SECRET,
+         signOptions: { expiresIn: process.env.JWT_EXPIRATION },
+       })],
   controllers: [AppController],
   providers: [
     AppService,
