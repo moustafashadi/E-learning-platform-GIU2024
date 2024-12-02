@@ -30,17 +30,17 @@ export class AuthGuard implements CanActivate {
             throw new UnauthorizedException('No token, please login');
         }
         try {
-            const payload = await this.jwtService.verifyAsync(
+            const payload = await this.jwtService.verifyAsync(//verifying the token
                 token,
                 {
-                    secret: process.env.JWT_SECRET
+                        secret: process.env.JWT_SECRET//getting the secret from the environment variables
                 }
             );
             // 💡 We're assigning the payload to the request object here
             // so that we can access it in our route handlers
-            request['user'] = payload;
+            request['user'] = payload;//assigning the payload to the request object
         } catch {
-            throw new UnauthorizedException('invalid token');
+            throw new UnauthorizedException('invalid token');//throwing an error if the token is invalid
         }
         return true;
     }
