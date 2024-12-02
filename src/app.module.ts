@@ -10,6 +10,9 @@ import { ModulesModule } from './module/module.module';
 import { CommunicationModule } from './communication/communication.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as dotenv from 'dotenv';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/guards/authentication.guard';
+import { authorizationGaurd } from './auth/guards/authorization.guard';
 
 dotenv.config();
 
@@ -17,6 +20,16 @@ dotenv.config();
   imports: [MongooseModule.forRoot(process.env.MONGO_URI),
        UserModule, AnalyticsModule,  NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: authorizationGaurd,
+    }
+  ],
 })
 export class AppModule {}
