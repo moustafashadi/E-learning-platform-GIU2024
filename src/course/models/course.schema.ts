@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Schema as MongooseSchema } from 'mongoose';
 import { Document } from 'mongoose';
-import { Instructor } from 'src/user/models/instructor.schema';
+import { Instructor } from '../../user/models/instructor.schema';
 
 @Schema({ timestamps: true }) //date4creation und updates
 export class Course {

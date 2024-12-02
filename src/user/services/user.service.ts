@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { UserDocument } from '../models/user.schema'; // Import the User schema if you're using Mongoose
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserDocument } from '../models/user.schema';
 import * as bcrypt from 'bcryptjs'; // For comparing passwords
 
 @Injectable()
 export class UserService {
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>
+  ) {}
+
   private readonly users: UserDocument[] = []; // This is an example; you'll interact with a database here.
 
   // Create a new user
@@ -20,5 +26,9 @@ export class UserService {
       return user;
     }
     return null;
+  }
+
+  async findByEmail(email: string) {
+    return this.userModel.findOne({ email }).exec();
   }
 }
