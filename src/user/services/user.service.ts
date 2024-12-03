@@ -1,32 +1,68 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User , UserDocument} from '../models/user.schema';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import * as bcrypt from 'bcryptjs';
+import { User, UserDocument } from '../models/user.schema';
+import { Admin, AdminDocument } from '../models/user.schema';
+import { Student, StudentDocument } from '../models/user.schema';
+import { Instructor, InstructorDocument } from '../models/user.schema';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
+    @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
+    @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<UserDocument> {//createUserDto is the data transfer object that contains the user data
-    const existingUser = await this.findByEmail(createUserDto.email);
+  async create(user: CreateUserDto): Promise<UserDocument> {//createUserDto is the data transfer object that contains the user data
+    const { role, email, ...userData } = user;
+
+    // Check if a user with the same email already exists
+    const existingUser = await this.userModel.findOne({ email }).exec();
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    let createdUser;
+
+    switch (role) {
+      case 'admin':
+        createdUser = new this.adminModel({
+          ...user,
+          name: user.username,
+          password: hashedPassword,
+          roles: [user.role]
+        });
+        break;
+      case 'student':
+        createdUser = new this.studentModel({
+          ...user,
+          name: user.username,
+          password: hashedPassword,
+          roles: [user.role],
+          ...(user.role === 'student' && { completedCourses: [], enrolledCourses: [] }),
+        });
+        break;
+      case 'instructor':
+        createdUser = new this.instructorModel({
+          ...user,
+          name: user.username,
+          password: hashedPassword,
+          roles: [user.role],
+          ...(user.role === 'instructor' && {coursesTaught: [] }),
+        });
+        break;
+      default:
+        throw new Error(`Invalid role: ${role}`);
+    }
     
-    const UserModel = this.userModel.discriminators[createUserDto.roles[0]] || this.userModel;
-    const newUser: UserDocument = new UserModel({
-      ...createUserDto,
-      password: hashedPassword,
-    });
-    
-    return newUser.save();
+    return createdUser.save();
+
   }
 
   async findAll(): Promise<UserDocument[]> {

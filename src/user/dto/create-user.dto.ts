@@ -2,7 +2,7 @@ import { IsEmail, IsString, IsArray, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
-  name: string;
+  username: string;
 
   @IsEmail()
   email: string;
@@ -11,6 +11,6 @@ export class CreateUserDto {
   @MinLength(6)
   password: string;
 
-  @IsArray()
-  roles: string[] = ['user'];
+  @IsString()
+  role: string;
 }

@@ -29,8 +29,6 @@ export const UserSchema = SchemaFactory.createForClass(User);
 // Admin Schema
 @Schema()
 export class Admin extends User {
-  @Prop({ required: true, default: [] })
-  permissions: string[]; // e.g., ['manage-users', 'view-reports']
 }
 
 export type AdminDocument = Admin & Document;
@@ -55,8 +53,6 @@ export const StudentSchema = SchemaFactory.createForClass(Student);
 // Instructor Schema
 @Schema()
 export class Instructor extends User {
-  @Prop({ required: true })
-  expertise: string; // e.g., "Mathematics", "Physics"
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
   coursesTaught: MongooseSchema.Types.ObjectId[]; // List of course IDs the instructor teaches

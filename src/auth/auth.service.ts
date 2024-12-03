@@ -21,7 +21,7 @@ export class AuthService {
             name: user.username,
             password: hashedPassword,
             roles: [user.role],
-            ...(user.role === 'student' && { gradeLevel: 0, enrolledCourses: [] }),
+            ...(user.role === 'student' && { completedCourses : [], enrolledCourses: [] }),
             ...(user.role === 'instructor' && { expertise: '', coursesTaught: [] }),
             ...(user.role === 'admin' && { permissions: [] })
         };
