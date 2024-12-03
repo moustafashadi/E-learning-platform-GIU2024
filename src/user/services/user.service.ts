@@ -18,7 +18,7 @@ export class UserService {
     @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
   ) {}
 
-  async create(user: CreateUserDto): Promise<UserDocument> {//createUserDto is the data transfer object that contains the user data
+  async create(user: CreateUserDto): Promise<UserDocument> {
     const { role, email, ...userData } = user;
 
     // Check if a user with the same email already exists
@@ -33,38 +33,37 @@ export class UserService {
     switch (role) {
       case 'admin':
         createdUser = new this.adminModel({
-          ...user,
-          name: user.username,
+          ...userData,
+          email,
           password: hashedPassword,
-          roles: [user.role]
+          role,
         });
         break;
       case 'student':
         createdUser = new this.studentModel({
-          ...user,
-          name: user.username,
+          ...userData,
+          email,
           password: hashedPassword,
-          roles: [user.role],
-          ...(user.role === 'student' && { completedCourses: [], enrolledCourses: [] }),
+          role,
+          enrolledCourses: [],
+          completedCourses: [],
         });
         break;
       case 'instructor':
         createdUser = new this.instructorModel({
-          ...user,
-          name: user.username,
+          ...userData,
+          email,
           password: hashedPassword,
-          roles: [user.role],
-          ...(user.role === 'instructor' && {coursesTaught: [] }),
+          role,
+          coursesTaught: [],
         });
         break;
       default:
         throw new Error(`Invalid role: ${role}`);
     }
-    
+
     return createdUser.save();
-
   }
-
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();
   }
