@@ -5,6 +5,9 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../auth/decorators/roles.decorator';
 import { Public } from '../../auth/decorators/public.decorator';
+import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
+
 
 @Controller('users')
 export class UserController {
@@ -16,24 +19,25 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
+  @UseGuards(AuthenticationGuard)
   @Get()
   @Roles(Role.Admin)
   findAll() {
     return this.userService.findAll();
   }
-
+  @UseGuards(AuthenticationGuard)
   @Get(':id')
   @Roles(Role.Admin)
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
-
+  @UseGuards(AuthenticationGuard)
   @Patch(':id')
   @Roles(Role.Admin)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
-
+  @UseGuards(AuthenticationGuard,AuthorizationGuard)
   @Delete(':id')
   @Roles(Role.Admin)
   remove(@Param('id') id: string) {

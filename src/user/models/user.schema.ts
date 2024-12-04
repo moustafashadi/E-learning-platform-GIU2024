@@ -44,6 +44,7 @@ export class Student extends User {
   completedCourses: MongooseSchema.Types.ObjectId[]; // List of course IDs the student completed
 
 
+
 }
 
 export type StudentDocument = Student & Document;

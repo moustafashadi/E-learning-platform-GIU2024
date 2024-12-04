@@ -13,6 +13,7 @@ import { response } from 'express';
 import { CreateStudentDto } from '../dto/create-student.dto';
 import { createInstructorDto } from '../dto/create-instructor.dto';
 import { CreateAdminDto } from '../dto/create-admin.dto';
+import { UpdateProfileDto } from '../dto/update-profile.dto';
 
 @Injectable()
 export class UserService {
@@ -123,4 +124,41 @@ export class UserService {
     }
     return null;
   }
-}
+
+  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserDocument> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (updateProfileDto.password) {
+      updateProfileDto.password = await bcrypt.hash(updateProfileDto.password, 10);
+    }
+
+    Object.assign(user, updateProfileDto);
+    return await user.save();
+  }
+
+  async getEnrolledCourses(userId: string) {
+    const user = await this.studentModel.findById(userId)
+      .populate('enrolledCourses')
+      .exec();
+    return user.enrolledCourses;
+  }
+
+  async getCompletedCourses(userId: string) {
+    const user = await this.studentModel.findById(userId)
+      .populate('completedCourses')
+      .exec();
+    return user?.completedCourses || [];
+  }
+
+  async getCoursesTaught(userId: string) {
+    const user = await this.instructorModel.findById(userId)
+      .populate('coursesTaught')
+      .exec();
+    return user?.coursesTaught || [];
+  }
+
+
+  }
