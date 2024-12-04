@@ -2,10 +2,11 @@ import { Body, Controller, HttpStatus, Post, HttpException, Res, Req } from '@ne
 import { AuthService } from '../auth/auth.service';
 import { RegisterRequestDto } from './dto/RegisterRequestDto';
 import { SignInDto } from './dto/SignInDto';
+import { UserService } from '../user/services/user.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) {}
+    constructor(private authService: AuthService, private userService: UserService) {}
   @Post('login')
   async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res) {//@Res({ passthrough: true }) res is used to pass the response object to the service layer
     try {
@@ -44,8 +45,8 @@ export class AuthController {
   @Post('register')
   async signup(@Body() registerRequestDto: RegisterRequestDto) {
     try {
-      // Call the AuthService to handle registration
-      const result = await this.authService.register(registerRequestDto);
+      // Call the userService to handle registration
+      const result = await this.userService.create(registerRequestDto);
 
       // Return a success response with HTTP 201 Created status
       return {

@@ -10,24 +10,6 @@ export class AuthService {
         private usersService: UserService,
         private jwtService: JwtService
     ) { }
-    async register(user: RegisterRequestDto): Promise<string> {
-        const existingUser = await this.usersService.findByEmail(user.email);
-        if (existingUser) {
-          throw new ConflictException('email already exists');
-        }
-        const hashedPassword = await bcrypt.hash(user.password, 10);
-        const newUser = {
-            ...user,
-            name: user.username,
-            password: hashedPassword,
-            roles: [user.role],
-            ...(user.role === 'student' && { completedCourses : [], enrolledCourses: [] }),
-            ...(user.role === 'instructor' && { expertise: '', coursesTaught: [] }),
-            ...(user.role === 'admin' && { permissions: [] })
-        };
-        await this.usersService.create(newUser);
-        return 'registered successfully';
-      }
 
     async signIn(email: string, password: string): Promise<{ access_token: string, payload: { userid: Types.ObjectId, role: string } }> {
         const user = await this.usersService.findByEmail(email);

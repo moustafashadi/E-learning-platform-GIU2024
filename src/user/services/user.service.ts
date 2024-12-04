@@ -8,6 +8,11 @@ import { User, UserDocument } from '../models/user.schema';
 import { Admin, AdminDocument } from '../models/user.schema';
 import { Student, StudentDocument } from '../models/user.schema';
 import { Instructor, InstructorDocument } from '../models/user.schema';
+import { request } from 'http';
+import { response } from 'express';
+import { CreateStudentDto } from '../dto/create-student.dto';
+import { createInstructorDto } from '../dto/create-instructor.dto';
+import { CreateAdminDto } from '../dto/create-admin.dto';
 
 @Injectable()
 export class UserService {
@@ -18,52 +23,60 @@ export class UserService {
     @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
   ) {}
 
-  async create(user: CreateUserDto): Promise<UserDocument> {
-    const { role, email, ...userData } = user;
+  async create(createUserDto: CreateUserDto): Promise<any> {
+    const { role, ...userData } = createUserDto;
 
-    // Check if a user with the same email already exists
-    const existingUser = await this.userModel.findOne({ email }).exec();
-    if (existingUser) {
-      throw new ConflictException('Email already exists');
-    }
-
-    const hashedPassword = await bcrypt.hash(user.password, 10);
-    let createdUser;
-
+    const baseUser = {
+      ...userData,
+      role,
+    };
+  
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    let userWithRoleSpecificFields;
+  
+    // Role-specific logic
     switch (role) {
       case 'admin':
-        createdUser = new this.adminModel({
-          ...userData,
-          email,
+        userWithRoleSpecificFields = await this.createAdmin({
+          ...baseUser, // Admin might not need extra attributes
           password: hashedPassword,
-          role,
         });
         break;
       case 'student':
-        createdUser = new this.studentModel({
-          ...userData,
-          email,
+        userWithRoleSpecificFields = await this.createStudent({
+          ...baseUser,
           password: hashedPassword,
-          role,
           enrolledCourses: [],
           completedCourses: [],
         });
         break;
       case 'instructor':
-        createdUser = new this.instructorModel({
-          ...userData,
-          email,
+        userWithRoleSpecificFields = await this.createInstructor({
+          ...baseUser,
           password: hashedPassword,
-          role,
           coursesTaught: [],
         });
         break;
       default:
         throw new Error(`Invalid role: ${role}`);
     }
-
-    return createdUser.save();
+  
+    return userWithRoleSpecificFields; // No need to call .save(), as .create() already saves the document  
   }
+  
+  async createStudent(studentData: CreateStudentDto) {
+    return this.studentModel.create({ ...studentData, role: 'student' });
+  }
+  
+  async createInstructor(instructorData: createInstructorDto) {
+    return this.instructorModel.create({ ...instructorData, role: 'instructor' });
+  }
+  
+  async createAdmin(adminData: CreateAdminDto) {
+    return this.adminModel.create({ ...adminData, role: 'admin' });
+  }
+  
+
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();
   }

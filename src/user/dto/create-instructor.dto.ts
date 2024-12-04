@@ -1,7 +1,7 @@
 import { IsEmail, IsString, IsArray, MinLength, IsOptional } from 'class-validator';
 import {Schema} from 'mongoose'
 
-export class CreateUserDto {
+export class createInstructorDto {
   @IsString()
   username: string;
 
@@ -14,4 +14,7 @@ export class CreateUserDto {
 
   @IsString()
   role: string;
+
+  @IsArray()
+  coursesTaught: Schema.Types.ObjectId[];
 }

@@ -28,8 +28,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 // Admin Schema
 @Schema()
-export class Admin extends User {
-}
+export class Admin extends User {}
 
 export type AdminDocument = Admin & Document;
 export const AdminSchema = SchemaFactory.createForClass(Admin);
@@ -53,7 +52,6 @@ export const StudentSchema = SchemaFactory.createForClass(Student);
 // Instructor Schema
 @Schema()
 export class Instructor extends User {
-
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
   coursesTaught: MongooseSchema.Types.ObjectId[]; // List of course IDs the instructor teaches
 }
@@ -63,7 +61,6 @@ export const InstructorSchema = SchemaFactory.createForClass(Instructor);
 
 // NestJS Discriminator Registration
 export const schemas = [
-  { name: 'User', schema: UserSchema },
   { name: 'Admin', schema: AdminSchema },
   { name: 'Student', schema: StudentSchema },
   { name: 'Instructor', schema: InstructorSchema },
