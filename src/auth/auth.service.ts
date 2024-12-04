@@ -1,36 +1,31 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { UserService } from '../user/services/user.service';
-import * as bcrypt from 'bcrypt';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterRequestDto } from './dto/RegisterRequestDto';
-import { ObjectId, Types } from 'mongoose';
+import { UserService } from '../user/services/user.service';
+import { SignInDto } from './dto/SignInDto';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
 @Injectable()
 export class AuthService {
-    constructor(
-        private usersService: UserService,
-        private jwtService: JwtService
-    ) { }
+  constructor(
+    private userService: UserService,
+    private jwtService: JwtService,
+  ) {}
 
-    async signIn(email: string, password: string): Promise<{ access_token: string, payload: { userid: Types.ObjectId, role: string } }> {
-        const user = await this.usersService.findByEmail(email);
-        if (!user) {
-            throw new NotFoundException('User not found');
-          }
-        console.log("password: ", user.password);
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-          console.log( await bcrypt.compare(password, user.password))
-        if (!isPasswordValid) {
-            throw new UnauthorizedException('Invalid credentials');
-        }
-
-        const payload = { 
-            userid: user._id as unknown as Types.ObjectId,
-            role: user.role.toLowerCase()
-        };
-
-        return {
-            access_token: await this.jwtService.signAsync(payload),
-            payload
-        };
+  async signIn(email: string, password: string): Promise<any> {
+    const user = await this.userService.validateUser(email, password);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
     }
+
+    const payload = { username: user.username, sub: user._id, role: user.role };
+    return {
+      access_token: this.jwtService.sign(payload, {
+        expiresIn: process.env.JWT_EXPIRATION,
+        secret: process.env.JWT_SECRET,
+    }),    
+      payload,
+    };
+  }
 }

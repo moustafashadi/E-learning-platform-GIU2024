@@ -1,37 +1,39 @@
-import { Body, Controller, HttpStatus, Post, HttpException, Res, Req } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Post, HttpException, Res, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from '../auth/auth.service';
 import { RegisterRequestDto } from './dto/RegisterRequestDto';
 import { SignInDto } from './dto/SignInDto';
 import { UserService } from '../user/services/user.service';
+import { AuthenticationGuard } from '../auth/guards/authentication.guard';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService, private userService: UserService) {}
+    constructor(
+      private authService: AuthService, 
+      private userService: UserService) {}
+    
+
   @Post('login')
-  async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res) {//@Res({ passthrough: true }) res is used to pass the response object to the service layer
+  async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res) {
     try {
-      console.log('helllo')
       const result = await this.authService.signIn(signInDto.email, signInDto.password);
 
       res.cookie('token', result.access_token, {
-        httpOnly: true, // Prevents client-side JavaScript access
-        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-        maxAge: 3600 * 1000, // Cookie expiration time in milliseconds
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 3600 * 1000,
       });
-      // Return success response
+
       return {
         statusCode: HttpStatus.OK,
         message: 'Login successful',
         user: result.payload,
       };
     } catch (error) {
-        console.log(error)
-      // Handle specific errors
+      console.log(error);
       if (error instanceof HttpException) {
-        throw error; // Pass through known exceptions
+        throw error;
       }
 
-      // Handle other unexpected errors
       throw new HttpException(
         {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -41,6 +43,7 @@ export class AuthController {
       );
     }
   }
+
 
   @Post('register')
   async signup(@Body() registerRequestDto: RegisterRequestDto) {
@@ -76,8 +79,5 @@ export class AuthController {
       );
     }
   }
-
-  
-
 
 }

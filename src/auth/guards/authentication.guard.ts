@@ -13,7 +13,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 dotenv.config();
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class AuthenticationGuard implements CanActivate {
     constructor(private jwtService: JwtService,private reflector: Reflector) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -44,6 +44,8 @@ export class AuthGuard implements CanActivate {
         }
         return true;
     }
+
+    
     private extractTokenFromHeader(request: Request): string | undefined {
         const token = request.cookies?.token || request.headers['authorization']?.split(' ')[1];
 
