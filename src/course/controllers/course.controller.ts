@@ -5,6 +5,7 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 
+
 @Controller('courses')
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
