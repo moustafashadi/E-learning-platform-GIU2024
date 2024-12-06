@@ -80,7 +80,6 @@ export class UserService {
     return this.adminModel.create({ ...adminData, role: 'admin' });
   }
 
-  //not working. throws NotFoundException. FIX
   async getCurrentUser(request: Request): Promise<UserDocument> {
     const token = request.cookies['token'];
     console.log(token);
@@ -89,15 +88,17 @@ export class UserService {
     }
 
     const decoded = this.jwtService.verify(token);
-    console.log(decoded);
     const userId = decoded.sub;
-    console.log('User ID:', userId);
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
+    switch (decoded.role) {
+      case 'admin':
+        return this.adminModel.findById(userId);
+      case 'student':
+        return this.studentModel.findById(userId);
+      case 'instructor':
+        return this.instructorModel.findById(userId);
+      default:
+        throw new NotFoundException('User not found');
     }
-
-    return user;
   }
 
   async findAll(): Promise<UserDocument[]> {

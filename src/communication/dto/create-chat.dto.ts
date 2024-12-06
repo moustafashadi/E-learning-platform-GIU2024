@@ -9,5 +9,5 @@ export class CreateChatDto {
     messages: ObjectId[];
 
     @IsMongoId()
-    initializer: ObjectId;
+    creator: ObjectId;
 }

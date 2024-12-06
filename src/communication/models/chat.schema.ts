@@ -12,7 +12,7 @@ export class Chat {
   messages: Types.ObjectId[];
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  initializer: Types.ObjectId;
+  creator: Types.ObjectId;
 }
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);
