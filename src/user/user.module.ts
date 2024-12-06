@@ -6,6 +6,7 @@ import { StudentSchema } from './models/user.schema';
 import { InstructorSchema } from './models/user.schema';
 import { AdminSchema } from './models/user.schema';
 import { UserSchema } from './models/user.schema';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -15,6 +16,10 @@ import { UserSchema } from './models/user.schema';
       { name: 'Instructor', schema: InstructorSchema },
       { name: 'Student', schema: StudentSchema },
     ]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1d' },
+    })
   ],
   controllers: [UserController],
   providers: [UserService],

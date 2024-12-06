@@ -10,20 +10,21 @@ import { Request } from 'express';
 import * as dotenv from 'dotenv';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+
 dotenv.config();
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
-    constructor(private jwtService: JwtService,private reflector: Reflector) { }
+    constructor(private jwtService: JwtService, private reflector: Reflector) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
             context.getHandler(),
             context.getClass(),
-          ]);
-          if (isPublic) {
+        ]);
+        if (isPublic) {
             return true;
-          }
+        }
         const request = context.switchToHttp().getRequest();
         const token = this.extractTokenFromHeader(request);
         if (!token) {
@@ -33,7 +34,7 @@ export class AuthenticationGuard implements CanActivate {
             const payload = await this.jwtService.verifyAsync(//verifying the token
                 token,
                 {
-                        secret: process.env.JWT_SECRET//getting the secret from the environment variables
+                    secret: process.env.JWT_SECRET//getting the secret from the environment variables
                 }
             );
             // 💡 We're assigning the payload to the request object here
@@ -45,10 +46,8 @@ export class AuthenticationGuard implements CanActivate {
         return true;
     }
 
-    
-    private extractTokenFromHeader(request: Request): string | undefined {
-        const token = request.cookies?.token || request.headers['authorization']?.split(' ')[1];
 
-        return token;
+    private extractTokenFromHeader(request: Request): string | undefined {
+        return request.cookies?.token || request.headers['authorization']?.split(' ')[1];
     }
 }

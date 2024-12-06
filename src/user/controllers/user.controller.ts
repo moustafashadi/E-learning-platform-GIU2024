@@ -21,19 +21,16 @@ export class UserController {
 
   @UseGuards(AuthenticationGuard)
   @Get()
-  @Roles(Role.Admin)
   findAll() {
     return this.userService.findAll();
   }
   @UseGuards(AuthenticationGuard)
   @Get(':id')
-  @Roles(Role.Admin)
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
   @UseGuards(AuthenticationGuard)
   @Patch(':id')
-  @Roles(Role.Admin)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
