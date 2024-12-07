@@ -11,7 +11,7 @@ import {Controller, Post, Get, Put, Delete, Body, Param, Req,} from '@nestjs/com
     /**
      * Create a new note
      * @param createNoteDto Data for creating a note
-     * @param req Request object (should include user data from middleware)
+     * @param req Request object 
      */
     @Post()
     async createNote(
