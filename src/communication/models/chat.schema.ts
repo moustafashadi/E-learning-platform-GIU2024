@@ -13,6 +13,10 @@ export class Chat {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   creator: Types.ObjectId;
+
+  @Prop({ required:true, default:"" })
+  title:String
+    save: any;
 }
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);

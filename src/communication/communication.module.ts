@@ -7,6 +7,7 @@ import { ChatController } from './controllers/chat.controller';
 import { chatService } from './services/chat.service';
 import { UserModule } from 'src/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
+import { GateWay } from './gateway/chat.gateway';
 
 @Module({
     
@@ -16,9 +17,9 @@ import { JwtModule } from '@nestjs/jwt';
             UserModule, JwtModule.register({
                 secret: process.env.JWT_SECRET,
                 signOptions: { expiresIn: '1d' },
-            })],
+            })], 
     controllers: [ChatController],
-    providers: [chatService],
+    providers: [chatService,GateWay],
 })
     
 export class CommunicationModule {}

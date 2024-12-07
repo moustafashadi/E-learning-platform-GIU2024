@@ -1,4 +1,4 @@
-import { IsArray, IsMongoId} from 'class-validator';
+import { IsArray, IsMongoId, IsString} from 'class-validator';
 import { ObjectId } from 'mongoose';
 
 export class CreateChatDto {
@@ -10,4 +10,7 @@ export class CreateChatDto {
 
     @IsMongoId()
     creator: ObjectId;
+
+    @IsString()
+    title:String;
 }

@@ -82,7 +82,6 @@ export class UserService {
 
   async getCurrentUser(request: Request): Promise<UserDocument> {
     const token = request.cookies['token'];
-    console.log(token);
     if (!token) {
       throw new NotFoundException('No JWT token found');
     }
