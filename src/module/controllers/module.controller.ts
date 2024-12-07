@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Patch, Delete, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { ModuleService } from './module.service';
-import { CreateModuleDto } from './dto/create-module.dto';
-import { UpdateModuleDto } from './dto/update-module.dto';
+import { ModuleService } from '../services/module.service';
+import { CreateModuleDto } from '../dto/create-module.dto';
+import { UpdateModuleDto } from '../dto/update-module.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 

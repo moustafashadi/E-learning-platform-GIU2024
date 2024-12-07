@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CourseSchema } from './schemas/course.schema';
+import { CourseSchema } from '../course/models/course.schema';
 import { UserSchema } from 'src/user/models/user.schema';
-import { CourseController } from './course.controller';
-import { CourseService } from './course.service';
+import { CourseController } from '../course/controllers/course.controller';
+import { CourseService } from '../course/services/course.service';
 
 @Module({
   imports: [

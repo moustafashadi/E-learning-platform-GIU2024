@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Param, Patch, Query, Delete, UploadedFile, UseInterceptors, Req } from '@nestjs/common';
-import { CourseService } from './course.service';
-import { CreateCourseDto } from './dto/create-course.dto';
-import { UpdateCourseDto } from './dto/update-course.dto';
+import { 
+  Controller, Get, Post, Body, Param, Patch, Query, Delete, UploadedFile, UseInterceptors, Req } from '@nestjs/common';
+import { CourseService } from '../services/course.service';
+import { CreateCourseDto } from '../dto/create-course.dto';
+import { UpdateCourseDto } from '../dto/update-course.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-
+import { Express } from 'express'; // Ensure Express types are available
 
 @Controller('courses')
 export class CourseController {
@@ -62,12 +63,23 @@ export class CourseController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads',
+        destination: './uploads', // Directory where files are saved
         filename: (req, file, callback) => {
           const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
           callback(null, `${uniqueSuffix}-${file.originalname}`);
         },
       }),
+      limits: {
+        fileSize: 5 * 1024 * 1024, // Limit file size to 5 MB
+      },
+      fileFilter: (req, file, callback) => {
+        // Optional: File type validation
+        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+          callback(null, true);
+        } else {
+          callback(new Error('Invalid file type. Only images and PDFs are allowed.'), false);
+        }
+      },
     }),
   )
   async uploadFile(
@@ -76,7 +88,7 @@ export class CourseController {
     @Req() req: any,
   ) {
     const fileUrl = `/uploads/${file.filename}`;
-    const userId = req.user.id; // Assuming `user` is set by authentication middleware
+    const userId = req.user?.id; // Assuming `user` is set by authentication middleware
     return await this.courseService.uploadResource(courseId, fileUrl, userId);
   }
 }
