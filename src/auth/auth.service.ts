@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/services/user.service';
-import { SignInDto } from './dto/SignInDto';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

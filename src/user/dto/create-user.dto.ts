@@ -1,5 +1,4 @@
-import { IsEmail, IsString, IsArray, MinLength, IsOptional } from 'class-validator';
-import {Schema} from 'mongoose'
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()

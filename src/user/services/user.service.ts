@@ -14,6 +14,8 @@ import { CreateStudentDto } from '../dto/create-student.dto';
 import { createInstructorDto } from '../dto/create-instructor.dto';
 import { CreateAdminDto } from '../dto/create-admin.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
+import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
 
 @Injectable()
 export class UserService {
@@ -22,6 +24,7 @@ export class UserService {
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
+    private jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<any> {
@@ -76,7 +79,27 @@ export class UserService {
   async createAdmin(adminData: CreateAdminDto) {
     return this.adminModel.create({ ...adminData, role: 'admin' });
   }
-  
+
+  async getCurrentUser(request: Request): Promise<UserDocument> {
+    const token = request.cookies['token'];
+    console.log(token);
+    if (!token) {
+      throw new NotFoundException('No JWT token found');
+    }
+
+    const decoded = this.jwtService.verify(token);
+    const userId = decoded.sub;
+    switch (decoded.role) {
+      case 'admin':
+        return this.adminModel.findById(userId);
+      case 'student':
+        return this.studentModel.findById(userId);
+      case 'instructor':
+        return this.instructorModel.findById(userId);
+      default:
+        throw new NotFoundException('User not found');
+    }
+  }
 
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();

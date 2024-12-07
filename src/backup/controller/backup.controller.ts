@@ -3,7 +3,9 @@ import { BackupService } from '../service/backup.service';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../auth/decorators/roles.decorator';
 import * as path from 'path';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 
+@UseGuards(AuthorizationGuard)
 @Controller('backup')
 @Roles(Role.Admin) // Only admins can access backup operations
 export class BackupController {
