@@ -16,7 +16,7 @@ export class AuthController {
   async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res) {
     try {
       const result = await this.authService.signIn(signInDto.email, signInDto.password);
-
+      console.log("result: ", result);
       res.cookie('token', result.access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Res } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -7,6 +7,7 @@ import { Role } from '../../auth/decorators/roles.decorator';
 import { Public } from '../../auth/decorators/public.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
+import { Request, Response } from 'express';
 
 
 @Controller('users')
@@ -24,6 +25,15 @@ export class UserController {
   findAll() {
     return this.userService.findAll();
   }
+
+  @UseGuards(AuthenticationGuard)
+  @Post('logout')
+  async logout(@Req() request: Request, @Res() response: Response) {
+    console.log(request);
+    console.log("RESPONSE: ", response);
+    return this.userService.logout(request, response);
+  }
+
   @UseGuards(AuthenticationGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {

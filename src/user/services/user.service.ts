@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException , Req, Res} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -15,7 +15,7 @@ import { createInstructorDto } from '../dto/create-instructor.dto';
 import { CreateAdminDto } from '../dto/create-admin.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class UserService {
@@ -25,7 +25,7 @@ export class UserService {
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
     const { role, ...userData } = createUserDto;
@@ -34,10 +34,10 @@ export class UserService {
       ...userData,
       role,
     };
-  
+
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     let userWithRoleSpecificFields;
-  
+
     // Role-specific logic
     switch (role) {
       case 'admin':
@@ -64,18 +64,18 @@ export class UserService {
       default:
         throw new Error(`Invalid role: ${role}`);
     }
-  
+
     return userWithRoleSpecificFields; // No need to call .save(), as .create() already saves the document  
   }
-  
+
   async createStudent(studentData: CreateStudentDto) {
     return this.studentModel.create({ ...studentData, role: 'student' });
   }
-  
+
   async createInstructor(instructorData: createInstructorDto) {
     return this.instructorModel.create({ ...instructorData, role: 'instructor' });
   }
-  
+
   async createAdmin(adminData: CreateAdminDto) {
     return this.adminModel.create({ ...adminData, role: 'admin' });
   }
@@ -100,6 +100,14 @@ export class UserService {
     }
   }
 
+  async logout(@Req() req: Request, @Res() res: Response) {
+    res.clearCookie('token');
+    res.status(200).send({
+      statusCode: 200,
+      message: 'Logged out successfully',
+    });
+  }
+
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();
   }
@@ -113,18 +121,25 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.studentModel.findOne({ email }).exec();
+    let user: UserDocument | null = await this.studentModel.findOne({ email }).exec();
+    if (!user) {
+      user = await this.instructorModel.findOne({ email }).exec();
+    }
+    if (!user) {
+      user = await this.adminModel.findOne({ email }).exec();
+    }
+    return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
-    
+
     const updatedUser = await this.userModel
       .findByIdAndUpdate(id, updateUserDto, { new: true })
       .exec();
-      
+
     if (!updatedUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -148,39 +163,55 @@ export class UserService {
   }
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserDocument> {
-    const user = await this.userModel.findById(userId);
-    if (!user) {
+    try {
+      const user = await this.userModel.findById(userId);
+
+      if (updateProfileDto.password) {
+        updateProfileDto.password = await bcrypt.hash(updateProfileDto.password, 10);
+      }
+
+      Object.assign(user, updateProfileDto);
+      return await user.save();
+    } catch (error) {
       throw new NotFoundException('User not found');
-    }
 
-    if (updateProfileDto.password) {
-      updateProfileDto.password = await bcrypt.hash(updateProfileDto.password, 10);
     }
-
-    Object.assign(user, updateProfileDto);
-    return await user.save();
   }
 
   async getEnrolledCourses(userId: string) {
-    const user = await this.studentModel.findById(userId)
-      .populate('enrolledCourses')
-      .exec();
-    return user.enrolledCourses;
+    try {
+      const user = await this.studentModel.findById(userId)
+        .populate('enrolledCourses')
+        .exec();
+      return user.enrolledCourses;
+    } catch (error) {
+      throw new NotFoundException('Student not found');
+
+    }
   }
 
   async getCompletedCourses(userId: string) {
-    const user = await this.studentModel.findById(userId)
-      .populate('completedCourses')
-      .exec();
-    return user?.completedCourses || [];
+    try {
+      const user = await this.studentModel.findById(userId)
+        .populate('completedCourses')
+        .exec();
+      return user?.completedCourses || [];
+    } catch (error) {
+      throw new NotFoundException('Student not found');
+
+    }
   }
 
   async getCoursesTaught(userId: string) {
-    const user = await this.instructorModel.findById(userId)
-      .populate('coursesTaught')
-      .exec();
-    return user?.coursesTaught || [];
+    try {
+      const user = await this.instructorModel.findById(userId)
+        .populate('coursesTaught')
+        .exec();
+      return user?.coursesTaught || [];
+    } catch (error) {
+      throw new NotFoundException('Instructor not found');
+    }
   }
 
 
-  }
+}
