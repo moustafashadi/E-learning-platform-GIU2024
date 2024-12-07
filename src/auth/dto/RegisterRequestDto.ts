@@ -1,17 +1,16 @@
-import { IsEmail, IsString, IsNumber, IsArray, IsEnum } from 'class-validator';
-import { Course } from "../../course/models/course.schema";
+import { IsEmail, IsString, MinLength, IsEnum } from 'class-validator';
 
 export class RegisterRequestDto {
-    @IsEmail()
-    email: string;
-
-   @IsString()
-    password: string;
-
     @IsString()
     username: string;
 
-    @IsEnum(['admin', 'student', 'instructor'])
-    role: string = 'student';
+    @IsEmail()
+    email: string;
 
+    @IsString()
+    @MinLength(6)
+    password: string;
+
+    @IsEnum(['admin', 'student', 'instructor'], { message: 'Invalid role' })
+    role: string;
 }
