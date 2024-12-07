@@ -173,6 +173,7 @@ export class UserService {
     }
     return null;
   }
+ 
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
