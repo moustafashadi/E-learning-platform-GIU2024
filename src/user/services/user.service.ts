@@ -28,44 +28,60 @@ export class UserService {
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
-    const { role, ...userData } = createUserDto;
-
-    const baseUser = {
-      ...userData,
-      role,
-    };
-
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    let userWithRoleSpecificFields;
-
-    // Role-specific logic
-    switch (role) {
-      case 'admin':
-        userWithRoleSpecificFields = await this.createAdmin({
-          ...baseUser, // Admin might not need extra attributes
-          password: hashedPassword,
-        });
-        break;
-      case 'student':
-        userWithRoleSpecificFields = await this.createStudent({
-          ...baseUser,
-          password: hashedPassword,
-          enrolledCourses: [],
-          completedCourses: [],
-        });
-        break;
-      case 'instructor':
-        userWithRoleSpecificFields = await this.createInstructor({
-          ...baseUser,
-          password: hashedPassword,
-          coursesTaught: [],
-        });
-        break;
-      default:
-        throw new Error(`Invalid role: ${role}`);
+    try {
+      console.log('Starting user creation with:', { ...createUserDto, password: '***' });
+      
+      const { role, ...userData } = createUserDto;
+  
+      // Check if email already exists
+      const existingUser = await this.findByEmail(userData.email);
+      if (existingUser) {
+        throw new ConflictException('Email already exists');
+      }
+  
+      const baseUser = {
+        ...userData,
+        role,
+      };
+    
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+      let userWithRoleSpecificFields;
+    
+      console.log('Creating user with role:', role);
+      
+      // Role-specific logic
+      switch (role.toLowerCase()) {
+        case 'admin':
+          userWithRoleSpecificFields = await this.createAdmin({
+            ...baseUser,
+            password: hashedPassword,
+          });
+          break;
+        case 'student':
+          userWithRoleSpecificFields = await this.createStudent({
+            ...baseUser,
+            password: hashedPassword,
+            enrolledCourses: [],
+            completedCourses: [],
+          });
+          break;
+        case 'instructor':
+          userWithRoleSpecificFields = await this.createInstructor({
+            ...baseUser,
+            password: hashedPassword,
+            coursesTaught: [],
+          });
+          break;
+        default:
+          throw new Error(`Invalid role: ${role}`);
+      }
+    
+      return userWithRoleSpecificFields;
+    } catch (error) {
+      console.error('User creation error:', error);
+      console.error('Error stack:', error.stack);
+      throw error;
     }
-
-    return userWithRoleSpecificFields; // No need to call .save(), as .create() already saves the document  
   }
 
   async createStudent(studentData: CreateStudentDto) {
@@ -121,14 +137,17 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    let user: UserDocument | null = await this.studentModel.findOne({ email }).exec();
-    if (!user) {
-      user = await this.instructorModel.findOne({ email }).exec();
-    }
-    if (!user) {
-      user = await this.adminModel.findOne({ email }).exec();
-    }
-    return user;
+    //Check all user types
+    const student = await this.studentModel.findOne({ email }).exec();
+    if (student) return student;
+
+    const instructor = await this.instructorModel.findOne({ email }).exec();
+    if (instructor) return instructor;
+
+    const admin = await this.adminModel.findOne({ email }).exec();
+    if (admin) return admin;
+
+    return null;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
@@ -161,6 +180,7 @@ export class UserService {
     }
     return null;
   }
+ 
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserDocument> {
     try {
@@ -213,5 +233,6 @@ export class UserService {
     }
   }
 
+  
 
-}
+  }
