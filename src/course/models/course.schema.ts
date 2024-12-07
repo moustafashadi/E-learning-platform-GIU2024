@@ -30,4 +30,3 @@ export class Course {
 export type CourseDocument = Course & Document;
 export const CourseSchema = SchemaFactory.createForClass(Course);
 
-CourseSchema.index({ title: 'text', category: 'text', difficulty: 'text' });

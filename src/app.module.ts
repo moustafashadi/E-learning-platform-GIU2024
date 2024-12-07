@@ -15,12 +15,14 @@ import { AuthenticationGuard } from './auth/guards/authentication.guard';
 import { AuthorizationGuard } from './auth/guards/authorization.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './auth/auth.module';
+import { CourseModule } from './course/course.module';
 
 dotenv.config();
 
 @Module({
   imports: [MongooseModule.forRoot(process.env.MONGO_URI),
        UserModule, AnalyticsModule,  NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule, AuthModule,
+       CourseModule,
        JwtModule.register({
         secret: process.env.JWT_SECRET,
         signOptions: { expiresIn: '1d' },

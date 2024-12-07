@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import {Schema as MongooseSchema} from 'mongoose'
-import mongoose, { Document} from 'mongoose';
+import { Document} from 'mongoose';
 
 
 @Schema({ timestamps: { createdAt: 'LastAccessed' } })

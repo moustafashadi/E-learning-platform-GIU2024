@@ -1,11 +1,27 @@
 import { 
-  Controller, Get, Post, Body, Param, Patch, Query, Delete, UploadedFile, UseInterceptors, Req } from '@nestjs/common';
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Query, 
+  Delete,
+  UploadedFile,
+  UseInterceptors,
+  Req 
+} 
+     from '@nestjs/common';
+ 
 import { CourseService } from '../services/course.service';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { Express } from 'express'; // Ensure Express types are available
+import { Module } from '@nestjs/common';
+import { Course } from '../models/course.schema';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Controller('courses')
 export class CourseController {
@@ -13,6 +29,8 @@ export class CourseController {
 
   @Post()
   async create(@Body() createCourseDto: CreateCourseDto) {
+    console.log("createCourseDto");
+
     return await this.courseService.create(createCourseDto);
   }
 
@@ -92,3 +110,12 @@ export class CourseController {
     return await this.courseService.uploadResource(courseId, fileUrl, userId);
   }
 }
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([{ name: Course.name, schema: Course }]),
+  ],
+  controllers: [CourseController],
+  providers: [CourseService],
+})
+export class CourseModule {}
