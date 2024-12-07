@@ -80,4 +80,30 @@ export class AuthController {
     }
   }
 
+  @Post('logout')
+  async logout(@Res() response) {
+    console.log('Logout called');
+    try {
+      // Clear the token cookie
+      console.log('Clearing token cookie');
+      response.clearCookie('token');
+      console.log('Token cookie cleared');
+
+      // Send a response back to the client
+      response.status(HttpStatus.OK).json({
+        statusCode: HttpStatus.OK,
+        message: 'Logged out successfully',
+      });
+      console.log('Logout response sent');
+    } catch (error) {
+      console.log('Logout error:', error);
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'An error occurred during logout',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

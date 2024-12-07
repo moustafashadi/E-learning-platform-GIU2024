@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/services/user.service';
 import * as dotenv from 'dotenv';
-
+import { Response } from 'express';
 dotenv.config();
 
 @Injectable()
@@ -26,5 +26,8 @@ export class AuthService {
     }),
       payload,
     };
+  }
+  async logout(response: Response): Promise<void> {
+    response.cookie('token', '', { expires: new Date(0) });
   }
 }

@@ -16,6 +16,7 @@ import { CreateAdminDto } from '../dto/create-admin.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { Response } from 'express';
 
 @Injectable()
 export class UserService {
@@ -210,5 +211,6 @@ export class UserService {
     return user?.coursesTaught || [];
   }
 
+  
 
   }
