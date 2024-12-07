@@ -10,13 +10,26 @@ import { ModulesModule } from './module/module.module';
 import { CommunicationModule } from './communication/communication.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as dotenv from 'dotenv';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthenticationGuard } from './auth/guards/authentication.guard';
+import { AuthorizationGuard } from './auth/guards/authorization.guard';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthModule } from './auth/auth.module';
 
 dotenv.config();
 
 @Module({
   imports: [MongooseModule.forRoot(process.env.MONGO_URI),
-       UserModule, AnalyticsModule,  NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule],
+       UserModule, AnalyticsModule,  NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule, AuthModule,
+       JwtModule.register({
+        secret: process.env.JWT_SECRET,
+        signOptions: { expiresIn: '1d' },
+       })],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    AuthenticationGuard,
+    AuthorizationGuard,
+  ],
 })
 export class AppModule {}
