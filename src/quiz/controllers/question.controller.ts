@@ -3,15 +3,16 @@ import { CreateQuestionDto } from '../dto/create-question.dto';
 import { QuestionService } from '../services/question.service';
 import { UpdateQuestionDto } from '../dto/update-question.dto';
 
+@Controller('/questions')
 export class QuestionController {
     constructor(private readonly questionService: QuestionService) {}
     
-    @Post()
+    @Post('/:quizId/createQuestion')
     async createQuestion(@Body() createQuestionDto: CreateQuestionDto) {
         return this.questionService.createQuestion(createQuestionDto);
     }
     
-    @Get()
+    @Get('/:quizId')
     async getQuestions() {
         return this.questionService.getQuestions();
     }
