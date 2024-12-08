@@ -7,11 +7,12 @@ import { AuthenticationGuard } from '../auth/guards/authentication.guard';
 
 @Controller('auth')
 export class AuthController {
-    constructor(
-      private authService: AuthService, 
-      private userService: UserService) {}
-    
+  constructor(
+    private authService: AuthService,
+    private userService: UserService) { }
 
+
+  //TESTED - WORKING
   @Post('login')
   async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res) {
     try {
@@ -44,7 +45,7 @@ export class AuthController {
     }
   }
 
-
+  //TESTED - WORKING
   @Post('register')
   async signup(@Body() registerRequestDto: RegisterRequestDto) {
     try {

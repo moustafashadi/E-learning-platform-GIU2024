@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException , Req, Res} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Req, Res } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -8,8 +8,6 @@ import { User, UserDocument } from '../models/user.schema';
 import { Admin, AdminDocument } from '../models/user.schema';
 import { Student, StudentDocument } from '../models/user.schema';
 import { Instructor, InstructorDocument } from '../models/user.schema';
-import { request } from 'http';
-import { response } from 'express';
 import { CreateStudentDto } from '../dto/create-student.dto';
 import { createInstructorDto } from '../dto/create-instructor.dto';
 import { CreateAdminDto } from '../dto/create-admin.dto';
@@ -30,25 +28,25 @@ export class UserService {
   async create(createUserDto: CreateUserDto): Promise<any> {
     try {
       console.log('Starting user creation with:', { ...createUserDto, password: '***' });
-      
+
       const { role, ...userData } = createUserDto;
-  
+
       // Check if email already exists
       const existingUser = await this.findByEmail(userData.email);
       if (existingUser) {
         throw new ConflictException('Email already exists');
       }
-  
+
       const baseUser = {
         ...userData,
         role,
       };
-    
+
       const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
       let userWithRoleSpecificFields;
-    
+
       console.log('Creating user with role:', role);
-      
+
       // Role-specific logic
       switch (role.toLowerCase()) {
         case 'admin':
@@ -75,7 +73,7 @@ export class UserService {
         default:
           throw new Error(`Invalid role: ${role}`);
       }
-    
+
       return userWithRoleSpecificFields;
     } catch (error) {
       console.error('User creation error:', error);
@@ -125,15 +123,25 @@ export class UserService {
   }
 
   async findAll(): Promise<UserDocument[]> {
-    return this.userModel.find().exec();
+    const students = await this.studentModel.find().exec();
+    const instructors = await this.instructorModel.find().exec();
+    const admins = await this.adminModel.find().exec();
+    return [...students, ...instructors, ...admins]
   }
 
   async findOne(id: string): Promise<UserDocument> {
-    const user = await this.userModel.findById(id).exec();
-    if (!user) {
+    const student = await this.studentModel.findById(id).exec();
+    if (student) return student;
+
+    const instructor = await this.instructorModel.findById(id).exec();
+    if (instructor) return instructor;
+
+    const admin = await this.adminModel.findById(id).exec();
+    if (admin) return admin;
+
+    else {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
@@ -155,22 +163,38 @@ export class UserService {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
 
-    const updatedUser = await this.userModel
+    const updatedStudent = await this.studentModel
       .findByIdAndUpdate(id, updateUserDto, { new: true })
       .exec();
-
-    if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+    if (updatedStudent) return updatedStudent;
+    
+    else if (!updatedStudent) {
+      const updatedInstructor = await this.instructorModel
+        .findByIdAndUpdate(id, updateUserDto, { new: true })
+        .exec();
+      if (updatedInstructor) return updatedInstructor;
+      else {
+        const updatedAdmin = await this.adminModel
+          .findByIdAndUpdate(id, updateUserDto, { new: true })
+          .exec();
+        if (updatedAdmin) {
+          return updatedAdmin;
+        }
+        else {
+          throw new NotFoundException(`User with ID ${id} not found`);
+        }
+      }
     }
-    return updatedUser;
   }
 
   async remove(id: string): Promise<UserDocument> {
-    const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
-    if (!deletedUser) {
+    const deletedStudent = await this.studentModel.findByIdAndDelete(id).exec();
+    if (deletedStudent) return deletedStudent;
+    const deletedInstructor = await this.instructorModel.findByIdAndDelete(id).exec();
+    if (deletedInstructor) return deletedInstructor;
+    else {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return deletedUser;
   }
 
   async validateUser(email: string, password: string): Promise<UserDocument | null> {
@@ -180,7 +204,7 @@ export class UserService {
     }
     return null;
   }
- 
+
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserDocument> {
     try {
@@ -199,23 +223,25 @@ export class UserService {
   }
 
   async getEnrolledCourses(userId: string) {
-    try {
-      const user = await this.studentModel.findById(userId)
-        .populate('enrolledCourses')
-        .exec();
-      return user.enrolledCourses;
-    } catch (error) {
-      throw new NotFoundException('Student not found');
+    const student = await this.studentModel.findById(userId).exec();
 
+    if (!student) {
+      throw new NotFoundException('Student not found');
     }
-  }
+  
+    return student.enrolledCourses;
+  } 
 
   async getCompletedCourses(userId: string) {
     try {
-      const user = await this.studentModel.findById(userId)
-        .populate('completedCourses')
-        .exec();
-      return user?.completedCourses || [];
+      const user = await this.studentModel.findById(userId).exec();
+      
+      if (!user) {
+        throw new NotFoundException('Student not found');
+      }
+
+      return user.completedCourses;
+      
     } catch (error) {
       throw new NotFoundException('Student not found');
 
@@ -233,6 +259,6 @@ export class UserService {
     }
   }
 
-  
 
-  }
+
+}

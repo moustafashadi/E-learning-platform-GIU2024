@@ -14,40 +14,60 @@ import { Request, Response } from 'express';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  //TESTED - WORKING
   @Post()
   @Public()
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
 
-  @UseGuards(AuthenticationGuard)
+  //TESTED - WORKING
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @Get()
   findAll() {
     return this.userService.findAll();
   }
 
+  //TESTED - WORKING
   @UseGuards(AuthenticationGuard)
   @Post('logout')
   async logout(@Req() request: Request, @Res() response: Response) {
-    console.log(request);
-    console.log("RESPONSE: ", response);
     return this.userService.logout(request, response);
   }
 
+  //TESTED - WORKING
   @UseGuards(AuthenticationGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
+
+  //TESTED - WORKING
   @UseGuards(AuthenticationGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
+
+  //TESTED - WORKING
   @UseGuards(AuthenticationGuard,AuthorizationGuard)
   @Delete(':id')
   @Roles(Role.Admin)
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
+  }
+
+  //TESTED - WORKING
+  @UseGuards(AuthenticationGuard)
+  @Get('/:id/completedCourses')
+  getCompletedCourses(@Param('id') id: string) {
+    return this.userService.getCompletedCourses(id);
+  }
+
+  //TESTED - WORKING
+  @UseGuards(AuthenticationGuard)
+  @Get('/:id/enrolledCourses')
+  getEnrolledCourses(@Param('id') id: string) {
+    return this.userService.getEnrolledCourses(id);
   }
 }
