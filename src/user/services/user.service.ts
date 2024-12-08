@@ -14,10 +14,12 @@ import { CreateAdminDto } from '../dto/create-admin.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
+import { Course, CourseDocument } from '../../course/models/course.schema';
 
 @Injectable()
 export class UserService {
   constructor(
+    @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
@@ -259,6 +261,24 @@ export class UserService {
     }
   }
 
+  async enrollCourse(userId: string, courseId: string) {
+    console.log(userId, courseId);
+    const student = await this.studentModel.findById(userId);
+    const course = await this.courseModel.findById(courseId);
+    
+    if (!student || !course) {
+      throw new NotFoundException('Student or course not found');
+    }
+    
+    if (student.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
+      throw new ConflictException('Student already enrolled in this course');
+    }
+    
+    student.enrolledCourses.push(course._id as any);
+    await student.save();
+    
+    return student.populate('enrolledCourses');
+  }
 
 
 }

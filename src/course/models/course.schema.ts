@@ -1,27 +1,32 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Schema as MongooseSchema } from 'mongoose';
 import { Document } from 'mongoose';
+import { User } from 'src/user/models/user.schema';
 
-@Schema({ timestamps: true }) //date4creation und updates
+@Schema({ timestamps: true })
 export class Course {
-  @Prop({ required: true, unique: true }) //1
-  course_code: string; 
+  @Prop({ required: true, unique: true })
+  course_code: string;
 
   @Prop({ required: true })
-  title: string; 
+  title: string;
 
   @Prop({ required: true })
-  description: string; 
+  description: string;
 
   @Prop({ required: true })
-  category: string; 
+  category: string;
 
   @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced'] })
-  difficulty: string; 
+  difficulty: string;
 
-  @Prop({type: {type: MongooseSchema.Types.ObjectId, ref: 'User'}})
-  created_by: MongooseSchema.Types.ObjectId; 
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: User.name })
+  created_by: User; 
+
+  @Prop({ type: [String], default: [] })
+  resources: string[]; // URLs of resources (videos, PDFs, etc.)
 }
 
 export type CourseDocument = Course & Document;
 export const CourseSchema = SchemaFactory.createForClass(Course);
+

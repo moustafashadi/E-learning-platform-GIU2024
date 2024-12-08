@@ -70,4 +70,13 @@ export class UserController {
   getEnrolledCourses(@Param('id') id: string) {
     return this.userService.getEnrolledCourses(id);
   }
+  //add enroll course 
+  @UseGuards(AuthenticationGuard)
+  @Post(':id/enroll/:courseId')
+  async enrollCourse(
+    @Param('id') userId: string,
+    @Param('courseId') courseId: string
+  ) {
+    return await this.userService.enrollCourse(userId, courseId);
+  }
 }
