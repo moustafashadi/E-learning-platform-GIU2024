@@ -25,6 +25,9 @@ export class Course {
 
   @Prop({ type: [String], default: [] })
   resources: string[]; // URLs of resources (videos, PDFs, etc.)
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  instructor: MongooseSchema.Types.ObjectId; 
 }
 
 export type CourseDocument = Course & Document;

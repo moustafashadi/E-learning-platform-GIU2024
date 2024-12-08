@@ -9,7 +9,7 @@ export class Quiz {
   module_id: MongooseSchema.Types.ObjectId; 
 
   @Prop({type: MongooseSchema.Types.ObjectId, ref: 'Course', required: true})
-  course_id: MongooseSchema.Types.ObjectId;
+  course: MongooseSchema.Types.ObjectId;
 
   @Prop({type: [{type: MongooseSchema.Types.ObjectId , ref: 'Question'}], default: [] })
   questions: MongooseSchema.Types.ObjectId[]; 

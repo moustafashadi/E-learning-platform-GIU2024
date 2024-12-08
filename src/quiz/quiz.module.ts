@@ -1,14 +1,29 @@
-import { Module } from '@nestjs/common';
+import { Module, Res } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { QuizSchema } from './models/quiz.schema';
 import { QuestionSchema } from './models/question.schema';
+import { QuizController } from './controllers/quiz.controller';
+import { QuizService } from './services/quiz.service';
+import { JwtModule } from '@nestjs/jwt';
+import { ResponseSchema } from '../response/models/response.schema';
+import { ResponseService } from '../response/services/response.service';
+import { ResponseGateway } from '../response/gateway/response.gateway';
+import { QuestionService } from './services/question.service';
+import { CourseSchema } from 'src/course/models/course.schema';
+import { UserSchema } from 'src/user/models/user.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
+    MongooseModule.forFeature([{ name: 'Instructor', schema: UserSchema }]),
     MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
-  ],
-  controllers: [],
-  providers: [],
+    MongooseModule.forFeature([{ name: 'Response', schema: ResponseSchema }]),
+    MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1d' },
+     })],
+  controllers: [QuizController],
+  providers: [QuizService, ResponseService, ResponseGateway, QuestionService],
 })
 export class QuizModule {}

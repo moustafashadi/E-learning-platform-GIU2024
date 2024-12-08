@@ -1,15 +1,20 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsMongoId, IsArray, IsObject, IsNumber, IsNotEmpty } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateResponseDto {
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
-  userId: string;
+  userId: Types.ObjectId;
 
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
-  questionId: string;
+  quizId: Types.ObjectId;
 
-  @IsString()
+  @IsArray()
   @IsNotEmpty()
-  chosenAnswer: string;
+  answers: Array<object>;
+
+  @IsNumber()
+  @IsNotEmpty()
+  score: number;
 }

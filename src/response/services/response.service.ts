@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Response, ResponseDocument } from './models/response.schema';
+import { Response, ResponseDocument } from '../models/response.schema';
 import { Model } from 'mongoose';
-import { QuestionService } from '../question/question.service'; // Hypothetical service to fetch question details
+import { QuestionService } from '../../quiz/services/question.service'; // Hypothetical service to fetch question details
 
 @Injectable()
 export class ResponseService {
