@@ -24,7 +24,7 @@ import { CourseSchema } from '../course/models/course.schema';
     })
   ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, JwtModule],
   exports: [UserService],
 })
 export class UserModule {} 

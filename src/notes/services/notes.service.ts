@@ -4,12 +4,13 @@ import { Model, ObjectId, Types } from 'mongoose';
 import { Note, NoteDocument } from '../models/notes.schema';
 import { CreateNoteDto } from '../dto/create-notes.dto';
 import { UpdateNoteDto } from '../dto/update-notes.dto';
+import { CourseDocument } from 'src/course/models/course.schema';
 
 @Injectable()
 export class NotesService {
   constructor(
     @InjectModel('Notes') private noteModel: Model<NoteDocument>,
-    @InjectModel('Courses') private courseModel: Model<any> // Replace 'any' with the appropriate type if available
+    @InjectModel('Course') private courseModel: Model<CourseDocument> 
   ) { }
 
   async findById(noteId: string, userId: string): Promise<Note | null> {
@@ -20,6 +21,7 @@ export class NotesService {
     return note;
   }
 
+  //TESTED - WORKING
   async createNoteForCourse(courseId: string, content: string, userId: string): Promise<Note> {
     try {
       const course = await this.courseModel.findById(courseId).exec();

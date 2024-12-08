@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 
 export class CreateNoteDto {
   @IsString()
-  readonly courseId: string;
+  readonly courseId: Types.ObjectId;
 
   @IsString()
   readonly content: string;

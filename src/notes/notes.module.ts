@@ -5,17 +5,23 @@ import { CourseSchema } from '../course/models/course.schema';
 import { NotesController } from './controllers/notes.controller';
 import { NotesService } from './services/notes.service';
 import { JwtModule } from '@nestjs/jwt';
+import { UserService } from 'src/user/services/user.service';
+import { UserSchema, AdminSchema, StudentSchema, InstructorSchema } from 'src/user/models/user.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Notes', schema: NoteSchema }]),
-    MongooseModule.forFeature([{ name: 'Courses', schema: CourseSchema }]),
+    MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),
+    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: 'Admin', schema: AdminSchema }]),
+    MongooseModule.forFeature([{ name: 'Student', schema: StudentSchema }]),
+    MongooseModule.forFeature([{ name: 'Instructor', schema: InstructorSchema }]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
     }),
   ],
   controllers: [NotesController],
-  providers: [NotesService],
+  providers: [NotesService, UserService],
 })
 export class NotesModule { }
