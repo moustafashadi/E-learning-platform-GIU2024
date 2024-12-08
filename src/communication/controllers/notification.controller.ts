@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Patch, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, Post, Patch, Req, UseGuards, Body } from "@nestjs/common";
 import { NotificationService } from "../services/notification.service";
 import { CreateNotificationDto } from "../dto/create-notifications.dto";
 import { Public } from "src/auth/decorators/public.decorator";
@@ -12,8 +12,8 @@ export class NotificationController {
     constructor(private readonly notificationService: NotificationService) { }
 
     @Post()
-    create(@Req() req: Request) {
-        return this.notificationService.CreateNotification(req);
+    create(@Body() Body, @Req() req: Request) {
+        return this.notificationService.CreateNotification(Body, req);
     }
     @Get()
     findAll() {
