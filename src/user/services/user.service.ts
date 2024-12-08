@@ -96,6 +96,7 @@ export class UserService {
     return this.adminModel.create({ ...adminData, role: 'admin' });
   }
 
+  // DO NOT USE OUTSIDE OF USER MODULE
   async getCurrentUser(request: Request): Promise<UserDocument> {
     const token = request.cookies['token'];
     if (!token) {

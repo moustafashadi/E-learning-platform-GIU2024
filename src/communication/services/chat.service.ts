@@ -18,12 +18,12 @@ export class chatService{
     ){}
 
     async create(@Req() req: Request): Promise<Chat> {
-        const creator = await this.userService.getCurrentUser(req);
+        const userId = req.user['sub'];
         const createdChat = new this.chatModel({
             title:req.body.title,
-            participants: [creator._id],
+            participants: [userId],
             messages: [],
-            creator: creator._id,}
+            creator: userId,}
         );
         console.log(createdChat);
         return createdChat.save();

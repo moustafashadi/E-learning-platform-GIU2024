@@ -17,14 +17,14 @@ export class NotificationService {
 
     async CreateNotification(@Req() req: Request): Promise<Notification> {
         // return this.notificationModel.create({cr}); w hot el constructors (cr:create-notifications.dto) shyel el taht w a3ml return de
-        const creator = await this.userService.getCurrentUser(req);
-        const createdChat = new this.notificationModel({
+        const userId = req.user['sub'];
+        const createdNotification = new this.notificationModel({
             messages: [],
-            recipient: [creator._id],
-            creator: creator._id,
+            recipient: [this.userService.findAll()],
+            creator: userId,
         }
         );
-        return createdChat.save();
+        return createdNotification.save();
     }
 
     async findall(): Promise<Notification[]> {
