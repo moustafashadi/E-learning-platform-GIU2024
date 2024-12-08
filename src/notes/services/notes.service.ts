@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Param, Body } from '@nestjs/common';
+import { Injectable, NotFoundException, Param, Body, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId, Types } from 'mongoose';
 import { Note, NoteDocument } from '../models/notes.schema';
@@ -20,21 +20,31 @@ export class NotesService {
     return note;
   }
 
-  //CREATE NOTE IMPLEMENTATION ACCORDING TO NOTES.CONTROLLER.TS
-  async create(courseId: string, content: string, userId: string): Promise<Note> {
+  async createNoteForCourse(courseId: string, content: string, userId: string): Promise<Note> {
     try {
-      const course = await this.courseModel.findById(courseId);
+      const course = await this.courseModel.findById(courseId).exec();
       if (!course) {
         throw new NotFoundException('Course not found');
       }
-      const newNote = await this.noteModel.create({
-        courseId,
+
+      const newNote = new this.noteModel({
+        courseId: new Types.ObjectId(courseId),  // Explicitly set courseId
         content,
-        userId,
+        userId: new Types.ObjectId(userId),
+        isPinned: false,
+        created_at: new Date(),
+        last_updated: new Date()
       });
-      return newNote;
+
+      const savedNote = await newNote.save();
+      console.log('Saved note:', savedNote); // Debug log
+      return savedNote;
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Error creating note:', error);
+      if (error.name === 'ValidationError') {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
     }
   }
 
@@ -60,14 +70,11 @@ export class NotesService {
   }
 
   async update(noteId: string, userId: string, updateNoteDto: UpdateNoteDto): Promise<Note | null> {
-    // Ensure the note belongs to the user
     const note = await this.noteModel.findOne({ _id: noteId, userId }).exec();
     if (!note) {
-      // Note not found or doesn't belong to the user
       throw new NotFoundException(`Note with ID ${noteId} not found or not owned by the user`);
     }
 
-    // Update the note
     const updatedNote = await this.noteModel.findByIdAndUpdate(
       noteId,
       { ...updateNoteDto },
@@ -78,15 +85,12 @@ export class NotesService {
   }
 
   async delete(noteId: string, userId: string): Promise<Note> {
-    // Find the note by ID and ensure it belongs to the user
     const note = await this.noteModel.findOne({ _id: noteId, userId }).exec();
     if (!note) {
       throw new NotFoundException(`Note with ID ${noteId} not found or not owned by the user`);
     }
 
-    // Delete the note
     const deletedNote = await this.noteModel.findByIdAndDelete(noteId).exec();
     return deletedNote;
   }
-
 }
