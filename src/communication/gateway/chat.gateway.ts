@@ -16,7 +16,7 @@ import { Request } from "express";
 export class GateWay implements OnGatewayConnection, OnGatewayDisconnect{
     constructor(
         private readonly userService: UserService, // Service to fetch users from the database
-    ) {}
+) {}
     
     handleConnection(client: User) { 
         console.log(`${client.username} have joined the chat`)
@@ -51,6 +51,6 @@ export class GateWay implements OnGatewayConnection, OnGatewayDisconnect{
             from:this.userService.getCurrentUser(req)
         });
        // console.log(user.username)
-    }
+    }
 
 }
