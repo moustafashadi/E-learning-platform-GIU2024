@@ -1,0 +1,62 @@
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Res } from '@nestjs/common';
+import { UserService } from '../services/user.service';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { Role } from '../../auth/decorators/roles.decorator';
+import { Public } from '../../auth/decorators/public.decorator';
+import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
+import { Request, Response } from 'express';
+
+
+@Controller('users')
+export class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Post()
+  @Public()
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Get()
+  findAll() {
+    return this.userService.findAll();
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Post('logout')
+  async logout(@Req() request: Request, @Res() response: Response) {
+    console.log(request);
+    console.log("RESPONSE: ", response);
+    return this.userService.logout(request, response);
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.userService.findOne(id);
+  }
+  @UseGuards(AuthenticationGuard)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(id, updateUserDto);
+  }
+  @UseGuards(AuthenticationGuard,AuthorizationGuard)
+  @Delete(':id')
+  @Roles(Role.Admin)
+  remove(@Param('id') id: string) {
+    return this.userService.remove(id);
+  }
+  //add enroll course 
+  @UseGuards(AuthenticationGuard)
+  @Post(':id/enroll/:courseId')
+  async enrollCourse(
+    @Param('id') userId: string,
+    @Param('courseId') courseId: string
+  ) {
+    return await this.userService.enrollCourse(userId, courseId);
+  }
+}
