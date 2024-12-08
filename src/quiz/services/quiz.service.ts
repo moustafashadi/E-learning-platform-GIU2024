@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { Quiz } from '../models/quiz.schema';
 import { Instructor } from '../../user/models/user.schema';
 import { Course } from '../../course/models/course.schema';
@@ -34,6 +34,11 @@ export class QuizService {
       questions: [],
     };
     const createdQuiz = new this.quizModel(quiz);
+
+    const createdQuizId = new mongoose.Schema.ObjectId(createdQuiz._id.toString());
+    // Add the quiz to the course
+    course.quizzes.push(createdQuizId);
+    
     await createdQuiz.save();
     return createdQuiz;
   }

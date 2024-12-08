@@ -20,14 +20,16 @@ export class Course {
   @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced'] })
   difficulty: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: User.name })
-  created_by: User; 
 
   @Prop({ type: [String], default: [] })
   resources: string[]; // URLs of resources (videos, PDFs, etc.)
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   instructor: MongooseSchema.Types.ObjectId; 
+
+  //quizzes
+  @Prop({ type: [MongooseSchema.Types.ObjectId], ref: 'Quiz', default: [] })
+  quizzes: MongooseSchema.Types.ObjectId[];
 }
 
 export type CourseDocument = Course & Document;
