@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, Param} from '@nestjs/common';
+import { Controller, Get, Body, Param, Post, Patch} from '@nestjs/common';
 import { ProgressService } from 'src/progress/services/progress.service';
 
   
@@ -7,8 +7,15 @@ import { ProgressService } from 'src/progress/services/progress.service';
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
+  @Post(':userId/:courseId/initialize')
+  async initializeProgress(
+  @Param('userId') userId: string,
+  @Param('courseId') courseId: string,
+) {
+  return await this.progressService.initializeProgress(userId, courseId);
+}
   // Track or update progress
-  @Put(':userId/:courseId')
+  @Patch(':userId/:courseId')
   async trackProgress(
     @Param('userId') userId: string,
     @Param('courseId') courseId: string,

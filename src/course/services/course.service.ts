@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from '../models/course.schema';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
@@ -9,13 +9,20 @@ import { User, UserDocument } from 'src/user/models/user.schema';
 @Injectable()
 export class CourseService {
   constructor(
-    @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
+    @InjectModel(Course.name) private courseModel: Model<Course>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
   async create(createCourseDto: CreateCourseDto): Promise<Course> {
-    const newCourse = new this.courseModel(createCourseDto);
-    return await newCourse.save();
+    try {
+      const course = new this.courseModel({
+        ...createCourseDto,
+        created_by: new Types.ObjectId(createCourseDto.created_by)
+      });
+      return await course.save();
+    } catch (error) {
+      throw new BadRequestException('Invalid course data');
+    }
   }
 
   async findAll(): Promise<Course[]> {
@@ -43,6 +50,7 @@ export class CourseService {
 
   async delete(course_code: string): Promise<void> {
     const result = await this.courseModel.deleteOne({ course_code }).exec();
+    console.log(result);
     if (result.deletedCount === 0) {
       throw new NotFoundException(`Course with code ${course_code} not found`);
     }
