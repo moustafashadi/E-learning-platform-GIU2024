@@ -7,13 +7,27 @@ export class QuestionService {
     constructor(
         @InjectModel(Question.name) private readonly questionModel: Model<Question>,
     ) {}
+
+    async createQuestion(createQuestionDto: any): Promise<Question> {
+        return this.questionModel.create(createQuestionDto);
+    }
     
-    //get question by id function implementation
     async getQuestionById(questionId: string): Promise<Question> {
         return this.questionModel.findById(questionId);
     }
+    
+    async getQuestions(quizId: string): Promise<Question[]> {
+        return this.questionModel.find({ quizId });
+    }
 
-    //is correct function implementation
+    async updateQuestion(questionId: string, updateQuestionDto: any): Promise<Question> {
+        return this.questionModel.findByIdAndUpdate(questionId, updateQuestionDto, { new: true });
+    }
+
+    async deleteQuestion(questionId: string): Promise<Question> {
+        return this.questionModel.findByIdAndDelete(questionId);
+    }
+
     async isCorrect(questionId: string, chosenAnswer: string): Promise<boolean> {
         const question = await this.questionModel.findById(questionId);
         return question.correctAnswer === chosenAnswer;

@@ -84,7 +84,7 @@ export class CourseService {
       .exec();
   }
 
-  async uploadResource(courseId: string, resourceUrl: string, userId: string): Promise<Course> {
+  async uploadFile(courseId: string, resourceUrl: string, userId: string): Promise<Course> {
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found`);

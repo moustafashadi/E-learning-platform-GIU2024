@@ -18,7 +18,7 @@ import { GateWay } from './gateway/chat.gateway';
                 secret: process.env.JWT_SECRET,
                 signOptions: { expiresIn: '1d' },
             })], 
-    controllers: [ChatController],
+    controllers: [ChatController,],
     providers: [chatService,GateWay],
 })
     

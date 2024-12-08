@@ -1,8 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { CreateQuestionDto } from '../dto/create-question.dto';
 import { QuestionService } from '../services/question.service';
 import { UpdateQuestionDto } from '../dto/update-question.dto';
+import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 
+@UseGuards(AuthenticationGuard)
 @Controller('/questions')
 export class QuestionController {
     constructor(private readonly questionService: QuestionService) {}
@@ -13,8 +15,8 @@ export class QuestionController {
     }
     
     @Get('/:quizId')
-    async getQuestions() {
-        return this.questionService.getQuestions();
+    async getQuestions(@Param('quizId') quizId: string) {
+        return this.questionService.getQuestions(quizId);
     }
     
     @Get(':id')

@@ -6,6 +6,8 @@ import { Role, ROLES_KEY } from '../decorators/roles.decorator';
 export class AuthorizationGuard implements CanActivate {
   constructor(private reflector: Reflector) { }
   canActivate(context: ExecutionContext): boolean {
+    //.getHandler() returns the handler method of the request eg. createNote, findAllNotes, findNoteById
+    //.getClass() returns the class of the handler method eg. NotesController
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [//getting the required roles from the reflector
       context.getHandler(),
       context.getClass(),

@@ -1,4 +1,5 @@
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsMongoId } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateNoteDto {
   @IsString()

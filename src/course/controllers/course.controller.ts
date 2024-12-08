@@ -1,18 +1,19 @@
-import { 
+import {
   Controller,
   Get,
   Post,
   Body,
   Param,
   Patch,
-  Query, 
+  Query,
   Delete,
   UploadedFile,
   UseInterceptors,
-  Req 
-} 
-     from '@nestjs/common';
- 
+  Req,
+  UseGuards
+}
+  from '@nestjs/common';
+
 import { CourseService } from '../services/course.service';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
@@ -22,11 +23,15 @@ import { Express } from 'express'; // Ensure Express types are available
 import { Module } from '@nestjs/common';
 import { Course } from '../models/course.schema';
 import { MongooseModule } from '@nestjs/mongoose';
+import { Role, Roles } from 'src/auth/decorators/roles.decorator';
+import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 
+@UseGuards(AuthenticationGuard)
 @Controller('courses')
 export class CourseController {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(private readonly courseService: CourseService) { }
 
+  @Roles(Role.Instructor)
   @Post()
   async create(@Body() createCourseDto: CreateCourseDto) {
     console.log("createCourseDto");
@@ -39,12 +44,12 @@ export class CourseController {
     return await this.courseService.findAll();
   }
 
-  @Get(':course_code')
+  @Get('/:course_code')
   async findOne(@Param('course_code') course_code: string) {
     return await this.courseService.findOne(course_code);
   }
 
-  @Patch(':course_code')
+  @Patch('/:course_code')
   async update(
     @Param('course_code') course_code: string,
     @Body() updateCourseDto: UpdateCourseDto,
@@ -52,12 +57,12 @@ export class CourseController {
     return await this.courseService.update(course_code, updateCourseDto);
   }
 
-  @Delete(':course_code')
+  @Delete('/:course_code')
   async delete(@Param('course_code') course_code: string) {
     return await this.courseService.delete(course_code);
   }
 
-  @Get('search')
+  @Get('/search')
   async searchCourses(@Query('query') query: string) {
     return await this.courseService.searchCoursesByQuery(query);
   }
@@ -80,6 +85,8 @@ export class CourseController {
   @Post(':id/upload')
   @UseInterceptors(
     FileInterceptor('file', {
+      //call uploadFile method from user service
+
       storage: diskStorage({
         destination: './uploads', // Directory where files are saved
         filename: (req, file, callback) => {
@@ -106,16 +113,7 @@ export class CourseController {
     @Req() req: any,
   ) {
     const fileUrl = `/uploads/${file.filename}`;
-    const userId = req.user?.id; // Assuming `user` is set by authentication middleware
-    return await this.courseService.uploadResource(courseId, fileUrl, userId);
+    return await this.courseService.uploadFile(courseId, fileUrl, req.user.id);
   }
 }
 
-@Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Course.name, schema: Course }]),
-  ],
-  controllers: [CourseController],
-  providers: [CourseService],
-})
-export class CourseModule {}
