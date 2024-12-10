@@ -1,19 +1,5 @@
-import { IsString, IsNumber, IsArray, IsOptional } from 'class-validator';
+//create update-question.dto.ts
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateQuestionDto } from '../dto/create-question.dto';
 
-export class UpdateQuestionDto {
-  @IsString()
-  @IsOptional()
-  question?: string;
-
-  @IsArray()
-  @IsOptional()
-  options?: string[];
-
-  @IsNumber()
-  @IsOptional()
-  correctAnswerIndex?: number;
-
-  @IsString()
-  @IsOptional()
-  difficulty?: string;
-}
+export class UpdateQuestionDto extends PartialType(CreateQuestionDto) {}

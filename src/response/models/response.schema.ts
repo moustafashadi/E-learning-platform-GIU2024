@@ -4,7 +4,7 @@ import {Schema as MongooseSchema} from 'mongoose'
 
 @Schema({ timestamps: { createdAt: 'submitted_at' } })
 
-export class Responses{
+export class Response{
     
     @Prop({type: { type:MongooseSchema.Types.ObjectId , ref: 'User' } })
     userId: MongooseSchema.Types.ObjectId;
@@ -12,11 +12,15 @@ export class Responses{
     @Prop( {type: { type:MongooseSchema.Types.ObjectId , ref: 'Quiz' }})
     QuizId: MongooseSchema.Types.ObjectId;
 
-    @Prop({ type: [{ type: Object }] })
-    answers: Array<object>;
+    @Prop({type: { type:MongooseSchema.Types.ObjectId , ref: 'Question' }})
+    questionId: MongooseSchema.Types.ObjectId;
 
     @Prop({required:true})
     score: number;
+
+    //feedback message
+    @Prop()
+    feedbackMessage: string;
 }
-export type responseDocument = Responses & Document;
-export const responseSchema = SchemaFactory.createForClass(Responses);
+export type ResponseDocument = Response & Document;
+export const ResponseSchema = SchemaFactory.createForClass(Response);

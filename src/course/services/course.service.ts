@@ -4,21 +4,25 @@ import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from '../models/course.schema';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
-import { User, UserDocument } from 'src/user/models/user.schema';
+import { Instructor, User, UserDocument } from 'src/user/models/user.schema';
 
 @Injectable()
 export class CourseService {
   constructor(
     @InjectModel(Course.name) private courseModel: Model<Course>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
   ) {}
 
   async create(createCourseDto: CreateCourseDto): Promise<Course> {
     try {
       const course = new this.courseModel({
         ...createCourseDto,
-        created_by: new Types.ObjectId(createCourseDto.created_by)
+        instructor: createCourseDto.instructor
       });
+      //update the instructor's courses taught
+      const instructor = await this.instructorModel.findById(createCourseDto.instructor);
+      instructor.coursesTaught.push(course._id as any);
       return await course.save();
     } catch (error) {
       throw new BadRequestException('Invalid course data');
@@ -80,7 +84,7 @@ export class CourseService {
       .exec();
   }
 
-  async uploadResource(courseId: string, resourceUrl: string, userId: string): Promise<Course> {
+  async uploadFile(courseId: string, resourceUrl: string, userId: string): Promise<Course> {
     const course = await this.courseModel.findById(courseId);
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found`);

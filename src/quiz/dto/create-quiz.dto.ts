@@ -1,13 +1,14 @@
-import { IsString, IsArray, IsOptional } from 'class-validator';
+import { IsMongoId, IsArray} from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateQuizDto {
-  @IsString()
-  title: string;
+    @IsMongoId()
+    module_id: Types.ObjectId;
 
-  @IsArray()
-  questionIds: string[]; // List of question IDs for the quiz
+    @IsMongoId()
+    course_id: Types.ObjectId;
 
-  @IsString()
-  @IsOptional()
-  description: string;
+    @IsArray()
+    @IsMongoId({ each: true })
+    questions: Types.ObjectId[];
 }

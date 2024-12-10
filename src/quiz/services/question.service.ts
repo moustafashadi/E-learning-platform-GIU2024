@@ -1,24 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { Question } from '../models/question.schema';
 import { Model } from 'mongoose';
-import { Question } from 'src/quiz/models/question.schema';
-import { CreateQuestionDto } from 'src/quiz/dto/create-question.dto';
-import { UpdateQuestionDto } from 'src/quiz/dto/update-question.dto';
+import { InjectModel } from '@nestjs/mongoose';
 
-
-@Injectable()
 export class QuestionService {
-  getQuestionsByDifficulty(difficulty: string) {
-      throw new Error('Method not implemented.');
-  }
-  constructor(@InjectModel(Question.name) private questionModel: Model<Question>) {}
+    constructor(
+        @InjectModel(Question.name) private readonly questionModel: Model<Question>,
+    ) {}
 
-  async create(createQuestionDto: CreateQuestionDto): Promise<Question> {
-    const createdQuestion = new this.questionModel(createQuestionDto);
-    return createdQuestion.save();
-  }
+    async createQuestion(createQuestionDto: any): Promise<Question> {
+        return this.questionModel.create(createQuestionDto);
+    }
+    
+    async getQuestionById(questionId: string): Promise<Question> {
+        return this.questionModel.findById(questionId);
+    }
+    
+    async getQuestions(quizId: string): Promise<Question[]> {
+        return this.questionModel.find({ quizId });
+    }
 
-  async update(id: string, updateQuestionDto: UpdateQuestionDto): Promise<Question> {
-    return this.questionModel.findByIdAndUpdate(id, updateQuestionDto, { new: true });
-  }
+    async updateQuestion(questionId: string, updateQuestionDto: any): Promise<Question> {
+        return this.questionModel.findByIdAndUpdate(questionId, updateQuestionDto, { new: true });
+    }
+
+    async deleteQuestion(questionId: string): Promise<Question> {
+        return this.questionModel.findByIdAndDelete(questionId);
+    }
+
+    async isCorrect(questionId: string, chosenAnswer: string): Promise<boolean> {
+        const question = await this.questionModel.findById(questionId);
+        return question.correctAnswer === chosenAnswer;
+    }
 }

@@ -8,6 +8,8 @@ import { chatService } from './services/chat.service';
 import { UserModule } from 'src/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { GateWay } from './gateway/chat.gateway';
+import { NotificationController } from './controllers/notification.controller';
+import { NotificationService } from './services/notification.service';
 
 @Module({
     
@@ -18,8 +20,8 @@ import { GateWay } from './gateway/chat.gateway';
                 secret: process.env.JWT_SECRET,
                 signOptions: { expiresIn: '1d' },
             })], 
-    controllers: [ChatController],
-    providers: [chatService,GateWay],
+    controllers: [ChatController,NotificationController],
+    providers: [chatService,NotificationService,GateWay],
 })
     
 export class CommunicationModule {}

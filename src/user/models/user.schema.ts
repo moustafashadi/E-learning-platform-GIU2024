@@ -43,7 +43,7 @@ export class Student extends User {
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
   completedCourses: MongooseSchema.Types.ObjectId[]; // List of course IDs the student completed
 
-
+  
 
 }
 

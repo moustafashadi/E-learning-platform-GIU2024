@@ -1,4 +1,5 @@
-import { IsString, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsString, IsEnum, IsNotEmpty, IsMongoId } from 'class-validator';
+import { Schema } from 'mongoose';
 
 export class CreateCourseDto {
   @IsString()
@@ -21,7 +22,7 @@ export class CreateCourseDto {
   @IsNotEmpty()
   difficulty: string;
 
-  @IsString()
-  @IsNotEmpty()
-  created_by: string; 
+  @IsMongoId({ each: true })
+  instructor: Schema.Types.ObjectId;
+
 }

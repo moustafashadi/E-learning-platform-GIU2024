@@ -13,6 +13,9 @@ export class Question{
     @Prop({required: true})
     correctAnswer: string;
 
+    @Prop()
+    hint: string;
+
     @Prop({required: true})
     difficulty: string; // easy, medium, hard
 }

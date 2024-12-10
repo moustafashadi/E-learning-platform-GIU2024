@@ -1,16 +1,20 @@
-import { IsString, IsNumber, IsArray, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsMongoId } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateQuestionDto {
-  @IsString()
-  question: string;
-
-  @IsArray()
-  options: string[];
-
-  @IsNumber()
-  correctAnswerIndex: number;
+  @IsMongoId()
+  @IsNotEmpty()
+  quiz: Types.ObjectId;
 
   @IsString()
-  @IsOptional()
-  difficulty: string; // Difficulty: 'easy', 'medium', 'hard'
+  @IsNotEmpty()
+  content: string;
+
+  @IsString()
+  @IsNotEmpty()
+  correctAnswer: string;
+
+  @IsString()
+  @IsNotEmpty()
+  difficulty: string; // easy, medium, hard
 }
