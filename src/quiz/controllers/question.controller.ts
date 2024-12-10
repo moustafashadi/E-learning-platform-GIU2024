@@ -5,16 +5,16 @@ import { UpdateQuestionDto } from '../dto/update-question.dto';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 
 @UseGuards(AuthenticationGuard)
-@Controller('/questions')
+@Controller('/:quizId')
 export class QuestionController {
     constructor(private readonly questionService: QuestionService) {}
     
-    @Post('/:quizId/createQuestion')
-    async createQuestion(@Body() createQuestionDto: CreateQuestionDto) {
-        return this.questionService.createQuestion(createQuestionDto);
+    @Post('/createQuestion')
+    async createQuestion(@Param('quizId') quizId : string, @Body() createQuestionDto: CreateQuestionDto) {
+        return this.questionService.createQuestion(quizId, createQuestionDto);
     }
     
-    @Get('/:quizId')
+    @Get('/questions')
     async getQuestions(@Param('quizId') quizId: string) {
         return this.questionService.getQuestions(quizId);
     }

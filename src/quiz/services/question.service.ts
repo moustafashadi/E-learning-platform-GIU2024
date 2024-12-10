@@ -1,15 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Param } from '@nestjs/common';
 import { Question } from '../models/question.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { CreateQuestionDto } from '../dto/create-question.dto';
 
 export class QuestionService {
     constructor(
         @InjectModel(Question.name) private readonly questionModel: Model<Question>,
     ) {}
 
-    async createQuestion(createQuestionDto: any): Promise<Question> {
-        return this.questionModel.create(createQuestionDto);
+    async createQuestion(quizId : string , createQuestionDto: CreateQuestionDto): Promise<Question> {
+        return this.questionModel.create({quiz: quizId, ...createQuestionDto});
     }
     
     async getQuestionById(questionId: string): Promise<Question> {
