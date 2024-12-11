@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model, Types } from 'mongoose';
+import mongoose, { Model, ObjectId, Types } from 'mongoose';
 import { Quiz } from '../models/quiz.schema';
 import { Instructor } from '../../user/models/user.schema';
 import { Course } from '../../course/models/course.schema';
@@ -16,29 +16,26 @@ export class QuizService {
 
   //TESTED - WORKING
   async createQuiz(userId: string, courseId: string) {
-    //instructor ID taken from request (has to be currently logged in)
     const instructor = await this.instructorModel.findById(userId);
     const instructorId = instructor._id.toString();
-    //course ID taken from params
     const course = await this.courseModel.findById(courseId);
-    // Check if the instructor and course exist
     if (!instructor || !course) {
       throw new NotFoundException('Instructor or course not found');
     }
-    // Check if the instructor is teaching the course
     if (!(instructorId === course.instructor.toString())) {
       throw new ConflictException('Instructor is not teaching this course');
     }
+
     const quiz = {
-      course: courseId,
+      course: new Types.ObjectId(courseId),
       questions: [],
     };
     const createdQuiz = new this.quizModel(quiz);
 
-    const createdQuizId = new mongoose.Schema.ObjectId(createdQuiz._id.toString());
     // Add the quiz to the course
-    course.quizzes.push(createdQuizId);
-    
+    course.quizzes.push(createdQuiz._id as any);
+    await course.save();
+
     await createdQuiz.save();
     return createdQuiz;
   }
