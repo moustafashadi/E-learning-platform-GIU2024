@@ -60,28 +60,12 @@ export class CourseService {
     }
   }
 
-  async searchCoursesByQuery(query: string): Promise<Course[]> {
-    return await this.courseModel.find({ $text: { $search: query } }).exec();
-  }
-
   async searchCoursesByCategory(category: string): Promise<Course[]> {
     return await this.courseModel.find({ category }).exec();
   }
 
   async searchCoursesByDifficulty(difficulty: string): Promise<Course[]> {
     return await this.courseModel.find({ difficulty }).exec();
-  }
-
-  async searchUsersByRoleAndQuery(role: string, query: string): Promise<User[]> {
-    return await this.userModel
-      .find({
-        role,
-        $or: [
-          { username: { $regex: query, $options: 'i' } },
-          { email: { $regex: query, $options: 'i' } },
-        ],
-      })
-      .exec();
   }
 
   async uploadFile(courseId: string, resourceUrl: string, userId: string): Promise<Course> {
