@@ -3,12 +3,16 @@ import { CreateQuestionDto } from '../dto/create-question.dto';
 import { QuestionService } from '../services/question.service';
 import { UpdateQuestionDto } from '../dto/update-question.dto';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import { Role, Roles } from 'src/auth/decorators/roles.decorator';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:quizId')
 export class QuestionController {
     constructor(private readonly questionService: QuestionService) {}
     
+    @UseGuards(AuthorizationGuard)
+    @Roles(Role.Instructor)
     @Post('/createQuestion')
     async createQuestion(@Param('quizId') quizId : string, @Body() createQuestionDto: CreateQuestionDto) {
         return this.questionService.createQuestion(quizId, createQuestionDto);
