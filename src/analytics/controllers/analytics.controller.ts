@@ -5,7 +5,7 @@ import { QuizService } from 'src/quiz/services/quiz.service';
 export class AnalyticsController {
   constructor(private readonly quizService: QuizService) {}
 
-  @Get('student/:studentId/course/:courseId')
+  @Get('/:studentId/:courseId')
   async getStudentQuizResults(
     @Param('studentId') studentId: string,
     @Param('courseId') courseId: string,
