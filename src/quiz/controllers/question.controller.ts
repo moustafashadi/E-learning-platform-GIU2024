@@ -28,6 +28,8 @@ export class QuestionController {
         return this.questionService.getQuestionById(id);
     }
     
+    @UseGuards(AuthorizationGuard)
+    @Roles(Role.Instructor)
     @Put(':id')
     async updateQuestion(
         @Param('id') id: string,
@@ -36,6 +38,8 @@ export class QuestionController {
         return this.questionService.updateQuestion(id, updateQuestionDto);
     }
     
+    @UseGuards(AuthorizationGuard)
+    @Roles(Role.Instructor)
     @Delete(':id')
     async deleteQuestion(@Param('id') id: string) {
         return this.questionService.deleteQuestion(id);
