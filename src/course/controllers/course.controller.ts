@@ -62,10 +62,7 @@ export class CourseController {
     return await this.courseService.delete(course_code);
   }
 
-  @Get('/search')
-  async searchCourses(@Query('query') query: string) {
-    return await this.courseService.searchCoursesByQuery(query);
-  }
+
 
   @Get('search/category')
   async searchByCategory(@Query('category') category: string) {
@@ -77,10 +74,7 @@ export class CourseController {
     return await this.courseService.searchCoursesByDifficulty(difficulty);
   }
 
-  @Get('search/users')
-  async searchUsers(@Query('role') role: string, @Query('query') query: string) {
-    return await this.courseService.searchUsersByRoleAndQuery(role, query);
-  }
+
 
   @Post(':id/upload')
   @UseInterceptors(

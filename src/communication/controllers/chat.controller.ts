@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { AuthenticationGuard } from "src/auth/guards/authentication.guard";
 import { CreateChatDto } from "../dto/create-chat.dto";
 import { chatService } from "../services/chat.service";
-import { Req } from "@nestjs/common";
+import { Req, } from "@nestjs/common";
 
 
 @UseGuards(AuthenticationGuard)
@@ -17,7 +17,7 @@ export class ChatController {
     createChat(@Req() req: Request) {
         return this.chatService.create(req);
     }
-    @Get('id')
+    @Get(':id')
     findOne(@Param('id') id: string) {
     return this.chatService.findChat(id);
   }
@@ -26,8 +26,8 @@ export class ChatController {
     return this.chatService.addParticipant(userId,req,chatId)
   }  
    @Patch()
-   update(@Param('id') id: string, @Body() title: string) {
-   return this.chatService.updateChatTitle(id, title);
+   update(@Body() body,chatId:string) {
+   return this.chatService.updateChatTitle(body,chatId);
   }
     
 //     @Get(':id')

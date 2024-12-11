@@ -19,12 +19,12 @@ export class NotificationController {
     findAll() {
         return this.notificationService.findall();
     }
-    @Get('id')
+    @Get(':id')
     findOne(@Param('id') id: string) {
         return this.notificationService.findOne(id);
     }
-    @Patch()
-    update(@Param('id') id: string) {
+    @Patch(":id")
+    update(@Param('id') id) {
         return this.notificationService.markRead(id);
     }
 }
