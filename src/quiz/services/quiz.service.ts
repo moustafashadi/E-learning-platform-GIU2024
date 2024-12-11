@@ -42,4 +42,20 @@ export class QuizService {
     await createdQuiz.save();
     return createdQuiz;
   }
+  async getStudentQuizResults(courseId: string, studentId: string) {
+    const quizzes = await this.quizModel.find({
+      courseId,
+      'results.userId': studentId,
+    });
+    const quizResults = quizzes.map((quiz) => {
+      const result = quiz.results.find((result) => result.userId === studentId);      return {
+        quizId: quiz._id,
+        grade: result.score,
+      };
+    });
+    return {
+      numQuizzes: quizResults.length,
+      quizResults,
+    };
+  }
 }

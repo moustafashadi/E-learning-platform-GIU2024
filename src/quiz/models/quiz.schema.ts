@@ -3,6 +3,7 @@ import { Schema as MongooseSchema } from 'mongoose';
 import { Document } from 'mongoose';
 
 
+
 @Schema({ timestamps: true }) //date4creation und updates
 export class Quiz {
   @Prop({type: {type: MongooseSchema.Types.ObjectId, ref: 'Module'} })
@@ -14,8 +15,14 @@ export class Quiz {
   @Prop({type: [{type: MongooseSchema.Types.ObjectId , ref: 'Question'}], default: [] })
   questions: MongooseSchema.Types.ObjectId[]; 
 
-  
+  @Prop({ type: [{ userId: String, score: Number }] })
+  results: { userId: String; score: Number }[];
+
+
+
 }
+
+
 
 export const QuizSchema = SchemaFactory.createForClass(Quiz);
 export type QuizDocument = Quiz & Document;

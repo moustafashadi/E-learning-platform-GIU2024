@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, UseGuards, Param } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards, Param, Get} from '@nestjs/common';
 import { ResponseService } from '../../response/services/response.service';
 import { ResponseGateway } from '../../response/gateway/response.gateway';
 import { QuestionService } from '../services/question.service';
@@ -22,6 +22,18 @@ export class QuizController {
         @Req() req,
         @Param('courseId') courseId: string,) {
         return await this.quizService.createQuiz(req.user.sub, courseId);
+    }
+
+    @Get(':courseId/:studentId')
+    async getStudentQuizResults(
+      @Param('courseId') courseId: string,
+      @Param('studentId') studentId: string,
+    ) {
+      const quizResults = await this.quizService.getStudentQuizResults(
+        courseId,
+        studentId,
+      );
+      return quizResults;
     }
 
     @Post('submit')
