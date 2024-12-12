@@ -19,8 +19,8 @@ export class Quiz {
   @Prop({ type: [{ userId: String, score: Number }] })
   results: { userId: String; score: Number }[];
 
-
-
+  @Prop({ type: Boolean, default: false })
+  done: Boolean;
 }
 
 

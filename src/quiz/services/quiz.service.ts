@@ -4,13 +4,15 @@ import mongoose, { Model, ObjectId, Types } from 'mongoose';
 import { Quiz } from '../models/quiz.schema';
 import { Instructor } from '../../user/models/user.schema';
 import { Course } from '../../course/models/course.schema';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { NotFoundException, ConflictException, Inject } from '@nestjs/common';
+import { QuestionService } from './question.service';
 
 @Injectable()
 export class QuizService {
   constructor(
     @InjectModel(Instructor.name) private readonly instructorModel: Model<Instructor>,
     @InjectModel(Course.name) private readonly courseModel: Model<Course>,
+    @Inject(QuestionService) private readonly questionService: QuestionService,
     @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
   ) {}
 
@@ -39,6 +41,7 @@ export class QuizService {
     await createdQuiz.save();
     return createdQuiz;
   }
+
   async getStudentQuizResults(courseId: string, studentId: string) {
     const quizzes = await this.quizModel.find({
       course: courseId,
@@ -55,5 +58,24 @@ export class QuizService {
       numQuizzes: quizResults.length,
       quizResults,
     };
+  }
+
+  //check if all questions in the array of questions are solved, if so then return true
+  async checkIfAllQuestionsSolved(quizId: string): Promise<boolean> {
+    const quiz = await this.quizModel.findById(quizId);
+    if (!quiz) {
+      throw new NotFoundException('Quiz not found');
+    }
+    await quiz.populate({
+      path: 'questions',
+      model: 'Question', // replace 'Question' with the actual model name if different
+    });
+    const questions = await this.questionService.getQuestions(quizId);
+    for (const question of questions) {
+      if (!question.solved) {
+        return false;
+      }
+    }
+    return true;
   }
 }

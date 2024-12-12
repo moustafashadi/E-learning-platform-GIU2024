@@ -5,11 +5,18 @@ import { UpdateQuestionDto } from '../dto/update-question.dto';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
+import { ResponseGateway } from 'src/response/gateway/response.gateway';
+import { ResponseService } from 'src/response/services/response.service';
+import { QuizService } from '../services/quiz.service';
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:quizId')
 export class QuestionController {
-    constructor(private readonly questionService: QuestionService) {}
+    constructor(private readonly questionService: QuestionService,
+        private readonly responseGateway: ResponseGateway,
+        private readonly responseService: ResponseService,
+        private readonly quizService: QuizService
+    ) {}
     
     @UseGuards(AuthorizationGuard)
     @Roles(Role.Instructor)
@@ -43,5 +50,22 @@ export class QuestionController {
     @Delete(':id')
     async deleteQuestion(@Param('id') id: string) {
         return this.questionService.deleteQuestion(id);
+    }
+
+    @Post('submit')
+    async submitAnswer(@Param('quizId') quizId: string, @Body() { userId, questionId, chosenAnswer }: { userId: string; questionId: string; chosenAnswer: string }) {
+        const savedResponse = await this.responseService.evaluateResponse(userId, questionId, chosenAnswer);
+
+        // After evaluation, send real-time feedback
+        this.responseGateway.sendResponseToClient(userId, {
+            questionId: savedResponse.questionId,
+            isCorrect: await this.questionService.isCorrect(questionId, chosenAnswer),
+            feedbackMessage: savedResponse.feedbackMessage,
+        });
+
+        const quizDone = await this.quizService.checkIfAllQuestionsSolved(quizId);
+
+        // Optionally return an immediate HTTP response as well
+        return { status: 'ok' };
     }
 }
