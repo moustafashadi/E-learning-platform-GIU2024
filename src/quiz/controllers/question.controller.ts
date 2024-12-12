@@ -8,6 +8,7 @@ import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 import { ResponseGateway } from 'src/response/gateway/response.gateway';
 import { ResponseService } from 'src/response/services/response.service';
 import { QuizService } from '../services/quiz.service';
+import { Quiz } from '../models/quiz.schema';
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:quizId')
@@ -64,6 +65,14 @@ export class QuestionController {
         });
 
         const quizDone = await this.quizService.checkIfAllQuestionsSolved(quizId);
+        if (quizDone) {
+            // Mark the quiz as done
+            const quizDone = true;
+            
+        } else {
+            //get next question
+            const nextQuestion = await this.questionService.getNextQuestion(quizId);
+        }
 
         // Optionally return an immediate HTTP response as well
         return { status: 'ok' };
