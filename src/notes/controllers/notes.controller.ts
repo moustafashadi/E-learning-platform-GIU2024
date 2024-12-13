@@ -10,6 +10,7 @@ import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 export class NotesController {
   constructor(private readonly notesService: NotesService) {}
 
+  //create note for specific course
   @Post(':courseId')
 async createNote(
   @Param('courseId') courseId: string,
