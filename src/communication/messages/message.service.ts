@@ -8,11 +8,10 @@ import { Model } from 'mongoose';
 export class MessageService {
     constructor(
         @InjectModel(Message.name) private readonly messageModel: Model<Message>,
-        private readonly messageService: MessageService,
     ) { }
 
     async getMessages(@Param('chatId') chatId: string) {
-        return this.messageService.findBy(chatId);
+        return await this.findBy(chatId);
     }
 
     async createMessage(createMessageDto: CreateMessageDto) {

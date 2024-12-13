@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, ObjectId, Types } from 'mongoose';
 import { Quiz } from '../models/quiz.schema';
-import { Instructor } from '../../user/models/user.schema';
+import { Instructor, Student } from '../../user/models/user.schema';
 import { Course } from '../../course/models/course.schema';
 import { NotFoundException, ConflictException, Inject } from '@nestjs/common';
 import { QuestionService } from './question.service';
@@ -14,6 +14,7 @@ export class QuizService {
     @InjectModel(Course.name) private readonly courseModel: Model<Course>,
     @Inject(QuestionService) private readonly questionService: QuestionService,
     @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
+    @InjectModel(Student.name) private readonly studentModel: Model<Student>,
   ) {}
 
   //TESTED - WORKING
@@ -51,22 +52,17 @@ export class QuizService {
     return quiz;
   }
 
-  async getStudentQuizResults(courseId: string, studentId: string) {
-    const quizzes = await this.quizModel.find({
-      course: courseId,
-      'results.userId': studentId,
-    });
-    const quizResults = quizzes.map((quiz) => {
-      const result = quiz.results.find((result) => result.userId === studentId);
-      return {
-        quizId: quiz._id,
-        grade: result?.score,
-      };
-    });
-    return {
-      numQuizzes: quizResults.length,
-      quizResults,
-    };
+  async getStudentQuizResults(quizId: string, studentId: string) {
+
+    const student = await this.studentModel.findById(studentId);
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    const quizGrade = student.quizGrades.get(quizId as unknown as ObjectId);
+    if (!quizGrade) {
+      throw new NotFoundException('Quiz grade not found');
+    }
+    return quizGrade;
   }
 
   //check if all questions in the array of questions are solved, if so then return true

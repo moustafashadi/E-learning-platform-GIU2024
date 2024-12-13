@@ -1,8 +1,9 @@
+// filepath: /f:/E-learning-platform-GIU2024/src/response/services/response.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Response, ResponseDocument } from '../models/response.schema';
 import { Model } from 'mongoose';
-import { QuestionService } from '../../quiz/services/question.service'; // Hypothetical service to fetch question details
+import { QuestionService } from '../../quiz/services/question.service';
 
 @Injectable()
 export class ResponseService {
@@ -11,8 +12,7 @@ export class ResponseService {
     private questionService: QuestionService,
   ) {}
 
-  async evaluateResponse(userId: string, questionId: string, chosenAnswer: string): Promise<Response> {
-    // Fetch the correct answer for the question
+  async evaluateResponse(userId: string, quizId: string, questionId: string, chosenAnswer: string): Promise<Response> {
     const question = await this.questionService.getQuestionById(questionId);
     if (!question) {
       throw new NotFoundException('Question not found.');
@@ -25,6 +25,7 @@ export class ResponseService {
 
     const response = new this.responseModel({
       userId,
+      quizId,
       questionId,
       chosenAnswer,
       isCorrect,
@@ -32,5 +33,9 @@ export class ResponseService {
     });
 
     return response.save();
+  }
+
+  async getResponsesForQuiz(userId: string, quizId: string): Promise<Response[]> {
+    return this.responseModel.find({ userId, quizId }).exec();
   }
 }

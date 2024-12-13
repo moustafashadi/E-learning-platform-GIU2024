@@ -10,7 +10,7 @@ import { CourseDocument } from 'src/course/models/course.schema';
 export class NotesService {
   constructor(
     @InjectModel('Notes') private noteModel: Model<NoteDocument>,
-    @InjectModel('Course') private courseModel: Model<CourseDocument> 
+    @InjectModel('Course') private courseModel: Model<CourseDocument>
   ) { }
 
   async findById(noteId: string, userId: string): Promise<Note | null> {

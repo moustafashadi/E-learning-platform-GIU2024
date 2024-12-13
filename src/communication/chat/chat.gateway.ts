@@ -10,6 +10,7 @@ import { UserService } from "src/user/services/user.service";
 import { Injectable, Req } from "@nestjs/common";
 import { Client } from "socket.io/dist/client";
 import { Request } from "express";
+import { CreateMessageDto } from "../messages/dto/create-message.dto";
 
 @WebSocketGateway(3002)
 @Injectable()
@@ -18,10 +19,10 @@ export class GateWay implements OnGatewayConnection, OnGatewayDisconnect {
         private readonly userService: UserService, // Service to fetch users from the database
     ) { }
 
-    handleConnection(client: User) {
-        console.log(`${client.username} have joined the chat`)
+    handleConnection(client: Socket) {
+        console.log(`${client.id} have joined the chat`)
         this.server.emit('user-joined', {
-            message: `${client.username} have entered the chat`,
+            message: `${client.id} have entered the chat`,
         });
     }
 
@@ -43,11 +44,10 @@ export class GateWay implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     @SubscribeMessage("newMessage")
-    handleNewMessage(client: Socket, body: any, @Req() req: Request) {
-        const user = new User;
-        console.log(body);
+    handleNewMessage(client: Socket, createMessageDto: CreateMessageDto, @Req() req: Request) {
+        console.log(createMessageDto);
         client.broadcast.emit('onMessage', {
-            msg: body,
+            msg: createMessageDto,
             from: this.userService.getCurrentUser(req)
         });
         // console.log(user.username)
