@@ -28,7 +28,7 @@ export class Course {
   instructor: MongooseSchema.Types.ObjectId; 
 
   //quizzes
-  @Prop({ type: [MongooseSchema.Types.ObjectId], ref: 'Quiz', default: [] })
+  @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Quiz'}], default: [] })
   quizzes: MongooseSchema.Types.ObjectId[];
 }
 

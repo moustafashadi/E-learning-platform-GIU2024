@@ -18,6 +18,9 @@ export class Question{
 
     @Prop({required: true})
     difficulty: string; // easy, medium, hard
+
+    @Prop({type : Boolean})
+    solved: Boolean;
 }
 
 export type QuestionDocument = Question & Document;
