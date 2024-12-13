@@ -1,9 +1,9 @@
 import { Model } from "mongoose";
-import { NotificationDocument } from "../models/notification.schema";
+import { NotificationDocument } from "./notification.schema";
 import { InjectModel } from "@nestjs/mongoose";
-import { CreateNotificationDto } from "../dto/create-notifications.dto";
-import { Chat, ChatDocument } from "../models/chat.schema";
-import { Notification } from "../models/notification.schema";
+import { CreateNotificationDto } from "./create-notifications.dto";
+import { Chat, ChatDocument } from "../chat/chat.schema";
+import { Notification } from "./notification.schema";
 import { UserService } from "src/user/services/user.service";
 import { Body, Injectable, NotFoundException, Req } from "@nestjs/common";
 import { Request } from "express";

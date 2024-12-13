@@ -8,34 +8,38 @@ import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 import { ResponseGateway } from 'src/response/gateway/response.gateway';
 import { ResponseService } from 'src/response/services/response.service';
 import { QuizService } from '../services/quiz.service';
-import { Quiz } from '../models/quiz.schema';
+import { Student } from 'src/user/models/user.schema';
+import { Types, Schema, ObjectId, Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:quizId')
 export class QuestionController {
-    constructor(private readonly questionService: QuestionService,
+    constructor(
+        private readonly questionService: QuestionService,
         private readonly responseGateway: ResponseGateway,
+        private readonly quizService: QuizService,
         private readonly responseService: ResponseService,
-        private readonly quizService: QuizService
-    ) {}
-    
+        @InjectModel(Student.name) private readonly studentModel: Model<Student>
+    ) { }
+
     @UseGuards(AuthorizationGuard)
     @Roles(Role.Instructor)
     @Post('/createQuestion')
-    async createQuestion(@Param('quizId') quizId : string, @Body() createQuestionDto: CreateQuestionDto) {
+    async createQuestion(@Param('quizId') quizId: string, @Body() createQuestionDto: CreateQuestionDto) {
         return this.questionService.createQuestion(quizId, createQuestionDto);
     }
-    
+
     @Get('/questions')
     async getQuestions(@Param('quizId') quizId: string) {
         return this.questionService.getQuestions(quizId);
     }
-    
+
     @Get(':id')
     async getQuestion(@Param('id') id: string) {
         return this.questionService.getQuestionById(id);
     }
-    
+
     @UseGuards(AuthorizationGuard)
     @Roles(Role.Instructor)
     @Put(':id')
@@ -45,7 +49,7 @@ export class QuestionController {
     ) {
         return this.questionService.updateQuestion(id, updateQuestionDto);
     }
-    
+
     @UseGuards(AuthorizationGuard)
     @Roles(Role.Instructor)
     @Delete(':id')
@@ -54,7 +58,9 @@ export class QuestionController {
     }
 
     @Post('submit')
-    async submitAnswer(@Param('quizId') quizId: string, @Body() { userId, questionId, chosenAnswer }: { userId: string; questionId: string; chosenAnswer: string }) {
+    async submitAnswer(
+        @Param('quizId') quizId: string, 
+        @Body() { userId, questionId, chosenAnswer }: { userId: string; questionId: string; chosenAnswer: string }) {
         const savedResponse = await this.responseService.evaluateResponse(userId, questionId, chosenAnswer);
 
         // After evaluation, send real-time feedback
@@ -68,7 +74,12 @@ export class QuestionController {
         if (quizDone) {
             // Mark the quiz as done
             const quizDone = true;
-            
+            //push the quiz to the completedQuizzes attribute in the student schema
+            //yehia will use this for metrics
+            const student = await this.studentModel.findById(userId);
+            const quiz = await this.quizService.getQuiz(quizId);
+            student.completedQuizzes.push(quiz._id as any);
+            await student.save();
         } else {
             //get next question
             const nextQuestion = await this.questionService.getNextQuestion(quizId);

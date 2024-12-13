@@ -10,12 +10,13 @@ import { ResponseService } from '../response/services/response.service';
 import { ResponseGateway } from '../response/gateway/response.gateway';
 import { QuestionService } from './services/question.service';
 import { CourseSchema } from 'src/course/models/course.schema';
-import { UserSchema } from 'src/user/models/user.schema';
+import { InstructorSchema, StudentSchema } from 'src/user/models/user.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
-    MongooseModule.forFeature([{ name: 'Instructor', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: 'Instructor', schema: InstructorSchema }]),
+    MongooseModule.forFeature([{ name: 'Student', schema: StudentSchema }]),
     MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
     MongooseModule.forFeature([{ name: 'Response', schema: ResponseSchema }]),
     MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),

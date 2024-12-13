@@ -41,6 +41,15 @@ export class QuizService {
     await createdQuiz.save();
     return createdQuiz;
   }
+  
+  //getQuiz
+  async getQuiz(quizId: string) {
+    const quiz = await this.quizModel.findById(quizId);
+    if (!quiz) {
+      throw new NotFoundException('Quiz not found');
+    }
+    return quiz;
+  }
 
   async getStudentQuizResults(courseId: string, studentId: string) {
     const quizzes = await this.quizModel.find({
