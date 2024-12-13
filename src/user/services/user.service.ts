@@ -15,6 +15,7 @@ import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { Course, CourseDocument } from '../../course/models/course.schema';
+import { updateStudentDto } from '../dto/update-student.dto';
 
 @Injectable()
 export class UserService {
@@ -161,13 +162,23 @@ export class UserService {
     return null;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
+  async updateStudent(id: string, updateStudentDto: updateStudentDto): Promise<UserDocument> {
+    const updatedStudent = await this.studentModel
+      .findByIdAndUpdate(id, updateStudentDto, { new: true })
+      .exec();
+    if (updatedStudent) return updatedStudent;
+    else {
+      throw new NotFoundException(`Student with ID ${id} not found`);
+    }
+  }
+
+  async update(id: string, updateUserDto :UpdateUserDto ): Promise<UserDocument> {
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
 
     const updatedStudent = await this.studentModel
-      .findByIdAndUpdate(id, updateUserDto, { new: true })
+      .findByIdAndUpdate(id, updateStudentDto, { new: true })
       .exec();
     if (updatedStudent) return updatedStudent;
     

@@ -24,6 +24,12 @@ export class QuizController {
         return await this.quizService.createQuiz(req.user.sub, courseId);
     }
 
+    //getQuiz by id
+    @Get(':quizId')
+    async getQuiz(@Param('quizId') quizId: string) {
+        return this.quizService.getQuiz(quizId);
+    }
+
     @Get(':courseId/:studentId')
     async getStudentQuizResults(
       @Param('courseId') courseId: string,

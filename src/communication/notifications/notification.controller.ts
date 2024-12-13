@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post, Patch, Req, UseGuards, Body } from "@nestjs/common";
-import { NotificationService } from "../services/notification.service";
-import { CreateNotificationDto } from "../dto/create-notifications.dto";
+import { NotificationService } from "./notification.service";
+import { CreateNotificationDto } from "./create-notifications.dto";
 import { Public } from "src/auth/decorators/public.decorator";
 import { Request } from "express";
 import { AuthenticationGuard } from "src/auth/guards/authentication.guard";

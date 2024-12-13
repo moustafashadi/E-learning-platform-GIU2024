@@ -15,8 +15,7 @@ export class Chat {
   creator: Types.ObjectId;
 
   @Prop({ required:true, default:"" })
-  title:String
-    save: any;
+  title:String;
 }
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);
