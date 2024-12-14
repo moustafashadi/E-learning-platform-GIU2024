@@ -1,4 +1,3 @@
-// filepath: /f:/E-learning-platform-GIU2024/src/response/models/response.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 

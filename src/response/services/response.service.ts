@@ -1,4 +1,3 @@
-// filepath: /f:/E-learning-platform-GIU2024/src/response/services/response.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Response, ResponseDocument } from '../models/response.schema';
