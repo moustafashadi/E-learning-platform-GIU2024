@@ -14,6 +14,7 @@ import {
 }
   from '@nestjs/common';
 
+  
 import { CourseService } from '../services/course.service';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
@@ -74,40 +75,15 @@ export class CourseController {
     return await this.courseService.searchCoursesByDifficulty(difficulty);
   }
 
-
-
-  @Post(':id/upload')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      //call uploadFile method from user service
-
-      storage: diskStorage({
-        destination: './uploads', // Directory where files are saved
-        filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          callback(null, `${uniqueSuffix}-${file.originalname}`);
-        },
-      }),
-      limits: {
-        fileSize: 5 * 1024 * 1024, // Limit file size to 5 MB
-      },
-      fileFilter: (req, file, callback) => {
-        // Optional: File type validation
-        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
-          callback(null, true);
-        } else {
-          callback(new Error('Invalid file type. Only images and PDFs are allowed.'), false);
-        }
-      },
-    }),
-  )
-  async uploadFile(
-    @Param('id') courseId: string,
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: any,
+  @Post(':courseCode/resources')
+  async addResource(
+    @Param('courseCode') courseCode: string,
+    @Body('fileUrl') fileUrl: string,
   ) {
-    const fileUrl = `/uploads/${file.filename}`;
-    return await this.courseService.uploadFile(courseId, fileUrl, req.user.id);
+    const updatedCourse = await this.courseService.addResource(courseCode, fileUrl);
+    return updatedCourse;
   }
+
+
 }
 

@@ -30,11 +30,11 @@ export class CourseService {
   }
 
   async findAll(): Promise<Course[]> {
-    return await this.courseModel.find().populate('created_by').exec();
+    return await this.courseModel.find().populate('instructor').exec();
   }
 
   async findOne(course_code: string): Promise<Course> {
-    const course = await this.courseModel.findOne({ course_code }).populate('created_by').exec();
+    const course = await this.courseModel.findOne({ course_code }).populate('instructor').exec();
     if (!course) {
       throw new NotFoundException(`Course with code ${course_code} not found`);
     }
@@ -68,18 +68,20 @@ export class CourseService {
     return await this.courseModel.find({ difficulty }).exec();
   }
 
-  async uploadFile(courseId: string, resourceUrl: string, userId: string): Promise<Course> {
-    const course = await this.courseModel.findById(courseId);
+  async addResource(courseCode: string, fileUrl: string): Promise<Course> {
+    // Find the course by its code
+    const course = await this.courseModel.findOne({ course_code: courseCode });
     if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
+      throw new NotFoundException(`Course with code ${courseCode} not found`);
     }
-
-    const user = await this.userModel.findById(userId);
-    if (!user || user.role !== 'instructor') {
-      throw new UnauthorizedException('Only instructors can upload resources');
+    if (course.resources.includes(fileUrl)) {
+      throw new Error('This file URL is already added to the resources');
     }
+    // Add the file URL to the resources array
+    course.resources.push(fileUrl);
+    // Save the updated course document
+    await course.save();
 
-    course.resources.push(resourceUrl);
-    return await course.save();
+    return course;
   }
 }
