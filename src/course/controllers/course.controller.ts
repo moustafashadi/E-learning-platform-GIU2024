@@ -57,6 +57,7 @@ export class CourseController {
   ) {
     return await this.courseService.update(course_code, updateCourseDto);
   }
+  
 
   @Delete('/:course_code')
   async delete(@Param('course_code') course_code: string) {

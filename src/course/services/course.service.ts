@@ -44,7 +44,7 @@ export class CourseService {
   async update(course_code: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
     const updatedCourse = await this.courseModel
       .findOneAndUpdate({ course_code }, updateCourseDto, { new: true })
-      .populate('created_by')
+      .populate('instructor')
       .exec();
     if (!updatedCourse) {
       throw new NotFoundException(`Course with code ${course_code} not found`);
@@ -79,7 +79,6 @@ export class CourseService {
     }
     // Add the file URL to the resources array
     course.resources.push(fileUrl);
-    // Save the updated course document
     await course.save();
 
     return course;
