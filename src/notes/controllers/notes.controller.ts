@@ -25,7 +25,7 @@ async createNote(
   );
 }
 
-  @Get()
+  @Get('/findall')
   async findAllNotes(@Req() req: Request) {
     const userId = req.user['sub'];  
     const notes = await this.notesService.findAll(userId);
