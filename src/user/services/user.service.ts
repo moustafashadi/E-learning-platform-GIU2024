@@ -291,6 +291,10 @@ export class UserService {
     
     return student.populate('enrolledCourses');
   }
+  async hasRole(userId: string, role: string): Promise<boolean> {
+  const user = await this.userModel.findById(userId);
+  return user && user.role === role.toLowerCase();
+}
 
 
 }
