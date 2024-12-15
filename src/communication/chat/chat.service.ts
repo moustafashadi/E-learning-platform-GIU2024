@@ -1,15 +1,9 @@
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Chat, ChatDocument } from "./chat.schema";
-import { CreateChatDto } from "./create-chat.dto";
-import { request } from "http";
-import { User, UserDocument } from "src/user/models/user.schema";
 import { UserService } from "src/user/services/user.service";
 import { Body, NotFoundException, Req } from "@nestjs/common";
 import { Request } from "express";
-import { messageDocument } from "../messages/message.schema";
-import { CreateStudentDto } from "src/user/dto/create-student.dto";
-import { Student } from "src/user/models/user.schema";
 
 export class chatService {
     constructor(

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
 // Base User Schema
 @Schema({ timestamps: true, discriminatorKey: 'role' })
@@ -43,9 +43,13 @@ export class Student extends User {
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
   completedCourses: MongooseSchema.Types.ObjectId[]; // List of course IDs the student completed
 
-  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Quiz' }], default: [] })
-  completedQuizzes: MongooseSchema.Types.ObjectId[]; // List of quiz IDs the student completed
+  //map that stores completed quizzes along with their grades
+  @Prop({ type: Map,of: Types.ObjectId, default: {} })
+  quizGrades: Map<MongooseSchema.Types.ObjectId, Number>;
 
+  //map that stores questions solved by the student
+  @Prop({ type: Map,of: Types.ObjectId, default: {} })
+  questionsSolved: Map<MongooseSchema.Types.ObjectId, Boolean>;
 }
 
 export type StudentDocument = Student & Document;

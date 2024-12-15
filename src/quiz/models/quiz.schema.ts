@@ -16,9 +16,6 @@ export class Quiz {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Question' }], default: [] })
   questions: Types.ObjectId[];
 
-  @Prop({ type: [{ userId: String, score: Number }] })
-  results: { userId: String; score: Number }[];
-
 }
 
 

@@ -1,27 +1,39 @@
-import { Injectable, Param } from '@nestjs/common';
+import { Injectable, Param, Req } from '@nestjs/common';
 import { Question } from '../models/question.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateQuestionDto } from '../dto/create-question.dto';
-
 import { Quiz } from '../models/quiz.schema';
+import { Student } from 'src/user/models/user.schema';
+import { Request } from 'express';
+import { Types } from 'mongoose';
 
 export class QuestionService {
     constructor(
         @InjectModel(Question.name) private readonly questionModel: Model<Question>,
         @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
-    ) {}
+        @InjectModel(Student.name) private readonly studentModel: Model<Student>,
+    ) { }
 
-    async createQuestion(quizId : string , createQuestionDto: CreateQuestionDto): Promise<Question> {
-        return this.questionModel.create({quiz: quizId, ...createQuestionDto});
+    async createQuestion(quizId: string, content: string, correctAnswer: string, difficulty: string): Promise<Question> {
+        try {
+            const createdQuestion = await this.questionModel.create({ quiz: new Types.ObjectId(quizId), content, correctAnswer, difficulty });
+            const quiz = await this.quizModel.findById(quizId);
+            quiz.questions.push(createdQuestion._id as any);
+            await quiz.save();
+            return createdQuestion;
+        } catch (error) {
+            console.log(error.message);
+        }
     }
-    
+
     async getQuestionById(questionId: string): Promise<Question> {
         return this.questionModel.findById(questionId);
     }
-    
+
     async getQuestions(quizId: string): Promise<Question[]> {
-        return this.questionModel.find({ quizId });
+        //return the questions of a quiz
+        return await this.questionModel.find({ quiz : quizId });
     }
 
     async updateQuestion(questionId: string, updateQuestionDto: any): Promise<Question> {
@@ -37,14 +49,22 @@ export class QuestionService {
         return question.correctAnswer === chosenAnswer;
     }
 
-    //getNextQuestion
-    async getNextQuestion(quizId: string): Promise<Question> {
-        const quiz = await this.quizModel.findById(quizId);
-        const questions = await this.questionModel.find({ _id: { $in: quiz.questions } });
-        const unsolvedQuestions = questions.filter((question) => !question.solved);
-        if (unsolvedQuestions.length === 0) {
-            return null;
+
+    async getNextQuestion(@Req() req: Request, quizId: string): Promise<Question> {
+        try {
+            const quiz = await this.quizModel.findById(quizId);
+            const questions = await this.questionModel.find({ _id: { $in: quiz.questions } });
+
+            const userId = req.user['sub'];
+            const student = await this.studentModel.findById(userId);
+
+            const unsolvedQuestions = questions.filter((question) => !student.questionsSolved.has(question._id as any));
+            if (unsolvedQuestions.length === 0) {
+                return null;
+            }
+            return unsolvedQuestions[0];
+        } catch (error) {
+            console.log(error.message);
         }
-        return unsolvedQuestions[0];
     }
 }
