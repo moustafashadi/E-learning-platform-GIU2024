@@ -11,6 +11,7 @@ import { ResponseGateway } from '../response/gateway/response.gateway';
 import { QuestionService } from './services/question.service';
 import { CourseSchema } from 'src/course/models/course.schema';
 import { InstructorSchema, StudentSchema } from 'src/user/models/user.schema';
+import { QuestionController } from './controllers/question.controller';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { InstructorSchema, StudentSchema } from 'src/user/models/user.schema';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
      })],
-  controllers: [QuizController],
+  controllers: [QuizController, QuestionController],
   providers: [QuizService, ResponseService, ResponseGateway, QuestionService],
 })
 export class QuizModule {}

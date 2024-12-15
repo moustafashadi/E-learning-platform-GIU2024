@@ -4,8 +4,10 @@ import mongoose, { Model, ObjectId, Types } from 'mongoose';
 import { Quiz } from '../models/quiz.schema';
 import { Instructor, Student } from '../../user/models/user.schema';
 import { Course } from '../../course/models/course.schema';
-import { NotFoundException, ConflictException, Inject } from '@nestjs/common';
+import { NotFoundException, ConflictException, Inject, Req } from '@nestjs/common';
 import { QuestionService } from './question.service';
+import { Request } from 'express';
+import { Question } from '../models/question.schema';
 
 @Injectable()
 export class QuizService {
@@ -13,6 +15,7 @@ export class QuizService {
     @InjectModel(Instructor.name) private readonly instructorModel: Model<Instructor>,
     @InjectModel(Course.name) private readonly courseModel: Model<Course>,
     @Inject(QuestionService) private readonly questionService: QuestionService,
+    @InjectModel(Question.name) private readonly questionModel: Model<Question>,
     @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
     @InjectModel(Student.name) private readonly studentModel: Model<Student>,
   ) {}
@@ -66,21 +69,26 @@ export class QuizService {
   }
 
   //check if all questions in the array of questions are solved, if so then return true
-  async checkIfAllQuestionsSolved(quizId: string): Promise<boolean> {
+  async checkIfAllQuestionsSolved(@Req() req: Request, quizId: string): Promise<boolean> {
+    const studentId = req.user['sub'];
+    const student = await this.studentModel.findById(studentId);
     const quiz = await this.quizModel.findById(quizId);
     if (!quiz) {
-      throw new NotFoundException('Quiz not found');
+        throw new NotFoundException('Quiz not found');
     }
     await quiz.populate({
-      path: 'questions',
-      model: 'Question', // replace 'Question' with the actual model name if different
+        path: 'questions',
+        model: 'Question', // replace 'Question' with the actual model name if different
     });
-    const questions = await this.questionService.getQuestions(quizId);
+    const questions: Question[] = await this.questionService.getQuestions(quizId);
+    
     for (const question of questions) {
-      if (!question.solved) {
-        return false;
-      }
+        // Check if the question's _id is not in the questionsSolved map
+        if (!student.questionsSolved.has(question._id)) {
+            return false;
+        }
     }
     return true;
-  }
+}
+
 }

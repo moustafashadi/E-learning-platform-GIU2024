@@ -4,6 +4,8 @@ import { Document } from "mongoose";
 
 @Schema()
 export class Question{
+    _id: MongooseSchema.Types.ObjectId;
+
     @Prop({type: [{type: MongooseSchema.Types.ObjectId, ref: 'Quiz'}] })
     quiz: MongooseSchema.Types.ObjectId;
 
@@ -19,8 +21,6 @@ export class Question{
     @Prop({required: true})
     difficulty: string; // easy, medium, hard
 
-    @Prop({type : Boolean})
-    solved: Boolean;
 }
 
 export type QuestionDocument = Question & Document;

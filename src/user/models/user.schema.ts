@@ -47,6 +47,9 @@ export class Student extends User {
   @Prop({ type: Map,of: Types.ObjectId, default: {} })
   quizGrades: Map<MongooseSchema.Types.ObjectId, Number>;
 
+  //map that stores questions solved by the student
+  @Prop({ type: Map,of: Types.ObjectId, default: {} })
+  questionsSolved: Map<MongooseSchema.Types.ObjectId, Boolean>;
 }
 
 export type StudentDocument = Student & Document;

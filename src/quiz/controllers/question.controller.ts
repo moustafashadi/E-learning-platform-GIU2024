@@ -1,4 +1,5 @@
-import { Get, Body, Controller, Param, Post, Put, UseGuards, Delete } from '@nestjs/common';
+import { Get, Body, Controller, Param, Post, Put, UseGuards, Delete, Req, UsePipes, ValidationPipe } from '@nestjs/common'; // Add this import statement
+import { Request } from 'express'; // Add this import statement
 import { QuestionService } from '../services/question.service';
 import { ResponseGateway } from 'src/response/gateway/response.gateway';
 import { ResponseService } from 'src/response/services/response.service';
@@ -11,6 +12,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { CreateQuestionDto } from '../dto/create-question.dto';
+import { Types } from 'mongoose';
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:quizId')
@@ -23,13 +25,18 @@ export class QuestionController {
     @InjectModel(Student.name) private readonly studentModel: Model<StudentDocument>,
   ) { }
 
+  //TESTED-WORKING
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post('/createQuestion')
-  async createQuestion(@Param('quizId') quizId: string, @Body() createQuestionDto: CreateQuestionDto) {
-    return this.questionService.createQuestion(quizId, createQuestionDto);
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async createQuestion(
+    @Param('quizId') quizId: string,
+    @Body() { content, correctAnswer, difficulty }: { content: string, correctAnswer: string, difficulty: string }) {
+    return this.questionService.createQuestion(quizId, content, correctAnswer, difficulty);
   }
 
+  //TESTED-WORKING
   @Get('/questions')
   async getQuestions(@Param('quizId') quizId: string) {
     return this.questionService.getQuestions(quizId);
@@ -57,11 +64,14 @@ export class QuestionController {
     return this.questionService.getQuestionById(id);
   }
 
-  @Post('submit')
+  @Post('/:id/submit')
   async submitAnswer(
+    @Req() req: Request,
     @Param('quizId') quizId: string,
-    @Body() { userId, questionId, chosenAnswer }: { userId: string; questionId: string; chosenAnswer: string },
+    @Param('id') questionId: string,
+    @Body() { chosenAnswer }: { chosenAnswer: string },
   ) {
+    const userId = req.user['sub'];
     const savedResponse = await this.responseService.evaluateResponse(userId, quizId, questionId, chosenAnswer);
 
     // After evaluation, send real-time feedback
@@ -71,7 +81,7 @@ export class QuestionController {
       feedbackMessage: savedResponse.feedbackMessage,
     });
 
-    const quizDone = await this.quizService.checkIfAllQuestionsSolved(quizId);
+    const quizDone = await this.quizService.checkIfAllQuestionsSolved(req, quizId);
     if (quizDone) {
       // Calculate the grade
       const responses = await this.responseService.getResponsesForQuiz(userId, quizId);
@@ -85,7 +95,7 @@ export class QuestionController {
       await student.save();
     } else {
       // Get next question
-      const nextQuestion = await this.questionService.getNextQuestion(quizId);
+      const nextQuestion = await this.questionService.getNextQuestion(req, quizId); // Use 'req' instead of 'Request'
     }
 
     // Optionally return an immediate HTTP response as well
