@@ -49,7 +49,7 @@ export class NotesService {
       throw error;
     }
   }
-
+//TESTED - WORKING
   async findAll(userId: String): Promise<Note[]> {
     try {
       const notes = await this.noteModel.find({ userId }).exec();

@@ -11,6 +11,7 @@ export class NotesController {
   constructor(private readonly notesService: NotesService) {}
 
   //create note for specific course
+  // TESTED - WORKING
   @Post(':courseId')
 async createNote(
   @Param('courseId') courseId: string,
@@ -25,13 +26,14 @@ async createNote(
   );
 }
 
+// TESTED - WORKING
   @Get('/findall')
   async findAllNotes(@Req() req: Request) {
     const userId = req.user['sub'];  
     const notes = await this.notesService.findAll(userId);
     return { notes };
   }
-
+//NOT WORKING
   @Get(':id')
   async findNoteById(@Param('id') noteId: string, @Req() req: Request) {
     const userId = req.user['sub'];  
@@ -39,6 +41,7 @@ async createNote(
     return { note };
   }
 
+  //NOT WORKING
   @Put(':id')
   async updateNote(
     @Param('id') noteId: string,
