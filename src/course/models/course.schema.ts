@@ -20,9 +20,12 @@ export class Course {
   @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced'] })
   difficulty: string;
 
-
-  @Prop({ type: [String], default: [] })
-  resources: string[]; // URLs of resources (videos, PDFs, etc.)
+  @Prop({
+    type: [String], // Array of GridFS file IDs
+    default: [],
+  })
+  resources: string[];
+  
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   instructor: MongooseSchema.Types.ObjectId; 

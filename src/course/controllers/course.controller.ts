@@ -9,8 +9,10 @@ import {
   Delete,
   UploadedFile,
   UseInterceptors,
-  Req,
-  UseGuards
+  Req,Res,
+  UseGuards,
+  BadRequestException,
+  NotFoundException
 }
   from '@nestjs/common';
 
@@ -20,12 +22,15 @@ import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { Express } from 'express'; // Ensure Express types are available
+import { Express } from 'express'; 
+import { Response } from 'express';
 import { Module } from '@nestjs/common';
 import { Course } from '../models/course.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @UseGuards(AuthenticationGuard)
 @Controller('courses')
@@ -76,13 +81,32 @@ export class CourseController {
     return await this.courseService.searchCoursesByDifficulty(difficulty);
   }
 
-  @Post(':courseCode/resources')
-  async addResource(
+
+@Post(':courseCode/upload-resource')
+@UseInterceptors(FileInterceptor('file', { storage: CourseService.storage })) 
+async uploadResource(
+  @Param('courseCode') courseCode: string,
+  @UploadedFile() file: Express.Multer.File
+) {
+  console.log('Received file in controller:', file);
+  return this.courseService.uploadResource(courseCode, file);
+}
+
+
+  @Get(':courseCode/resource/:fileName')
+  async getResource(
     @Param('courseCode') courseCode: string,
-    @Body('fileUrl') fileUrl: string,
+    @Param('fileName') fileName: string,
+    @Res() res: Response,
   ) {
-    const updatedCourse = await this.courseService.addResource(courseCode, fileUrl);
-    return updatedCourse;
+    try {
+      const fileStream = await this.courseService.getResource(courseCode, fileName);
+      
+      // Pipe the file stream to the response
+      fileStream.pipe(res);
+    } catch (error) {
+      throw new NotFoundException(`Resource not found for course: ${courseCode}, file: ${fileName}`);
+    }
   }
 
 
