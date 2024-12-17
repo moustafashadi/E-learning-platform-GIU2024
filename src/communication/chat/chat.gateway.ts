@@ -1,56 +1,66 @@
-import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
-import { subscribe } from "diagnostics_channel";
-import { Server, Socket } from "socket.io"
-import { Student, User, UserDocument } from "src/user/models/user.schema";
-import { Chat, ChatDocument } from "./chat.schema";
-import { Message, messageDocument } from "../messages/message.schema";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
-import { UserService } from "src/user/services/user.service";
-import { Injectable, Req } from "@nestjs/common";
-import { Client } from "socket.io/dist/client";
-import { Request } from "express";
-import { CreateMessageDto } from "../messages/dto/create-message.dto";
-
-@WebSocketGateway(3002)
-@Injectable()
-export class GateWay implements OnGatewayConnection, OnGatewayDisconnect {
+import {
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    SubscribeMessage,
+    WebSocketGateway,
+  } from '@nestjs/websockets';
+  import { Socket } from 'socket.io';
+  
+  import { AuthService } from '../../auth/auth.service';
+  import { MessageService } from '../messages/message.service';
+  import { CreateMessageDto } from '../messages/dto/create-message.dto';
+  
+  @WebSocketGateway({ cors: { origin: '*' } })
+  export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(
-        private readonly userService: UserService, // Service to fetch users from the database
-    ) { }
-
+      private readonly messageService: MessageService,
+      private readonly authService: AuthService,
+    ) {}
+  
     handleConnection(client: Socket) {
-        console.log(`${client.id} have joined the chat`)
-        this.server.emit('user-joined', {
-            message: `${client.id} have entered the chat`,
-        });
+      const token = client.handshake.auth.token;
+      const payload = this.authService.verifyToken(token);
+  
+      if (!payload) {
+        client.disconnect(true);
+      } else {
+        console.log(`Client ${client.id} connected. Auth token: ${token}`);
+      }
     }
-
-    handleDisconnect(client: User) {
-        console.log(`${client.username} have left the chat`)
-
-        this.server.emit('user-left', {
-            meesage: `${client.username} have left the chat`,
-        });
+  
+    @SubscribeMessage('join')
+    handleJoin(client: Socket, chatId: string) {
+      console.log(`Client ${client.id} joined chat: ${chatId}`);
+      client.join(chatId.toString());
+      return chatId;
     }
-
-    @WebSocketServer()
-    server: Server
-    onModuleInit() {
-        this.server.on('connection', (socket) => {
-            console.log(socket.id);
-            console.log('connected')
-        })
+  
+    @SubscribeMessage('leave')
+    handleLeave(client: Socket, chatId: string) {
+      console.log(`Client ${client.id} leaved chat: ${chatId}`);
+      client.leave(chatId.toString());
+      return chatId;
     }
-
-    @SubscribeMessage("newMessage")
-    handleNewMessage(client: Socket, createMessageDto: CreateMessageDto, @Req() req: Request) {
-        console.log(createMessageDto);
-        client.broadcast.emit('onMessage', {
-            msg: createMessageDto,
-            from: this.userService.getCurrentUser(req)
-        });
-        // console.log(user.username)
+  
+    @SubscribeMessage('message')
+    async handleMessage(client: Socket, createMessageDto: CreateMessageDto) {
+      console.log(
+        `Client ${client.id} sended message: ${createMessageDto.message} to chat: ${createMessageDto.chat}`,
+      );
+      const message = await this.messageService.createMessage(createMessageDto);
+      client.emit('message', message);
+      client.to(message.chat.toString()).emit('message', message);
     }
-
-}
+  
+    @SubscribeMessage('isTyping')
+    async handleTypingNotification(client: Socket, chatId: CreateMessageDto) {
+      console.log(`Client ${client.id} typing message to chat: ${chatId}`);
+      client
+        .to(chatId.toString())
+        .emit('isTyping', `${client.id} typing message...`);
+    }
+  
+    handleDisconnect(client: Socket) {
+      console.log(`Client ${client.id} disconnected`);
+    }
+  }

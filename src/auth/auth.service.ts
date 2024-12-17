@@ -30,4 +30,14 @@ export class AuthService {
   async logout(response: Response): Promise<void> {
     response.cookie('token', '', { expires: new Date(0) });
   }
+
+  verifyToken(token: string): any {
+    try {
+      return this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+    } catch (error) {
+      return null;
+    }
+  }
 }

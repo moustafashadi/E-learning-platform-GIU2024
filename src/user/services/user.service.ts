@@ -26,7 +26,7 @@ export class UserService {
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
     try {
@@ -172,7 +172,7 @@ export class UserService {
     }
   }
 
-  async update(id: string, updateUserDto :UpdateUserDto ): Promise<UserDocument> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
@@ -181,7 +181,7 @@ export class UserService {
       .findByIdAndUpdate(id, updateStudentDto, { new: true })
       .exec();
     if (updatedStudent) return updatedStudent;
-    
+
     else if (!updatedStudent) {
       const updatedInstructor = await this.instructorModel
         .findByIdAndUpdate(id, updateUserDto, { new: true })
@@ -242,20 +242,20 @@ export class UserService {
     if (!student) {
       throw new NotFoundException('Student not found');
     }
-  
+
     return student.enrolledCourses;
-  } 
+  }
 
   async getCompletedCourses(userId: string) {
     try {
       const user = await this.studentModel.findById(userId).exec();
-      
+
       if (!user) {
         throw new NotFoundException('Student not found');
       }
 
       return user.completedCourses;
-      
+
     } catch (error) {
       throw new NotFoundException('Student not found');
 
@@ -277,24 +277,25 @@ export class UserService {
     console.log(userId, courseId);
     const student = await this.studentModel.findById(userId);
     const course = await this.courseModel.findById(courseId);
-    
+
     if (!student || !course) {
       throw new NotFoundException('Student or course not found');
     }
-    
+
     if (student.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
       throw new ConflictException('Student already enrolled in this course');
     }
-    
+
     student.enrolledCourses.push(course._id as any);
     await student.save();
-    
+
     return student.populate('enrolledCourses');
   }
   async hasRole(userId: string, role: string): Promise<boolean> {
-  const user = await this.userModel.findById(userId);
-  return user && user.role === role.toLowerCase();
-}
-
-
+    const user = await this.userModel.findById(userId);
+    if (user.role == 'admin') {
+      throw new ConflictException('Admins cannot enter chat');
+    }
+    return user && user.role === role.toLowerCase();
+  }
 }
