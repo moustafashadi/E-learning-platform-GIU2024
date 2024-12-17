@@ -9,22 +9,28 @@ import {
   Delete,
   UploadedFile,
   UseInterceptors,
-  Req,
-  UseGuards
+  Req,Res,
+  UseGuards,
+  BadRequestException,
+  NotFoundException
 }
   from '@nestjs/common';
 
+  
 import { CourseService } from '../services/course.service';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { Express } from 'express'; // Ensure Express types are available
+import { Express } from 'express'; 
+import { Response } from 'express';
 import { Module } from '@nestjs/common';
 import { Course } from '../models/course.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @UseGuards(AuthenticationGuard)
 @Controller('courses')
@@ -56,6 +62,7 @@ export class CourseController {
   ) {
     return await this.courseService.update(course_code, updateCourseDto);
   }
+  
 
   @Delete('/:course_code')
   async delete(@Param('course_code') course_code: string) {
@@ -75,39 +82,33 @@ export class CourseController {
   }
 
 
+@Post(':courseCode/upload-resource')
+@UseInterceptors(FileInterceptor('file', { storage: CourseService.storage })) 
+async uploadResource(
+  @Param('courseCode') courseCode: string,
+  @UploadedFile() file: Express.Multer.File
+) {
+  console.log('Received file in controller:', file);
+  return this.courseService.uploadResource(courseCode, file);
+}
 
-  @Post(':id/upload')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      //call uploadFile method from user service
 
-      storage: diskStorage({
-        destination: './uploads', // Directory where files are saved
-        filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          callback(null, `${uniqueSuffix}-${file.originalname}`);
-        },
-      }),
-      limits: {
-        fileSize: 5 * 1024 * 1024, // Limit file size to 5 MB
-      },
-      fileFilter: (req, file, callback) => {
-        // Optional: File type validation
-        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
-          callback(null, true);
-        } else {
-          callback(new Error('Invalid file type. Only images and PDFs are allowed.'), false);
-        }
-      },
-    }),
-  )
-  async uploadFile(
-    @Param('id') courseId: string,
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: any,
+  @Get(':courseCode/resource/:fileName')
+  async getResource(
+    @Param('courseCode') courseCode: string,
+    @Param('fileName') fileName: string,
+    @Res() res: Response,
   ) {
-    const fileUrl = `/uploads/${file.filename}`;
-    return await this.courseService.uploadFile(courseId, fileUrl, req.user.id);
+    try {
+      const fileStream = await this.courseService.getResource(courseCode, fileName);
+      
+      // Pipe the file stream to the response
+      fileStream.pipe(res);
+    } catch (error) {
+      throw new NotFoundException(`Resource not found for course: ${courseCode}, file: ${fileName}`);
+    }
   }
+
+
 }
 
