@@ -1,4 +1,5 @@
 'use client'
+import { ClientPageRoot } from "next/dist/client/components/client-page";
 import React,{FC, useState} from "react";
 
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
     setRoute: (route: string) => void;
     activeItem: number;
 }
+//
 
 const Header: FC<Props> = (props) => {
     const [active, setActive] = useState(false);
