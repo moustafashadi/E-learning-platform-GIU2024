@@ -6,10 +6,10 @@ export type ForumDocument = Forum & Document;
 @Schema({ timestamps: true })
 export class Forum {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Course' }], required: true })
-  courses: Types.ObjectId[];
+  course: Types.ObjectId;
 
-  @Prop({default : []})
-  Threads: String[];
+  @Prop({type: [{type:Types.ObjectId, ref:'Thread'}]})
+  Threads: Types.ObjectId[];
 
   @Prop({ required: true })
   title: string;

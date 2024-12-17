@@ -9,10 +9,9 @@ import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 import { Student, StudentDocument } from 'src/user/models/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model } from 'mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
-import { CreateQuestionDto } from '../dto/create-question.dto';
-import { Types } from 'mongoose';
+
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:quizId')

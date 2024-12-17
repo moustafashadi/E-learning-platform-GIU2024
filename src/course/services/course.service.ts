@@ -82,4 +82,8 @@ export class CourseService {
     course.resources.push(resourceUrl);
     return await course.save();
   }
+
+  async getCourseByCode(courseCode: string) {
+    return await this.courseModel.findOne({ code: courseCode }).populate('created_by');
+  }
 }

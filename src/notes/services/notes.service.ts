@@ -14,7 +14,10 @@ export class NotesService {
   ) { }
 
   async findById(noteId: string, userId: string): Promise<Note | null> {
-    const note = await this.noteModel.findOne({ _id: noteId, userId }).exec();
+    const parsedNoteId = new Types.ObjectId(noteId);
+    const parsedUserId = new Types.ObjectId(userId);
+    const note = await this.noteModel.findOne({ _id: parsedNoteId, userId: parsedUserId }).exec();
+    console.log('Note:', note._id);
     if (!note) {
       throw new NotFoundException('Note not found');
     }
@@ -49,10 +52,12 @@ export class NotesService {
       throw error;
     }
   }
-//TESTED - WORKING
-  async findAll(userId: String): Promise<Note[]> {
+
+  async findAll(userId: string): Promise<Note[]> {
+    //parse userId to ObjectId
+    const parsedUserId = new Types.ObjectId(userId);
     try {
-      const notes = await this.noteModel.find({ userId }).exec();
+      const notes = await this.noteModel.find({ userId: parsedUserId }).exec();
 
       if (!notes) {
         throw new NotFoundException('No notes found');
@@ -72,7 +77,9 @@ export class NotesService {
   }
 
   async update(noteId: string, userId: string, updateNoteDto: UpdateNoteDto): Promise<Note | null> {
-    const note = await this.noteModel.findOne({ _id: noteId, userId }).exec();
+    const parsedNoteId = new Types.ObjectId(noteId);
+    const parsedUserId = new Types.ObjectId(userId);
+    const note = await this.noteModel.findOne({ _id: parsedNoteId, userId: parsedUserId }).exec();
     if (!note) {
       throw new NotFoundException(`Note with ID ${noteId} not found or not owned by the user`);
     }
@@ -87,7 +94,10 @@ export class NotesService {
   }
 
   async delete(noteId: string, userId: string): Promise<Note> {
-    const note = await this.noteModel.findOne({ _id: noteId, userId }).exec();
+    //parse noteId and userId to ObjectId
+    const parsedNoteId = new Types.ObjectId(noteId);
+    const parsedUserId = new Types.ObjectId(userId);
+    const note = await this.noteModel.findOne({ _id: parsedNoteId, userId: parsedUserId }).exec();
     if (!note) {
       throw new NotFoundException(`Note with ID ${noteId} not found or not owned by the user`);
     }

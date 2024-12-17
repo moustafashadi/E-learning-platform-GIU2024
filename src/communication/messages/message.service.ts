@@ -1,26 +1,26 @@
-import { Injectable, Param } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { GetMessagesDto } from './dto/get-messages.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Message } from './message.schema';
 import { Model } from 'mongoose';
 
+
 @Injectable()
 export class MessageService {
-    constructor(
-        @InjectModel(Message.name) private readonly messageModel: Model<Message>,
-    ) { }
+  constructor(
+    @InjectModel(Message.name) private messageModel: Model<Message>,
+  ) {}
 
-    async getMessages(@Param('chatId') chatId: string) {
-        return await this.findBy(chatId);
-    }
+  getMessages(getMessagesDto: GetMessagesDto) {
+    return this.messageModel.find({
+      chat: { id: getMessagesDto.chat },
+    });
+  }
 
-    async createMessage(createMessageDto: CreateMessageDto) {
-        const message = new this.messageModel(createMessageDto);
-        await message.save();
-        return message;
-    }
-
-    async findBy(chatId: string) {
-        return await this.messageModel.find({ chat: chatId });
-    }
+  async createMessage(createMessageDto: CreateMessageDto) {
+    const message = new this.messageModel(createMessageDto);
+    await message.save();
+    return message;
+  }
 }

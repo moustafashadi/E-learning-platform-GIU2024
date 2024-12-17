@@ -17,6 +17,7 @@ import { QuestionSchema } from 'src/quiz/models/question.schema';
       MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),
       MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
       MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
+      MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
     ],
     controllers: [AnalyticsController],
     providers: [QuizService,QuestionService],

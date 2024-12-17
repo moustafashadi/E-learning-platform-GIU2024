@@ -1,78 +1,76 @@
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
-import { Chat, ChatDocument } from "./chat.schema";
-import { UserService } from "src/user/services/user.service";
-import { Body, NotFoundException, Req } from "@nestjs/common";
-import { Request } from "express";
+import { Injectable, NotFoundException } from '@nestjs/common';
 
-export class chatService {
-    constructor(
-        @InjectModel(Chat.name) private chatModel: Model<ChatDocument>,
-        private userService: UserService,
-    ) { }
+import { InjectModel } from '@nestjs/mongoose';
+import { Chat } from './chat.schema';
+import { Model } from 'mongoose';
+import { CreateChatDto } from './dto/create-chat.dto';
+import { GetChatsDto } from './dto/get-chat.dto';
+import { SearchChatsDto } from './dto/search-chats.dto';
+import { UpdateChatDto } from './dto/update-chat.dto';
 
-    async create(@Req() req: Request): Promise<Chat> {
-        const userId = req.user['sub'];
-        const createdChat = new this.chatModel({
-            title: req.body.title,
-            participants: [userId],
-            messages: [],
-            creator: userId,
-        }
-        );
-        console.log(createdChat);
-        return createdChat.save();
+@Injectable()
+export class ChatService {
+  constructor(
+    @InjectModel(Chat.name) private chatModel: Model<Chat>,
+  ) {}
+
+  getChats(getChatsDto: GetChatsDto ) {
+    return this.chatModel.find({
+      skip: getChatsDto.skip,
+      take: getChatsDto.take,
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  getChat(id: number) {
+    return this.chatModel.findOne({ id });
+  }
+
+  async searchChats(searchChatsDto: SearchChatsDto) {
+    const query = this.chatModel.find();
+    if (searchChatsDto.skip) {
+      query.skip(searchChatsDto.skip);
     }
-
-    async findChat(chatId: string): Promise<Chat> {
-        const chat = await this.chatModel.findById(chatId).exec();
-        if (!chat)
-            throw new NotFoundException(`Chat with this ID: ${chatId} is not found`);
-        return chat;
+    if (searchChatsDto.take) {
+      query.limit(searchChatsDto.take);
     }
-
-    async addParticipant(newUser: string, @Req() req: Request, chatId: string): Promise<Chat> {
-        const newParticipant = await this.userService.findOne(newUser);
-        if (!newParticipant) {
-            throw new NotFoundException(`No such user wit this is id: ${newUser}`);
-        }
-
-        const existingChat = await this.findChat(chatId);
-        if (!existingChat) {
-            const newChat = await this.create(req);
-            return new this.chatModel(newChat).save();
-        }
-
-        if (existingChat.participants.some((participant) => participant.toString() === newParticipant.id.toString())) {
-            throw new Error('User is already a participant in this chat');
-        }
-        existingChat.participants.push(newParticipant.id);
-
-        return (existingChat as ChatDocument).save();
+    if (searchChatsDto.title) {
+      query.where('title', new RegExp(searchChatsDto.title, 'i'));
     }
-    
-    async updateChatTitle(@Body() body, chatId: string): Promise<Chat> {
-        const existingChat = await this.chatModel.findOne({ chatId });
-
-        existingChat.title = body.message;
-        return existingChat.save();
+    if (searchChatsDto.ownerId) {
+      query.where('owner.id', searchChatsDto.ownerId);
     }
+    const items = await query.exec();
+    const count = await this.chatModel.countDocuments(query.getFilter());
+    return { items, count };
+  }
 
-    async createStudyGroups(@Req() req: Request, chatId: string, newUser: string): Promise<Chat> {
-        const student = await this.userService.getCurrentUser(req);
-        if (!student.role["Student"])
-            throw new NotFoundException("You are not a student to create a study group")
+  async createChat(createChatDto: CreateChatDto, userId: string) {
+    const chat = new this.chatModel({
+      title: createChatDto.title,
+      description: createChatDto.description,
+      owner: { id: userId },
+    });
+    await chat.save();
+  }
 
-        const createStudyGroup = new this.chatModel({
-            participants: [student._id],
-            messages: [],
-            creator: student._id,
-        }
-        );
-
-
-        const addUser = await this.userService.findOne(newUser);
-        createStudyGroup.participants.push(addUser.id)
-        return createStudyGroup.save();
+  async updateChat(id: string, updateChatDto: UpdateChatDto, userId: string) {
+    const result = await this.chatModel.updateOne(
+      { id, owner: { id: userId } },
+      updateChatDto,
+    );
+    if (!result.acknowledged) {
+      throw new NotFoundException(`chat with id ${id} not found`);
     }
+  }
+
+  async deleteChat(id: string, userId: string) {
+    const result = await this.chatModel.deleteOne({
+      id,
+      owner: { id: userId },
+    });
+    if (!result.acknowledged) {
+      throw new NotFoundException(`chat with id ${id} not found`);
+    }
+  }
 }

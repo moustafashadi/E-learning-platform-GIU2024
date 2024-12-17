@@ -8,40 +8,41 @@ import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 @Controller('notes')
 @UseGuards(AuthenticationGuard)  // Add this line to protect all routes
 export class NotesController {
-  constructor(private readonly notesService: NotesService) {}
+  constructor(private readonly notesService: NotesService) { }
 
   //create note for specific course
-  // TESTED - WORKING
+  //TESTED - WORKING
   @Post(':courseId')
-async createNote(
-  @Param('courseId') courseId: string,
-  @Body() createNoteDto: { content: string },
-  @Req() req: Request,
-) {
-  const userId = req.user['sub'];
-  return this.notesService.createNoteForCourse(
-    courseId,
-    createNoteDto.content,
-    userId
-  );
-}
+  async createNote(
+    @Param('courseId') courseId: string,
+    @Body() createNoteDto: { content: string },
+    @Req() req: Request,
+  ) {
+    const userId = req.user['sub'];
+    return this.notesService.createNoteForCourse(
+      courseId,
+      createNoteDto.content,
+      userId
+    );
+  }
 
-// TESTED - WORKING
-  @Get('/findall')
+  //TESTED - WORKING
+  @Get('/')
   async findAllNotes(@Req() req: Request) {
-    const userId = req.user['sub'];  
+    const userId = req.user['sub'];
     const notes = await this.notesService.findAll(userId);
     return { notes };
   }
-//NOT WORKING
+
+  //TESTED - WORKING
   @Get(':id')
   async findNoteById(@Param('id') noteId: string, @Req() req: Request) {
-    const userId = req.user['sub'];  
+    const userId = req.user['sub'];
     const note = await this.notesService.findById(noteId, userId);
     return { note };
   }
 
-  //NOT WORKING
+  //TESTED - WORKING
   @Put(':id')
   async updateNote(
     @Param('id') noteId: string,
@@ -53,6 +54,7 @@ async createNote(
     return { message: 'Note updated successfully', note: updatedNote };
   }
 
+  
   @Delete(':id')
   async deleteNote(@Param('id') noteId: string, @Req() req: Request) {
     const userId = req.user['sub'];  // Get userId from JWT token
