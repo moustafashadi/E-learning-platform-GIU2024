@@ -14,7 +14,7 @@ export class MessageService {
 
   getMessages(getMessagesDto: GetMessagesDto) {
     return this.messageModel.find({
-      room: { id: getMessagesDto.chat },
+      chat: { id: getMessagesDto.chat },
     });
   }
 

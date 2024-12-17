@@ -18,7 +18,7 @@ import {
     // Client listens for 'quizResponse' events
     sendResponseToClient(userId: string, responseData: any) {
       // Emit the response data to a specific user, assuming we have a way to identify them by socket.
-      // One approach is to have clients join a room named after their userId when they connect.
+      // One approach is to have clients join a chat named after their userId when they connect.
       this.server.to(userId).emit('quizResponse', responseData);
     }
   
