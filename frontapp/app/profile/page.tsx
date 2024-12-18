@@ -37,4 +37,5 @@ const ProfilePage: React.FC = () => {
   }
 };
 
-export default <Profile></Profile>Page;
+export default ProfilePage;
+` `
