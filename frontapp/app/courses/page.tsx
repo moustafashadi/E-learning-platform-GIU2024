@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import AdminDashboard from "./components/AdminDashboard.jsx";
-import InstructorDashboard from "./components/InstructorDashboard.jsx";
-import StudentDashboard from "./components/StudentDashboard.jsx";
+import AdminCourses from "./components/AdminCourses";
+import InstructorCourses from "./components/InstructorCourses";
+import StudentCourses from "./components/StudentCourses";
 
-const DashboardPage: React.FC = () => {
+const CoursesPage: React.FC = () => {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
 
@@ -30,14 +30,14 @@ const DashboardPage: React.FC = () => {
   // Render the appropriate dashboard based on the role
   switch (role) {
     case "admin":
-      return <AdminDashboard />;
+      return <AdminCourses />;
     case "instructor":
-      return <InstructorDashboard />;
+      return <InstructorCourses />;
     case "student":
-      return <StudentDashboard />;
+      return <StudentCourses />;
     default:
       return <div>Invalid role</div>;
   }
 };
 
-export default DashboardPage;
+export default CoursesPage;
