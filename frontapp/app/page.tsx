@@ -1,21 +1,17 @@
+// app/page.tsx
 "use client";
-import React, { FC, useEffect } from "react";
-import Heading from "./utils/heading";
 
+import React from "react";
 
-interface Props { }
-
-const Page: FC<Props> = () => {
+const HomePage: React.FC = () => {
   return (
-    <div>
-      <Heading
-        title="ELearning"
-        description="hello world"
-        keywords="test this isnt real"
-      />
-      </div>
-    
+    <div className="flex flex-col items-center justify-center min-h-screen py-2 bg-gray-100">
+      <h1 className="text-4xl font-bold mb-4">Welcome to the E-Learning Platform</h1>
+      <p className="text-lg text-center">
+        Enhance your skills with our comprehensive courses. Please login or signup to get started.
+      </p>
+    </div>
   );
 };
 
-export default Page;
+export default HomePage;

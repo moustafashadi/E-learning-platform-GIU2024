@@ -1,20 +1,11 @@
-"use client";
-import "./globals.css";
-import { Roboto } from "next/font/google";
-import { Lato } from "next/font/google";
-import { ThemeProvider } from "./utils/theme-provider";
+// app/layout.tsx
+import Navbar from './components/NavBar';
+import './globals.css'; // Import global styles
 
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-Roboto",
-});
-
-const lato = Lato({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-Lato",
-});
+export const metadata = {
+  title: 'My E-Learning Platform',
+  description: 'An e-learning platform',
+};
 
 export default function RootLayout({
   children,
@@ -22,12 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
-      <body>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                <div>{children}</div>
-            </ThemeProvider>
-       </body>
+    <html lang="en">
+       <Navbar />
+      <body>{children}</body>
     </html>
   );
 }
