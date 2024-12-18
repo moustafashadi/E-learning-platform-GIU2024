@@ -44,8 +44,10 @@ input[type="number"] {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  margin-top: 0rem;
+  background-color: #1d4ed8;
+  color: #1d4ed8;
+  margin-top: 0rem;  
+  
 }
 
 .hero_animation {
