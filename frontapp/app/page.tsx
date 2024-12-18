@@ -1,16 +1,17 @@
-"use client"
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+// app/page.tsx
+"use client";
 
-const App: React.FC = () => {
+import React from "react";
+
+const HomePage: React.FC = () => {
   return (
-    //white page 
-    <Router>
-      <Routes>
-        <Route path="/" element={<div className='bg-black'>Home</div>} />
-      </Routes>
-    </Router>
+    <div className="flex flex-col items-center justify-center min-h-screen py-2 bg-gray-100">
+      <h1 className="text-4xl font-bold mb-4">Welcome to the E-Learning Platform</h1>
+      <p className="text-lg text-center">
+        Enhance your skills with our comprehensive courses. Please login or signup to get started.
+      </p>
+    </div>
   );
 };
 
-export default App;
+export default HomePage;
