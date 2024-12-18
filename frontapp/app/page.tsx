@@ -1,32 +1,16 @@
-'use client'
-import Image from "next/image";
-import Heading from './utils/heading';
-import Header from './components/Header';
-import { useState } from 'react';
-interface Props {}
+"use client"
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
-export default function Home(props: Props) {
-  const [route, setRoute] = useState('login');
-  const [activeItem, setActiveItem] = useState(0);
-  const [open, setOpen] = useState(false);
-
+const App: React.FC = () => {
   return (
-    <div>
-      <Heading
-        title="E-learning2"
-        description="Learn from anywhere"
-        keywords='Programming, E-learning, Online learning, Web development'
-      />
-<p>Home</p>
-      <Header
-        open={open}
-        setOpen={setOpen}
-        activeItem={activeItem}
-        setRoute={setRoute}
-        route={route}
-      />
-    </div>
-  )
-}
+    //white page 
+    <Router>
+      <Routes>
+        <Route path="/" element={<div className='bg-black'>Home</div>} />
+      </Routes>
+    </Router>
+  );
+};
 
-
+export default App;
