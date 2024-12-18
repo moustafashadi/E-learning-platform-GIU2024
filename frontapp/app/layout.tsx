@@ -1,5 +1,6 @@
 // app/layout.tsx
 import Navbar from './components/NavBar';
+import Footer from './components/Footer'; // Import the Footer component
 import './globals.css'; // Import global styles
 
 export const metadata = {
@@ -14,8 +15,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-       <nav ><Navbar /></nav>
-      <body>{children}</body>
+      <body>
+        <Navbar />
+        {children}
+        <Footer /> {/* Add the Footer here */}
+      </body>
     </html>
   );
 }

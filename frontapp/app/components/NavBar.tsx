@@ -33,7 +33,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-blue-600 p-4 text-white flex justify-between items-center">
+    <nav className="fixed top-0 left-0 w-full bg-blue-600 p-4 text-white flex justify-between items-center z-50">
       <div>
         <Link href="/" className="text-lg font-bold hover:underline">
           E-Learning Platform
@@ -44,9 +44,6 @@ const Navbar: React.FC = () => {
           <>
             <Link href="/login" className="mx-2 hover:underline">
               Login
-            </Link>
-            <Link href="/signup" className="mx-2 hover:underline">
-              Signup
             </Link>
           </>
         ) : (
