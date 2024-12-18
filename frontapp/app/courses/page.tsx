@@ -1,31 +1,43 @@
-// app/dashboard/page.tsx
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast"; // Optional: For toast notifications
+import toast from "react-hot-toast";
+import AdminCourses from "./components/AdminCourses";
+import InstructorCourses from "./components/InstructorCourses";
+import StudentCourses from "./components/StudentCourses";
 
-const DashboardPage: React.FC = () => {
+const CoursesPage: React.FC = () => {
   const router = useRouter();
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if the user is logged in
+    const storedRole = localStorage.getItem("role");
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (!isLoggedIn) {
+
+    if (!isLoggedIn || !storedRole) {
       toast.error("You must be logged in to access the dashboard.");
       router.push("/login");
+    } else {
+      setRole(storedRole); // Fetch the user role from localStorage
     }
   }, [router]);
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-      <p className="text-lg">
-        Welcome to your dashboard! Here you can access your courses and manage your profile.
-      </p>
-      {/* Add more dashboard content here */}
-    </div>
-  );
+  if (!role) {
+    return <div>Loading...</div>; // Show loader while determining the role
+  }
+
+  // Render the appropriate dashboard based on the role
+  switch (role) {
+    case "admin":
+      return <AdminCourses />;
+    case "instructor":
+      return <InstructorCourses />;
+    case "student":
+      return <StudentCourses />;
+    default:
+      return <div>Invalid role</div>;
+  }
 };
 
-export default DashboardPage;
+export default CoursesPage;
