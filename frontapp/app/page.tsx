@@ -1,32 +1,21 @@
-'use client'
-import Image from "next/image";
-import Heading from './utils/heading';
-import Header from './components/Header';
-import { useState } from 'react';
-interface Props {}
+"use client";
+import React, { FC, useEffect } from "react";
+import Heading from "./utils/heading";
 
-export default function Home(props: Props) {
-  const [route, setRoute] = useState('login');
-  const [activeItem, setActiveItem] = useState(0);
-  const [open, setOpen] = useState(false);
 
+interface Props { }
+
+const Page: FC<Props> = () => {
   return (
     <div>
       <Heading
-        title="E-learning2"
-        description="Learn from anywhere"
-        keywords='Programming, E-learning, Online learning, Web development'
+        title="ELearning"
+        description="hello world"
+        keywords="test this isnt real"
       />
-<p>Home</p>
-      <Header
-        open={open}
-        setOpen={setOpen}
-        activeItem={activeItem}
-        setRoute={setRoute}
-        route={route}
-      />
-    </div>
-  )
-}
+      </div>
+    
+  );
+};
 
-
+export default Page;
