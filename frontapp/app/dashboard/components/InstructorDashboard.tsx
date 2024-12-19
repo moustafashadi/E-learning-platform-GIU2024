@@ -1,12 +1,11 @@
+function InstructorDashboard() {
+  return (
+    <div>
+      <h1>Instructor Dashboard</h1>
+      <p>Welcome to your dashboard. Content will be added soon.</p>
+    </div>
+  );
+}
 
-const InstructorDashboard: React.FC = () => {
-    return (
-      <div>
-        <h1>Student Dashboard</h1>
-        <p>Welcome to your dashboard. Content will be added soon.</p>
-      </div>
-    );
-  };
-  
-  export default InstructorDashboard;
+export default InstructorDashboard;
   

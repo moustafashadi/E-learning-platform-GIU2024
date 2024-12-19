@@ -7,7 +7,7 @@ import AdminCourses from "./components/AdminCourses";
 import InstructorCourses from "./components/InstructorCourses";
 import StudentCourses from "./components/StudentCourses";
 
-const CoursesPage: React.FC = () => {
+function CoursesPage() {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
 

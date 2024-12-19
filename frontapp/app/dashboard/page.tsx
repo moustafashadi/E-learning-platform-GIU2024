@@ -4,41 +4,30 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import toast from "react-hot-toast";
 import AdminDashboard from "./components/AdminDashboard";
 import InstructorDashboard from "./components/InstructorDashboard";
 import StudentDashboard from "./components/StudentDashboard";
+import useAuth from "./hooks/useAuth";
 
-const DashboardPage: React.FC = () => {
+function DashboardPage() {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
 
-  // Helper function to parse cookies
-  const getCookie = (name: string): string | null => {
-    const matches = document.cookie.match(
-      new RegExp(
-        // eslint-disable-next-line no-useless-escape
-        "(?:^|; )" +
-          name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") +
-          "=([^;]*)"
-      )
-    );
-    return matches ? decodeURIComponent(matches[1]) : null;
-  };
-
   useEffect(() => {
-    const storedRole = getCookie("role");
-    const isLoggedIn = getCookie("isLoggedIn") === "true";
+    const storedRole = localStorage.getItem("role");
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
     if (!isLoggedIn || !storedRole) {
       toast.error("You must be logged in to access the dashboard.");
       router.push("/login");
     } else {
-      setRole(storedRole); // Fetch the user role from cookies
+      setRole(storedRole); // Fetch the user role from localStorage
     }
-  }, [router]);
+  }, [isAuthenticated, loading, router]);
 
-  if (!role) {
+  if (loading || !isAuthenticated) {
     return <div>Loading...</div>; // Show loader while determining the role
   }
 
@@ -53,6 +42,7 @@ const DashboardPage: React.FC = () => {
     default:
       return <div>Invalid role</div>;
   }
-};
+}
+
 
 export default DashboardPage;

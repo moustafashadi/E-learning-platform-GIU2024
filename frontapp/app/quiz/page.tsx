@@ -7,7 +7,7 @@ import AdminQuiz from "./components/AdminQuiz";
 import InstructorQuiz from "./components/InstructorQuiz";
 import StudentQuiz from "./components/StudentQuiz";
 
-const QuizPage: React.FC = () => {
+function QuizPage() {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
 
