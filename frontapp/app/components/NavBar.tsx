@@ -1,35 +1,21 @@
-// app/components/Navbar.tsx
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import useAuth from "../hooks/useAuth";
+import axios from "axios";
 
-const Navbar: React.FC = () => {
+const Navbar = () => {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const { isAuthenticated, loading } = useAuth();
 
-  useEffect(() => {
-    // Initialize isLoggedIn from localStorage
-    const storedIsLoggedIn = localStorage.getItem("isLoggedIn");
-    setIsLoggedIn(storedIsLoggedIn === "true");
-
-    // Listen for storage changes (e.g., login/logout from other tabs)
-    const handleStorageChange = () => {
-      const updatedIsLoggedIn = localStorage.getItem("isLoggedIn");
-      setIsLoggedIn(updatedIsLoggedIn === "true");
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    localStorage.removeItem("isLoggedIn");
-    // Optionally, remove tokens or other auth data
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await axios.post("/auth/logout", {}, { withCredentials: true });
+      router.push("/login");
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    }
   };
 
   return (
@@ -40,12 +26,10 @@ const Navbar: React.FC = () => {
         </Link>
       </div>
       <div>
-        {!isLoggedIn ? (
-          <>
-            <Link href="/login" className="mx-2 hover:underline">
-              Login
-            </Link>
-          </>
+        {!loading && !isAuthenticated ? (
+          <Link href="/login" className="mx-2 hover:underline">
+            Login
+          </Link>
         ) : (
           <>
             <Link href="/dashboard" className="mx-2 hover:underline">
