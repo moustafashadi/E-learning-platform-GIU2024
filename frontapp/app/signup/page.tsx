@@ -33,7 +33,7 @@ const SignupPage: React.FC = () => {
 
       // Set isLoggedIn in localStorage
       localStorage.setItem("isLoggedIn", "true");
-
+      
       // Redirect to dashboard after successful signup
       setTimeout(() => {
         router.push("/dashboard");

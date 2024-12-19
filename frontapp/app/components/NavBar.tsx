@@ -23,7 +23,7 @@ const Navbar: React.FC = () => {
     window.addEventListener("storage", handleStorageChange);
 
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  }, [localStorage.getItem("isLoggedIn")]);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
@@ -48,6 +48,15 @@ const Navbar: React.FC = () => {
           </>
         ) : (
           <>
+            <Link href="/dashboard" className="mx-2 hover:underline">
+              Dashboard
+            </Link>
+            <Link href="/profile" className="mx-2 hover:underline">
+              Profile
+            </Link>
+            <Link href="/quiz" className="mx-2 hover:underline">
+              Quiz
+            </Link>
             <Link href="/dashboard" className="mx-2 hover:underline">
               Dashboard
             </Link>
