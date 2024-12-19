@@ -46,11 +46,12 @@ export class AuthController {
     }
   }
 
-
+  //API USED BY FRONTEND
   @Get('me')
   @UseGuards(AuthenticationGuard)
   async getMe(@Req() req: Request, @Res() res: Response) {
-    const user = req.user;
+    const userBeforeAttributes = req.user;
+    const user = await this.userService.findOne(req.user['sub']);
     return res.send({ user });
   }
 

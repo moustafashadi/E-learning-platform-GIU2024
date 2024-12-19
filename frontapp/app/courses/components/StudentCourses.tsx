@@ -1,5 +1,5 @@
 
-const StudentCourses: React.FC = () => {
+function StudentCourses()  {
   return (
     <div>
       <h1>Student Dashboard</h1>

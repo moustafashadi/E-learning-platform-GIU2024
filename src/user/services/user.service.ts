@@ -298,4 +298,13 @@ export class UserService {
     }
     return user && user.role === role.toLowerCase();
   }
+
+  //get notifications
+  async getNotifications(userId: string) {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user.notifications;
+  }
 }

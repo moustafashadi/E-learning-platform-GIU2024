@@ -63,7 +63,7 @@ export class QuestionController {
     return this.questionService.getQuestionById(id);
   }
 
-  @Post('/:id/submit')
+  @Post('/:quizId/:id/submit')
   async submitAnswer(
     @Req() req: Request,
     @Param('quizId') quizId: string,
@@ -94,7 +94,7 @@ export class QuestionController {
       await student.save();
     } else {
       // Get next question
-      const nextQuestion = await this.questionService.getNextQuestion(req, quizId); // Use 'req' instead of 'Request'
+      const nextQuestion = await this.questionService.getNextQuestion(req, quizId);
     }
 
     // Optionally return an immediate HTTP response as well

@@ -30,11 +30,12 @@ export class QuizController {
     return this.quizService.getQuiz(quizId);
   }
 
-  @Get(':courseId/:studentId')
+  @Get('/:courseId/:studentId')
   async getStudentQuizResults(
     @Param('courseId') courseId: string,
     @Param('studentId') studentId: string,
   ) {
+    console.log('courseId', courseId);
     const quizResults = await this.quizService.getStudentQuizResults(
       courseId,
       studentId,
