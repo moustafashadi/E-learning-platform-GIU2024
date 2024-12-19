@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import InstructorProfile from "./components/InstructorProfile";
 import StudentProfile from "./components/StudentProfile";
 
-const ProfilePage: React.FC = () => {
+function ProfilePage() {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
 
