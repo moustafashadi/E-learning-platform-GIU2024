@@ -58,7 +58,7 @@ export class QuestionService {
             const userId = req.user['sub'];
             const student = await this.studentModel.findById(userId);
 
-            const unsolvedQuestions = questions.filter((question) => !student.questionsSolved.has(question._id as any));
+            const unsolvedQuestions = questions.filter((question) => !student.questionsSolved.includes(question._id as any));
             if (unsolvedQuestions.length === 0) {
                 return null;
             }

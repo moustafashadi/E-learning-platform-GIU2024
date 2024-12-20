@@ -106,7 +106,7 @@ export class QuizService {
 
     for (const question of questions) {
       // Check if the question's _id is not in the questionsSolved map
-      if (!student.questionsSolved.has(question._id)) {
+      if (!student.questionsSolved.includes(question._id)) {
         return false;
       }
     }
