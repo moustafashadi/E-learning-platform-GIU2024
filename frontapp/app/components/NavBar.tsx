@@ -39,6 +39,7 @@ const Navbar = () => {
             <Link href="/dashboard" className="mx-2 hover:underline">
               Dashboard
             </Link>
+            
             <button onClick={handleLogout} className="mx-2 hover:underline">
               Logout
             </button>

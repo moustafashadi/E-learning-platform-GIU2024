@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useDispatch, UseDispatch, useSelector } from "react-redux";
+import { UseSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import { RootState } from "@/app/store";
 
 interface Course {
   _id: string;
@@ -23,15 +27,20 @@ function StudentCourses() {
   const [userId, setUserId] = useState<string | null>(null); // To store the userId
   const [viewingCourseId, setViewingCourseId] = useState<string | null>(null); // Track the course being viewed
 
+  const dispatch = useDispatch;
+  const router = useRouter;
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         // Fetch the logged-in user's data
         const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
-        setUserId(authData.user.sub); // Set the user ID using the 'sub' field
+        setUserId(authData.id); // Set the user ID using the 'sub' field
   
         // Fetch enrolled courses using the provided endpoint
-        const enrolledResponse = await axios.get(`http://localhost:3000/users/${authData.user.sub}/enrolledCourses`, {
+        const enrolledResponse = await axios.get(`http://localhost:3000/users/${authData.id}/enrolledCourses`, {
           withCredentials: true,
         });
         setEnrolledCourses(enrolledResponse.data);
@@ -64,7 +73,10 @@ function StudentCourses() {
     if (!userId) {
       toast.error("User not authenticated. Please log in.");
       return;
+      console.log("******************************************************");
+      console.log(userId)
     }
+
 
     try {
       // Send enrollment request with courseId as the URL parameter and userId as part of the URL
