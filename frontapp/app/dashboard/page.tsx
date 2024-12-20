@@ -9,15 +9,11 @@ import InstructorDashboard from "./components/InstructorDashboard";
 import StudentDashboard from "./components/StudentDashboard";
 import Sidebar from "./components/Sidebar";
 import useAuth from "../hooks/useAuth";
-import { selectAuthState } from "../store/slices/authSlice";
-
-import { useSelector } from "react-redux";
 
 function DashboardPage() {
-  
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
-  const { isAuthenticated, loading, user } = useSelector(selectAuthState);
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
     const fetchUserRole = async () => {

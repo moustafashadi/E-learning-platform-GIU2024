@@ -1,4 +1,3 @@
-// filepath: /f:/E-learning-platform-GIU2024/frontapp/components/NavBar.tsx
 "use client";
 
 import Link from "next/link";
@@ -23,12 +22,6 @@ const Navbar = () => {
     }
   };
 
-  // Highlight the current route
-  const getNavLinkClasses = (route: string) =>
-    `mx-2 hover:underline ${
-      pathname === route ? "font-bold text-blue-300" : "text-white"
-    }`;
-
   return (
     <nav className="fixed top-0 left-0 w-full bg-blue-600 p-4 text-white flex justify-between items-center z-50">
       <div>
@@ -36,41 +29,17 @@ const Navbar = () => {
           E-Learning Platform
         </Link>
       </div>
-      <div className="flex items-center">
+      <div>
         {!loading && !isAuthenticated ? (
-          <>
-            <Link href="/login" className={getNavLinkClasses("/login")}>
-              Login
-            </Link>
-            <Link href="/signup" className={getNavLinkClasses("/signup")}>
-              Sign Up
-            </Link>
-          </>
+          <Link href="/login" className="mx-2 hover:underline">
+            Login
+          </Link>
         ) : (
           <>
-            <Link href="/dashboard" className={getNavLinkClasses("/dashboard")}>
+            <Link href="/dashboard" className="mx-2 hover:underline">
               Dashboard
             </Link>
-            <Link href="/profile" className={getNavLinkClasses("/profile")}>
-              Profile
-            </Link>
-            <div className="relative mx-2">
-              <Link
-                href="/notifications"
-                className={getNavLinkClasses("/notifications")}
-              >
-                Notifications
-                {unreadNotifications.length > 0 && (
-                  <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-2 py-1">
-                    {unreadNotifications.length}
-                  </span>
-                )}
-              </Link>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="mx-2 hover:underline text-red-400"
-            >
+            <button onClick={handleLogout} className="mx-2 hover:underline">
               Logout
             </button>
           </>
