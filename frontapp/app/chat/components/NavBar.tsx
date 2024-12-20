@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import useAuth from "../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import axios from "axios";
-import { useState } from "react";
 
 const Navbar = () => {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const { isAuthenticated, loading } = useAuth();  
 
   const handleLogout = async () => {
@@ -20,11 +18,6 @@ const Navbar = () => {
       console.error("Failed to logout:", error);
     }
   };
-
-  // Render loading state until isLoggedIn is determined
-  if (isLoggedIn === null) {
-    return null; // or a loading spinner
-  }
 
   return (
     <nav className=" fixed top-0 left-0 w-full bg-blue-600 p-4 text-white flex justify-between items-center z-50">

@@ -1,6 +1,6 @@
 // app/layout.tsx
-import Navbar from './components/NavBar';
-import Footer from './components/Footer'; // Import the Footer component
+import Navbar from './chat/components/NavBar';
+import Footer from './chat/components/Footer'; // Import the Footer component
 import './globals.css'; // Import global styles
 
 export const metadata = {
