@@ -15,14 +15,9 @@ export default function RootLayout({
 }) {
 return (
     <html lang="en">
-      <body>
-        <div>
-        
       <body className="flex flex-col min-h-screen">
         {/* Navbar */}
         <Navbar />
-        </div>
-        
         {children}
       </body>
     </html>
