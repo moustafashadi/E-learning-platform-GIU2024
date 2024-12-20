@@ -1,12 +1,15 @@
+// filepath: /f:/E-learning-platform-GIU2024/frontapp/store/index.ts
+"use client";
 import { configureStore } from '@reduxjs/toolkit';
-import userReducer from './slices/userSlice';
+import authReducer from './slices/authSlice';
 import courseReducer from './slices/courseSlice';
 import notificationReducer from './slices/notificationSlice';
 import quizReducer from './slices/quizResultSlice';
 
+
 const store = configureStore({
   reducer: {
-    user: userReducer,
+    auth: authReducer,
     courses: courseReducer,
     notifications: notificationReducer,
     quizzes: quizReducer,
@@ -14,6 +17,6 @@ const store = configureStore({
 });
 
 export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type AppDispatch = typeof store.dispatch; // Export AppDispatch
 
 export default store;
