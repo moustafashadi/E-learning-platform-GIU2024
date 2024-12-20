@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState, AppDispatch } from "../../store";
-import { fetchUser } from "../../store/slices/userSlice";
-import { fetchCourses } from "../../store/slices/courseSlice";
-import { fetchNotifications } from "../../store/slices/notificationSlice";
-import { fetchQuizResults } from "../../store/slices/quizResultSlice";
+import { useEffect, useState } from "react";
+import axiosInstance from "../../_utils/axiosInstance";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
+import { ObjectId } from "mongodb";
+import { AxiosResponse } from "axios";
 
 interface Course {
   id: string;
@@ -27,38 +24,100 @@ interface QuizResult {
 }
 
 function StudentDashboard() {
-  const dispatch = useDispatch<AppDispatch>();
-  if (!dispatch) {
-    throw new Error('Redux Provider is missing.');
-  }
-
   const router = useRouter();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { userId, loading: userLoading, error: userError } = useSelector((state: RootState) => state.user);
-  const { courses, loading: coursesLoading, error: coursesError } = useSelector((state: RootState) => state.courses);
-  const { notifications, loading: notificationsLoading, error: notificationsError } = useSelector((state: RootState) => state.notifications);
-  const { quizResults, loading: quizResultsLoading, error: quizResultsError } = useSelector((state: RootState) => state.quizzes);
-
+  // Fetch user ID and related data
   useEffect(() => {
-    dispatch(fetchUser());
-  }, [dispatch]);
+    const fetchUser = async () => {
+      try {
+        const response = await axiosInstance.get("/auth/me", {
+          withCredentials: true,
+        });
 
+        const userId = response.data.id;
+        setUserId(userId);
+        console.log("User ID:", userId);
+
+        // Fetch and process course data
+        const courseIds: string[] =
+          response.data.user?.enrolledCourses?.map((courseId: ObjectId) =>
+            courseId.toString()
+          ) || [];
+
+        if (courseIds.length === 0) {
+          toast.error("No enrolled courses found.");
+          setCourses([]);
+          return;
+        }
+
+        console.log("Course IDs:", courseIds);
+
+        // Fetch details for each course
+        const coursesData = await Promise.all(
+          courseIds.map((courseId: string) =>
+            axiosInstance.get(`http://localhost:3000/courses/${courseId}`, {
+              withCredentials: true,
+            })
+          )
+        );
+
+        const formattedCourses = coursesData.map((res) => res.data);
+        console.log("Courses Data:", formattedCourses);
+
+        setCourses(formattedCourses);
+
+        // Fetch quiz results for each course
+        const quizResultsData = await Promise.all(
+          courseIds.map((courseId: string) =>
+            axiosInstance.get(`/quiz/${courseId}/${userId}`, {
+              withCredentials: true,
+            })
+          )
+        );
+
+        const formattedQuizResults = quizResultsData.map((res) => res.data);
+        console.log("Quiz Results:", formattedQuizResults);
+
+        setQuizResults(formattedQuizResults);
+      } catch (error) {
+        toast.error("Failed to fetch dashboard data.");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [router]);
+
+  // Fetch notifications
   useEffect(() => {
-    if (userId) {
-      dispatch(fetchCourses(userId));
-      dispatch(fetchNotifications(userId));
-    }
-  }, [dispatch, userId]);
+    if (!userId) return;
 
-  useEffect(() => {
-    if (userId && courses.length > 0) {
-      courses.forEach((course) => {
-        dispatch(fetchQuizResults({ courseId: course.id, userId }));
-      });
-    }
-  }, [dispatch, userId, courses]);
+    const fetchNotifications = async () => {
+      try {
+        const response = await axiosInstance.get("/notifications", {
+          withCredentials: true,
+        });
 
-  if (userLoading || coursesLoading || notificationsLoading || quizResultsLoading) {
+        console.log("Notifications Data:", response.data.notifications);
+
+        setNotifications(response.data.notifications);
+      } catch (error) {
+        toast.error("Failed to fetch notifications.");
+        console.error(error);
+      }
+    };
+
+    fetchNotifications();
+  }, [userId]);
+
+  if (loading) {
     return (
       <div className="text-black mt-20 ml-2">
         <h1>Loading Dashboard...</h1>
@@ -66,10 +125,7 @@ function StudentDashboard() {
     );
   }
 
-  if (userError || coursesError || notificationsError || quizResultsError) {
-    toast.error("Failed to fetch dashboard data.");
-    console.error(userError || coursesError || notificationsError || quizResultsError);
-  }
+
 
   return (
     <div className="mt-[2rem] p-6">
