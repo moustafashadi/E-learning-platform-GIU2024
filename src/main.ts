@@ -1,31 +1,37 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import * as dotenv from 'dotenv';
 import * as cookieParser from 'cookie-parser';
+import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Enable CORS with explicit configuration
   app.enableCors({
-    origin: 'http://localhost:3000',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',// check user controller for more details
-    credentials: true,
+    origin: (origin, callback) => {
+      const allowedOrigins = ['http://localhost:3000', 'http://localhost:4000'];
+      // Allow requests with no origin (e.g., mobile apps or Postman)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true, // Allow cookies and credentials
   });
+
+  // Middleware for parsing cookies
   app.use(cookieParser());
+
+  // Validation Pipes for DTO validation
   app.useGlobalPipes(new ValidationPipe());
-  app.enableCors({
-    origin: 'http://localhost:3002', // Allow requests from chat gateway
-    credentials: true, // Allow cookies
-  });
-  app.enableCors({
-    origin: 'http://localhost:3000', // Allow requests to backend
-    credentials: true,
-  });
 
-
-
-  await app.listen(process.env.PORT);
+  // Start listening
+  await app.listen(process.env.PORT || 3000);
 }
+
 bootstrap();

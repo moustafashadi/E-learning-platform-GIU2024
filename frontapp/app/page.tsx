@@ -1,32 +1,31 @@
-'use client'
-import Image from "next/image";
-import Heading from './utils/heading';
-import Header from './components/Header';
-import { useState } from 'react';
-interface Props {}
+"use client";
 
-export default function Home(props: Props) {
-  const [route, setRoute] = useState('login');
-  const [activeItem, setActiveItem] = useState(0);
-  const [open, setOpen] = useState(false);
+import React from "react";
+import Link from "next/link";
+import useAuth from "./hooks/useAuth";
+import Footer from "./components/Footer";
+
+function HomePage() {
+  const { isAuthenticated, loading } = useAuth();
 
   return (
     <div>
-      <Heading
-        title="E-learning2"
-        description="Learn from anywhere"
-        keywords='Programming, E-learning, Online learning, Web development'
-      />
-<p>Home</p>
-      <Header
-        open={open}
-        setOpen={setOpen}
-        activeItem={activeItem}
-        setRoute={setRoute}
-        route={route}
-      />
+      <div className="flex flex-col items-center justify-center min-h-screen py-2 bg-gray-100">
+        <h1 className="text-4xl font-bold mb-4">Welcome to the E-Learning Platform</h1>
+        <p className="text-lg text-center">
+          Enhance your skills with our comprehensive courses. Please login or signup to get started.
+        </p>
+        {!loading && !isAuthenticated && (
+          <Link href="/signup">
+            <button className="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+              Get Started
+            </button>
+          </Link>
+        )}
+      </div>
+      <Footer></Footer>
     </div>
-  )
+  );
 }
 
-
+export default HomePage;

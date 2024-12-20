@@ -13,8 +13,8 @@ export class Quiz {
   @Prop({ type: Types.ObjectId, ref: 'Course', required: true })
   course: Types.ObjectId;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Question' }], default: [] })
-  questions: Types.ObjectId[];
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Question' }], default: [] })
+  questions: MongooseSchema.Types.ObjectId[];
 
 }
 

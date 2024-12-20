@@ -1,9 +1,10 @@
-import { Body, Controller, HttpStatus, Post, HttpException, Res, Req, UseGuards } from '@nestjs/common';
+import {Get, Body, Controller, HttpStatus, Post, HttpException, Res, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from '../auth/auth.service';
 import { RegisterRequestDto } from './dto/RegisterRequestDto';
 import { SignInDto } from './dto/SignInDto';
 import { UserService } from '../user/services/user.service';
 import { AuthenticationGuard } from '../auth/guards/authentication.guard';
+import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -43,6 +44,16 @@ export class AuthController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  //API USED BY FRONTEND
+  @Get('me')
+  @UseGuards(AuthenticationGuard)
+  async getMe(@Req() req: Request, @Res() res: Response) {
+    const id = req.user['sub'];
+    const user = await this.userService.findOne(req.user['sub']);
+    console.log(user);
+    return res.send({ id, user });
   }
 
   //TESTED - WORKING

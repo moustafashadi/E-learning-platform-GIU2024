@@ -3,19 +3,118 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 240, 240, 240; /* Light grey background start */
+  --background-end-rgb: 255, 255, 255; /* Light grey background end */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 18, 18, 18; /* Dark grey background start */
+    --background-end-rgb: 18, 18, 18; /* Dark grey background end */
   }
 }
 
+::-webkit-scrollbar-track {
+  background: #e0e0e0; /* Lighter grey for scrollbar track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0; /* Grey for scrollbar thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0; /* Darker grey for scrollbar thumb on hover */
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #e5e7eb; /* Light grey background */
+  color: #1f2937; /* Dark grey text color for contrast */
+  margin-top: 0rem;
+}
+
+.hero_animation {
+  background-image: linear-gradient(147.92deg, rgba(56, 189, 248, 0.456) 10.41%, rgba(255, 255, 255, 0) 89.25%);
+  animation: changeBackgroundColor 8s infinite alternate;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #3b82f6 2.34%, #9333ea 100.78%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-fill-color: transparent;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+::-webkit-scrollbar-track {
+  background: #e0e0e0; /* Lighter grey for scrollbar track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0; /* Grey for scrollbar thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0; /* Darker grey for scrollbar thumb on hover */
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@keyframes changeBackgroundColor {
+  0%, 100% {
+    opacity: 1;
+  }
+  16.67% {
+    opacity: 0.8;
+  }
+  33.33% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  66.67% {
+    opacity: 0.5;
+  }
+  83.33% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-2px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
 }
