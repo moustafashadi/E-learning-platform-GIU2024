@@ -1,41 +1,26 @@
-// filepath: /hooks/useAuth.ts
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useDispatch } from "react-redux";
-import setauthsta
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const useAuth = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const dispatch = useDispatch();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await axios.get("/auth/me", { withCredentials: true });
-        dispatch(
-          setAuthState({
-            isAuthenticated: true,
-            loading: false,
-            user: response.data.user,
-          })
-        );
+        const response = await axios.get('/auth/me', { withCredentials: true });
+        setIsAuthenticated(true);
       } catch (error) {
-        dispatch(
-          setAuthState({
-            isAuthenticated: false,
-            loading: false,
-            user: null,
-          })
-        );
+        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, [dispatch]);
+  }, []);
 
-  return { loading };
+  return { isAuthenticated, loading };
 };
 
 export default useAuth;
