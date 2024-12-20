@@ -21,7 +21,7 @@ export class Course {
   difficulty: string;
 
   @Prop({
-    type: [String], // Array of GridFS file IDs
+    type: [String],
     default: [],
   })
   resources: string[];

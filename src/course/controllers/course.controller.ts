@@ -55,6 +55,10 @@ export class CourseController {
     return await this.courseService.findOne(course_code);
   }
 
+  @Get('/by-id/:course_id')
+async findOneByCourseId(@Param('course_id') course_id: string) {
+  return await this.courseService.findOneByCourseId(course_id);
+}
   @Patch('/:course_code')
   async update(
     @Param('course_code') course_code: string,
