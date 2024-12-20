@@ -108,7 +108,7 @@ function StudentCourses() {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-100">
+    <div className="mt-[2rem] p-6 space-y-6 bg-gray-100">
       {/* Enrolled Courses Section */}
       <section>
         <h2 className="text-2xl font-bold mb-4">Enrolled Courses</h2>

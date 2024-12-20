@@ -13,10 +13,9 @@ import { Question } from '../models/question.schema';
 @Injectable()
 export class QuizService {
   constructor(
+    private questionService: QuestionService,
     @InjectModel(Instructor.name) private readonly instructorModel: Model<Instructor>,
     @InjectModel(Course.name) private readonly courseModel: Model<Course>,
-    @Inject(QuestionService) private readonly questionService: QuestionService,
-    @InjectModel(Question.name) private readonly questionModel: Model<Question>,
     @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
     @InjectModel(Student.name) private readonly studentModel: Model<Student>,
   ) { }
@@ -142,5 +141,19 @@ export class QuizService {
       );
     }
 
+  }
+
+  async deleteQuizzes(quizzes: ObjectId[]) {
+    try {
+      for (const quizId of quizzes) {
+        //delete all questions in this quiz
+        const quiz = await this.quizModel.findById(quizId).exec();
+        const questions = quiz.questions;
+        await this.questionService.deleteQuestions(questions);
+        await this.quizModel.findByIdAndDelete(quizId).exec();
+      }
+    } catch (error) {
+      throw new BadRequestException('Error deleting quizzes');
+    }
   }
 }

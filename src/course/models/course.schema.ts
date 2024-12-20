@@ -33,6 +33,10 @@ export class Course {
   //quizzes
   @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Quiz'}], default: [] })
   quizzes: MongooseSchema.Types.ObjectId[];
+
+  //array of students
+  @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'User'}], default: [] })
+  students: MongooseSchema.Types.ObjectId[];
 }
 
 export type CourseDocument = Course & Document;
