@@ -2,34 +2,21 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { useSelector, useDispatch } from "react-redux";
-import { useEffect } from "react";
-import { fetchNotifications, selectUnreadNotifications } from "../store/slices/notificationSlice";
-import { selectAuthState, logout as logoutAction } from "../store/slices/authSlice";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../store";
+import { logout } from "../store/slices/authSlice";
 import axios from "axios";
 
 const Navbar = () => {
   const router = useRouter();
-  const pathname = usePathname();
   const dispatch = useDispatch();
+  const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
 
-  // Select authentication and notifications state from Redux
-  const { isAuthenticated, loading, user } = useSelector(selectAuthState);
-  const unreadNotifications = useSelector(selectUnreadNotifications);
-
-  // Fetch notifications dynamically if authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-    
-    }
-  }, [dispatch, isAuthenticated]);
-
-  // Handle logout functionality
   const handleLogout = async () => {
     try {
       await axios.post("/auth/logout", {}, { withCredentials: true });
-      dispatch(logoutAction()); // Update Redux state
+      dispatch(logout());
       router.push("/login");
     } catch (error) {
       console.error("Failed to logout:", error);

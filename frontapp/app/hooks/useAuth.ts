@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { setAuthState } from "../store/slices/authSlice";
+import setauthsta
 
 const useAuth = () => {
   const [loading, setLoading] = useState(true);

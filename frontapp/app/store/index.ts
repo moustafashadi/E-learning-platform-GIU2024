@@ -5,6 +5,7 @@ import authReducer from './slices/authSlice';
 import courseReducer from './slices/courseSlice';
 import notificationReducer from './slices/notificationSlice';
 import quizReducer from './slices/quizResultSlice';
+import authReducer from './slices/authSlice';
 
 
 const store = configureStore({
@@ -13,6 +14,7 @@ const store = configureStore({
     courses: courseReducer,
     notifications: notificationReducer,
     quizzes: quizReducer,
+    auth: authReducer,
   },
 });
 

@@ -1,11 +1,9 @@
 "use client";
 // app/layout.tsx
+import Providers from './providers';
 import Navbar from './components/NavBar';
-import Footer from './components/Footer'; // Import the Footer component
-import './globals.css'; // Import global styles
-import store from './store';
-import { Provider } from 'react-redux';
-
+import Footer from './components/Footer';
+import './globals.css';
 
 
 export default function RootLayout({
@@ -13,14 +11,14 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-return (
+  return (
     <html lang="en">
-      <body className="flex flex-col min-h-screen">
-        {/* Navbar */}
-        <Provider store={store}>
-        <Navbar />
-        {children}
-        </Provider>
+      <body>
+        <Providers>
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

@@ -4,19 +4,20 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
-import { setAuthState } from "../../store/slices/authSlice";
+import toast from "react-hot-toast"; // Optional: For toast notifications
+import { useDispatch } from 'react-redux';
+import { loginStart, loginSuccess, loginFailure } from '../../store/slices/authSlice';
 
-function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [feedback, setFeedback] = useState("");
-  const router = useRouter();
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const dispatch = useDispatch();
+  const [feedback, setFeedback] = useState('');
+  const router = useRouter();
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
+    dispatch(loginStart());
     try {
       // Call the backend API for login
       const response = await axios.post(
@@ -25,25 +26,23 @@ function LoginPage() {
         { withCredentials: true }
       );
 
-      const user = response.data.user;
+      const payload = response.data.user;
+      console.log("payload: ", response.data.user.sub);
 
-      // Update Redux auth state
-      dispatch(
-        setAuthState({
-          isAuthenticated: true,
-          loading: false,
-          user,
-        })
-      );
+      // Dispatch login success action
+      dispatch(loginSuccess(payload));
 
-      // Provide feedback and redirect
-      setFeedback(`Login successful! Welcome, ${user.username}`);
-      toast.success(`Login successful! Welcome, ${user.username}`);
+      setFeedback(`Login successful! Welcome, ${payload.username}`);
+      toast.success(`Login successful! Welcome, ${payload.username}`); // Optional: Show toast notification
 
-      router.push("/dashboard"); // Redirect immediately
+      // Redirect to dashboard after successful login
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 2000);
     } catch (error: any) {
-      setFeedback(error.response?.data?.message || "Login failed. Please try again.");
-      toast.error(error.response?.data?.message || "Login failed. Please try again.");
+      dispatch(loginFailure());
+      setFeedback(error.message || "Login failed. Please try again.");
+      toast.error(error.message || "Login failed. Please try again."); // Optional
     }
   };
 
@@ -99,6 +98,6 @@ function LoginPage() {
       </div>
     </div>
   );
-}
+};
 
-export default LoginPage;
+export default Login;

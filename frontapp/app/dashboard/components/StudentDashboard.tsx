@@ -1,11 +1,13 @@
 "use client";
-
+import { useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import axiosInstance from "../../_utils/axiosInstance";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { ObjectId } from "mongodb";
 import { AxiosResponse } from "axios";
+import { RootState } from "../../store";
+import { useSelector } from "react-redux";
 
 interface Course {
   id: string;
@@ -24,12 +26,14 @@ interface QuizResult {
 }
 
 function StudentDashboard() {
+  const dispatch = useDispatch();
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   // Fetch user ID and related data
   useEffect(() => {
