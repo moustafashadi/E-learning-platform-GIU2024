@@ -1,5 +1,3 @@
-// app/dashboard/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,21 +7,29 @@ import toast from "react-hot-toast";
 import AdminDashboard from "./components/AdminDashboard";
 import InstructorDashboard from "./components/InstructorDashboard";
 import StudentDashboard from "./components/StudentDashboard";
-import useAuth from "./hooks/useAuth";
+import useAuth from "../hooks/useAuth";
 
 function DashboardPage() {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("role");
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const fetchUserRole = async () => {
+      try {
+        const response = await axios.get("/auth/me", { withCredentials: true });
+        const user = response.data.user;
+        setRole(user.role);
+      } catch (error) {
+        toast.error("You must be logged in to access the dashboard.");
+        router.push("/login");
+      }
+    };
 
-    if (!isLoggedIn || !storedRole) {
-      toast.error("You must be logged in to access the dashboard.");
+    if (isAuthenticated) {
+      fetchUserRole();
+    } else if (!loading) {
       router.push("/login");
-    } else {
-      setRole(storedRole); // Fetch the user role from localStorage
     }
   }, [isAuthenticated, loading, router]);
 
