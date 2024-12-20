@@ -29,6 +29,7 @@ export class NotificationService {
 
     async findall(): Promise<Notification[]> {
         const notification = await this.notificationModel.find().exec();
+        console.log("Fetched Notifications:", notification);
         return [...notification];
     }
 
