@@ -1,9 +1,9 @@
 
-const StudentQuiz: React.FC = () => {
+function StudentQuiz() {
   return (
-    <div>
-      <h1>Student Dashboard</h1>
-      <p>Welcome to your dashboard. Content will be added soon.</p>
+    <div className="text-black mt-20 ml-2">
+      <h1>Student QUIZ</h1>
+      <p>Welcome to your quiz Page. Content will be added soon.</p> 
     </div>
   );
 };

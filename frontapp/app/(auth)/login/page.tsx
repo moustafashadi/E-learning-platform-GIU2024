@@ -16,9 +16,9 @@ function LoginPage() {
     try {
       // Call the backend API for login using relative path
       const response = await axios.post("/auth/login", { email, password });
-      console.log("response: ", response.data);
 
       const payload  = response.data.user;
+      console.log("payload: ", response.data.user.sub);
 
       setFeedback(`Login successful! Welcome, ${payload.username}`);
       toast.success(`Login successful! Welcome, ${payload.username}`); // Optional: Show toast notification

@@ -18,14 +18,7 @@ return (
       <body className="flex flex-col min-h-screen">
         {/* Navbar */}
         <Navbar />
-
-        {/* Main Content */}
-        <main className='min-h-screen'>
-          {children}
-        </main>
-
-        {/* Footer */}
-        <Footer />
+        {children}
       </body>
     </html>
   );
