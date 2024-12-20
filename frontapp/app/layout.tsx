@@ -16,7 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <div>
+        
         <Navbar />
+        </div>
+        
         {children}
         <Footer /> {/* Add the Footer here */}
       </body>

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 const Navbar: React.FC = () => {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Initialize isLoggedIn from localStorage
@@ -31,6 +31,11 @@ const Navbar: React.FC = () => {
     // Optionally, remove tokens or other auth data
     router.push("/login");
   };
+
+  // Render loading state until isLoggedIn is determined
+  if (isLoggedIn === null) {
+    return null; // or a loading spinner
+  }
 
   return (
     <nav className="fixed top-0 left-0 w-full bg-blue-600 p-4 text-white flex justify-between items-center z-50">
