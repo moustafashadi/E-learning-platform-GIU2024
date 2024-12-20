@@ -19,7 +19,7 @@ interface Notification {
 }
 
 interface QuizResult {
-  courseId: string;
+  quizId: string;
   score: number;
 }
 
@@ -58,35 +58,71 @@ function StudentDashboard() {
         console.log("Course IDs:", courseIds);
 
         // Fetch details for each course
-        const coursesData = await Promise.all(
-          courseIds.map((courseId: string) =>
-            axiosInstance.get(`http://localhost:3000/courses/${courseId}`, {
-              withCredentials: true,
+        try {
+          console.log("Fetching data for Course IDs:", courseIds);
+
+          const coursesData = await Promise.all(
+            courseIds.map(async (courseId: string) => {
+              try {
+                const response = await axiosInstance.get(`http://localhost:3000/courses/${courseId}`, {
+                  withCredentials: true,
+                });
+                console.log(`Course Data for ${courseId}:`, response.data);
+                return response;
+              } catch (err) {
+                console.error(`Error fetching course with ID ${courseId}:`, err);
+                return null; // Fallback for failed requests
+              }
             })
-          )
-        );
+          );
 
-        const formattedCourses = coursesData.map((res) => res.data);
-        console.log("Courses Data:", formattedCourses);
+          const formattedCourses = coursesData
+            .filter((res): res is AxiosResponse => res !== null) // Remove null values
+            .map((res) => {
+              const course = res.data;
+              return {
+                id: course.id || course._id || "unknown-id", // Handle `_id` or fallback to a default
+                name: course.name || course.title || "Unnamed Course", // Handle `title` or fallback
+                progress: course.progress || 0, // Default progress to 0 if not provided
+              };
+            });
 
-        setCourses(formattedCourses);
-
+          console.log("Formatted Courses for Display:", formattedCourses);
+          setCourses(formattedCourses);
+        } catch (error) {
+          console.error("Failed to fetch and process courses:", error);
+        }
         // Fetch quiz results for each course
-        const quizResultsData = await Promise.all(
-          courseIds.map((courseId: string) =>
-            axiosInstance.get(`/quiz/${courseId}/${userId}`, {
-              withCredentials: true,
+        try {
+          // Fetch quiz results for each course
+          const quizResultsData = await Promise.all(
+            courseIds.map(async (courseId: string) => {
+              try {
+                const response = await axiosInstance.get(`/quiz/${courseId}/${userId}`, {
+                  withCredentials: true,
+                });
+                console.log(`Quiz Results for Course ${courseId}:`, response.data);
+                return response;
+              } catch (err) {
+                console.error(`Error fetching quiz results for Course ID ${courseId}:`, err);
+                return null; // Return null for failed requests
+              }
             })
-          )
-        );
+          );
 
-        const formattedQuizResults = quizResultsData.map((res) => res.data);
-        console.log("Quiz Results:", formattedQuizResults);
+          // Filter out null responses and format the results
+          const formattedQuizResults = quizResultsData
+            .filter((res): res is AxiosResponse => res !== null) // Remove null values
+            .map((res) => res.data);
 
-        setQuizResults(formattedQuizResults);
-      } catch (error) {
-        toast.error("Failed to fetch dashboard data.");
-        console.error(error);
+          console.log("Formatted Quiz Results:", formattedQuizResults);
+
+          // Update state with formatted quiz results
+          setQuizResults(formattedQuizResults);
+        } catch (error) {
+          toast.error("Failed to fetch dashboard data.");
+          console.error("Quiz Results Fetch Error:", error);
+        }
       } finally {
         setLoading(false);
       }
@@ -96,6 +132,7 @@ function StudentDashboard() {
   }, [router]);
 
   // Fetch notifications
+
   useEffect(() => {
     if (!userId) return;
 
@@ -105,14 +142,26 @@ function StudentDashboard() {
           withCredentials: true,
         });
 
-        console.log("Notifications Data:", response.data.notifications);
+        console.log("Raw Notifications Response:", response.data);
 
-        setNotifications(response.data.notifications);
+        // Validate and map notifications
+        const formattedNotifications = response.data
+          .filter((notification: any) => notification?.message) // Ensure `message` exists
+          .map((notification: any) => ({
+            id: notification._id?.toString() || "unknown-id", // Handle `_id` or fallback to a default
+            message: notification.message || "No message available",
+            isRead: notification.isRead || false, // Add isRead for UI purposes
+          }));
+
+        console.log("Formatted Notifications for Display:", formattedNotifications);
+
+        setNotifications(formattedNotifications);
       } catch (error) {
         toast.error("Failed to fetch notifications.");
-        console.error(error);
+        console.error("Error Fetching Notifications:", error);
       }
     };
+
 
     fetchNotifications();
   }, [userId]);
@@ -125,46 +174,52 @@ function StudentDashboard() {
     );
   }
 
-
-
   return (
     <div className="mt-[2rem] p-6">
       {/* Notifications Popup */}
       <div className="mt-[4rem] fixed top-4 right-4 bg-white shadow-lg rounded-lg p-4 w-64">
         <h3 className="font-bold text-lg">Notifications</h3>
         <ul>
-          {notifications.map((notification) => (
-            <li key={notification.id} className="text-sm py-1">
+          {notifications?.map((notification, index) => (
+            <li key={notification.id || index} className="text-sm py-1">
               {notification.message}
             </li>
-          ))}
+          )) || <p>No notifications available.</p>}
         </ul>
       </div>
 
       {/* Dashboard Content */}
       <h1 className="text-2xl font-bold mb-6">Student Dashboard</h1>
 
-      {/* Courses Section */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">My Courses</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course) => (
-            <div
-              key={course.id}
-              className="bg-white shadow-md rounded-lg p-4 flex flex-col"
-            >
-              <h3 className="text-lg font-semibold mb-2">{course.name}</h3>
-              <div className="h-2 bg-gray-200 rounded-full mb-2">
-                <div
-                  className="h-full bg-blue-500 rounded-full"
-                  style={{ width: `${course.progress}%` }}
-                ></div>
+          {courses.length > 0 ? (
+            courses.map((course, index) => (
+              <div
+                key={course.id || `course-${index}`} // Use course.id, fallback to index if id is missing
+                className="bg-white shadow-md rounded-lg p-4 flex flex-col"
+              >
+                {/* Render course name */}
+                <h3 className="text-lg font-semibold mb-2">{course.name || "Unnamed Course"}</h3>
+
+                {/* Render progress bar */}
+                <div className="h-2 bg-gray-200 rounded-full mb-2">
+                  <div
+                    className="h-full bg-blue-500 rounded-full"
+                    style={{ width: `${course.progress || 0}%` }}
+                  ></div>
+                </div>
+
+                {/* Render progress percentage */}
+                <span className="text-sm text-gray-600">
+                  Progress: {course.progress || 0}%
+                </span>
               </div>
-              <span className="text-sm text-gray-600">
-                Progress: {course.progress}%
-              </span>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p>No courses available.</p> // Fallback when courses array is empty
+          )}
         </div>
       </div>
 
@@ -172,12 +227,16 @@ function StudentDashboard() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Quiz Results</h2>
         <ul>
-          {quizResults.map((result, index) => (
-            <li key={index} className="mb-2">
-              <strong>Course ID:</strong> {result.courseId} -{" "}
-              <strong>Score:</strong> {result.score}%
-            </li>
-          ))}
+          {quizResults.length > 0 ? (
+            quizResults.map((result, index) => (
+              <li key={`quiz-result-${index}`} className="mb-2">
+                <strong>Course ID:</strong> {result.quizId || "N/A"} -{" "}
+                <strong>Score:</strong> {result.score || 0}%
+              </li>
+            ))
+          ) : (
+            <p>No quiz results available.</p> // Fallback when quizResults array is empty
+          )}
         </ul>
       </div>
     </div>
