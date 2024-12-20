@@ -73,9 +73,10 @@ export class QuestionController {
   ) {
     const userId = req.user['sub'];
     const student = await this.studentModel.findById(userId);
-    const parsedQuestionId = new Types.ObjectId(questionId);
-    console.log('parsedQuestionId', parsedQuestionId);
-    student.questionsSolved.push(parsedQuestionId as unknown as ObjectId);
+    if (!student.questionsSolved) {
+      student.questionsSolved = [];
+    }
+    student.questionsSolved.push(questionId);
     const savedResponse = await this.responseService.evaluateResponse(userId, quizId, questionId, chosenAnswer);
 
     // After evaluation, send real-time feedback
@@ -94,9 +95,7 @@ export class QuestionController {
       const grade = (correctAnswers / totalQuestions) * 100;
 
       // Push the grade to the quizGrades attribute in the student schema
-      const student = await this.studentModel.findById(userId);
-      student.quizGrades.set(quizId as any, grade);
-
+      student.quizGrades.set(quizId, grade);
       await student.save();
     } else {
       // Get next question

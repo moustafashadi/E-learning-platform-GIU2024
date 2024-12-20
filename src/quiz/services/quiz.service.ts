@@ -86,7 +86,7 @@ export class QuizService {
     const studentCourseQuizzesIds = stringifiedStudentQuizIds.filter((quizId) => stringifiedCourseQuizzes.includes(quizId));
 
     //filter the quizGrades attribute of the student to get the grades of the quizzes that are in the course
-    const studentCourseQuizGrades = studentCourseQuizzesIds.map((quizId) => student.quizGrades.get(quizId as unknown as mongoose.Schema.Types.ObjectId));
+    const studentCourseQuizGrades = studentCourseQuizzesIds.map((quizId) => student.quizGrades.get(quizId));
 
     return studentCourseQuizGrades;
 
@@ -97,16 +97,28 @@ export class QuizService {
     const studentId = req.user['sub'];
     console.log('quizId', quizId);
     const student = await this.studentModel.findById(studentId);
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    if (!student.questionsSolved) {
+      student.questionsSolved = [];
+    }
     const quiz = await this.quizModel.findById(quizId);
     if (!quiz) {
       throw new NotFoundException('Quiz not found');
     }
 
-    const questions: Question[] = quiz.questions as unknown as Question[];
+    const questions = quiz.questions;
+    let questionIds = [];
 
     for (const question of questions) {
+      questionIds = student.questionsSolved.map((questionId) => questionId.toString());
+    }
+
+
+    for (const question of questionIds) {
       // Check if the question's _id is not in the questionsSolved map
-      if (!student.questionsSolved.includes(question._id)) {
+      if (!student.questionsSolved.includes(question)) {
         return false;
       }
     }
