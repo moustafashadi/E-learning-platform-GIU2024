@@ -1,31 +1,73 @@
-// app/dashboard/page.tsx
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast"; // Optional: For toast notifications
+import axios from "axios";
+import toast from "react-hot-toast";
+import AdminDashboard from "./components/AdminDashboard";
+import InstructorDashboard from "./components/InstructorDashboard";
+import StudentDashboard from "./components/StudentDashboard";
+import Sidebar from "./components/Sidebar";
+import useAuth from "../hooks/useAuth";
 
-const DashboardPage: React.FC = () => {
+function DashboardPage() {
   const router = useRouter();
+  const [role, setRole] = useState<string | null>(null);
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    // Check if the user is logged in
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (!isLoggedIn) {
-      toast.error("You must be logged in to access the dashboard.");
+    const fetchUserRole = async () => {
+      try {
+        const response = await axios.get("/auth/me", { withCredentials: true });
+        setRole(response.data.user.role);
+      } catch (error) {
+        toast.error("You must be logged in to access the dashboard.");
+        router.push("/login");
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchUserRole();
+    } else if (!loading) {
       router.push("/login");
     }
-  }, [router]);
+  }, [isAuthenticated, loading, router]);
+
+  const renderDashboard = () => {
+    if (!role) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-gray-100">
+          <p className="text-lg font-semibold">Loading role...</p>
+        </div>
+      );
+    }
+
+    switch (role) {
+      case "admin":
+        return <AdminDashboard />;
+      case "instructor":
+        return <InstructorDashboard />;
+      case "student":
+        return <StudentDashboard />;
+      default:
+        return <div className="text-center mt-10">Invalid role</div>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <p className="text-lg font-semibold">Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-      <p className="text-lg">
-        Welcome to your dashboard! Here you can access your courses and manage your profile.
-      </p>
-      {/* Add more dashboard content here */}
+    <div className="flex">
+      {role && <Sidebar role={role} />}
+      <main className="flex-1 p-6 bg-gray-100">{renderDashboard()}</main>
     </div>
   );
-};
+}
 
 export default DashboardPage;

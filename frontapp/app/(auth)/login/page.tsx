@@ -1,4 +1,3 @@
-// app/login/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -6,42 +5,31 @@ import axios from "axios"; // Adjust the path if necessary
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast"; // Optional: For toast notifications
 
-const LoginPage: React.FC = () => {
+function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [feedback, setFeedback] = useState('');
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [feedback, setFeedback] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
     try {
       // Call the backend API for login using relative path
       const response = await axios.post("/auth/login", { email, password });
 
-      const { access_token, payload } = response.data;
-
-      // Optionally, store the token in localStorage (if needed)
-      // localStorage.setItem("access_token", access_token);
+      const payload  = response.data.user;
+      console.log("payload: ", response.data.user.sub);
 
       setFeedback(`Login successful! Welcome, ${payload.username}`);
       toast.success(`Login successful! Welcome, ${payload.username}`); // Optional: Show toast notification
-
-      // Set isLoggedIn in localStorage
-      localStorage.setItem("isLoggedIn", "true");
 
       // Redirect to dashboard after successful login
       setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
-    } catch (error: any) {
-      if (error.response) {
-        setFeedback(error.response.data.message || "Login failed. Please try again.");
-        toast.error(error.response.data.message || "Login failed. Please try again."); // Optional
-      } else {
-        setFeedback("An error occurred. Please check your connection.");
-        toast.error("An error occurred. Please check your connection."); // Optional
-      }
+    } catch (error : any ) {
+      setFeedback(error.message || "Login failed. Please try again.");
+      toast.error(error.message || "Login failed. Please try again."); // Optional
     }
   };
 
@@ -89,9 +77,8 @@ const LoginPage: React.FC = () => {
         </form>
         {feedback && (
           <p
-            className={`mt-4 text-center ${
-              feedback.toLowerCase().includes("successful") ? "text-green-600" : "text-red-600"
-            }`}
+            className={`mt-4 text-center ${feedback.toLowerCase().includes("successful") ? "text-green-600" : "text-red-600"
+              }`}
           >
             {feedback}
           </p>
@@ -99,6 +86,6 @@ const LoginPage: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default LoginPage;

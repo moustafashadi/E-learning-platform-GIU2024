@@ -8,9 +8,10 @@ import { UpdateQuestionDto } from '../dto/update-question.dto';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 import { Student, StudentDocument } from 'src/user/models/user.schema';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectModel, MongooseModule } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
+import { Types, ObjectId } from 'mongoose';
 
 
 @UseGuards(AuthenticationGuard)
@@ -63,7 +64,7 @@ export class QuestionController {
     return this.questionService.getQuestionById(id);
   }
 
-  @Post('/:id/submit')
+  @Post('/:quizId/:id/submit')
   async submitAnswer(
     @Req() req: Request,
     @Param('quizId') quizId: string,
@@ -71,6 +72,11 @@ export class QuestionController {
     @Body() { chosenAnswer }: { chosenAnswer: string },
   ) {
     const userId = req.user['sub'];
+    const student = await this.studentModel.findById(userId);
+    if (!student.questionsSolved) {
+      student.questionsSolved = [];
+    }
+    student.questionsSolved.push(questionId);
     const savedResponse = await this.responseService.evaluateResponse(userId, quizId, questionId, chosenAnswer);
 
     // After evaluation, send real-time feedback
@@ -89,12 +95,11 @@ export class QuestionController {
       const grade = (correctAnswers / totalQuestions) * 100;
 
       // Push the grade to the quizGrades attribute in the student schema
-      const student = await this.studentModel.findById(userId);
-      student.quizGrades.set(quizId as any, grade);
+      student.quizGrades.set(quizId, grade);
       await student.save();
     } else {
       // Get next question
-      const nextQuestion = await this.questionService.getNextQuestion(req, quizId); // Use 'req' instead of 'Request'
+      const nextQuestion = await this.questionService.getNextQuestion(req, quizId);
     }
 
     // Optionally return an immediate HTTP response as well
