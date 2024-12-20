@@ -52,7 +52,7 @@ function DashboardPage() {
       case "instructor":
         return <InstructorDashboard />;
       case "student":
-        return <StudentDashboard router={router} />; // Pass router correctly
+        return <StudentDashboard  />; // Pass router correctly
       default:
         return <div className="text-center mt-10">Invalid role</div>;
     }
