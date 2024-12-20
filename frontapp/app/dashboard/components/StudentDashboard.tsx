@@ -5,6 +5,7 @@ import axiosInstance from "../../_utils/axiosInstance";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { ObjectId } from "mongodb";
+import { AxiosResponse } from "axios";
 
 interface Course {
   id: string;
@@ -57,35 +58,71 @@ function StudentDashboard() {
         console.log("Course IDs:", courseIds);
 
         // Fetch details for each course
-        const coursesData = await Promise.all(
-          courseIds.map((courseId: string) =>
-            axiosInstance.get(`http://localhost:3000/courses/${courseId}`, {
-              withCredentials: true,
+        try {
+          console.log("Fetching data for Course IDs:", courseIds);
+        
+          const coursesData = await Promise.all(
+            courseIds.map(async (courseId: string) => {
+              try {
+                const response = await axiosInstance.get(`http://localhost:3000/courses/${courseId}`, {
+                  withCredentials: true,
+                });
+                console.log(`Course Data for ${courseId}:`, response.data);
+                return response;
+              } catch (err) {
+                console.error(`Error fetching course with ID ${courseId}:`, err);
+                return null; // Fallback for failed requests
+              }
             })
-          )
-        );
-
-        const formattedCourses = coursesData.map((res) => res.data);
-        console.log("Courses Data:", formattedCourses);
-
+          );
+        
+          const formattedCourses = coursesData
+          .filter((res): res is AxiosResponse => res !== null) // Remove null values
+          .map((res) => {
+            const course = res.data;
+            return {
+              id: course.id || course._id || "unknown-id", // Handle `_id` or fallback to a default
+              name: course.name || course.title || "Unnamed Course", // Handle `title` or fallback
+              progress: course.progress || 0, // Default progress to 0 if not provided
+            };
+          });
+        
+        console.log("Formatted Courses for Display:", formattedCourses);
         setCourses(formattedCourses);
-
+        } catch (error) {
+          console.error("Failed to fetch and process courses:", error);
+        }
         // Fetch quiz results for each course
-        const quizResultsData = await Promise.all(
-          courseIds.map((courseId: string) =>
-            axiosInstance.get(`/quiz/${courseId}/${userId}`, {
-              withCredentials: true,
+        try {
+          // Fetch quiz results for each course
+          const quizResultsData = await Promise.all(
+            courseIds.map(async (courseId: string) => {
+              try {
+                const response = await axiosInstance.get(`/quiz/${courseId}/${userId}`, {
+                  withCredentials: true,
+                });
+                console.log(`Quiz Results for Course ${courseId}:`, response.data);
+                return response;
+              } catch (err) {
+                console.error(`Error fetching quiz results for Course ID ${courseId}:`, err);
+                return null; // Return null for failed requests
+              }
             })
-          )
-        );
-
-        const formattedQuizResults = quizResultsData.map((res) => res.data);
-        console.log("Quiz Results:", formattedQuizResults);
-
-        setQuizResults(formattedQuizResults);
-      } catch (error) {
-        toast.error("Failed to fetch dashboard data.");
-        console.error(error);
+          );
+        
+          // Filter out null responses and format the results
+          const formattedQuizResults = quizResultsData
+            .filter((res): res is AxiosResponse => res !== null) // Remove null values
+            .map((res) => res.data);
+        
+          console.log("Formatted Quiz Results:", formattedQuizResults);
+        
+          // Update state with formatted quiz results
+          setQuizResults(formattedQuizResults);
+        } catch (error) {
+          toast.error("Failed to fetch dashboard data.");
+          console.error("Quiz Results Fetch Error:", error);
+        }
       } finally {
         setLoading(false);
       }
@@ -95,26 +132,39 @@ function StudentDashboard() {
   }, [router]);
 
   // Fetch notifications
-  useEffect(() => {
-    if (!userId) return;
 
-    const fetchNotifications = async () => {
-      try {
-        const response = await axiosInstance.get("/notifications", {
-          withCredentials: true,
-        });
+ useEffect(() => {
+  if (!userId) return;
 
-        console.log("Notifications Data:", response.data.notifications);
+  const fetchNotifications = async () => {
+    try {
+      const response = await axiosInstance.get("/notifications", {
+        withCredentials: true,
+      });
+  
+      console.log("Raw Notifications Response:", response.data);
+  
+      // Validate and map notifications
+      const formattedNotifications = response.data
+        .filter((notification: any) => notification?.message) // Ensure `message` exists
+        .map((notification: any) => ({
+          id: notification._id?.toString() || "unknown-id", // Handle `_id` or fallback to a default
+          message: notification.message || "No message available",
+          isRead: notification.isRead || false, // Add isRead for UI purposes
+        }));
+  
+      console.log("Formatted Notifications for Display:", formattedNotifications);
+  
+      setNotifications(formattedNotifications);
+    } catch (error) {
+      toast.error("Failed to fetch notifications.");
+      console.error("Error Fetching Notifications:", error);
+    }
+  };
+  
 
-        setNotifications(response.data.notifications);
-      } catch (error) {
-        toast.error("Failed to fetch notifications.");
-        console.error(error);
-      }
-    };
-
-    fetchNotifications();
-  }, [userId]);
+  fetchNotifications();
+}, [userId]);
 
   if (loading) {
     return (
