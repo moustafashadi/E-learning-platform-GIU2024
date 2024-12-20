@@ -4,21 +4,28 @@ import React, { useState } from "react";
 import axios from "axios"; // Adjust the path if necessary
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast"; // Optional: For toast notifications
+import { useDispatch } from 'react-redux';
+import { loginStart, loginSuccess, loginFailure } from '../../store/slices/authSlice';
 
-function LoginPage() {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
   const [feedback, setFeedback] = useState('');
   const router = useRouter();
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
+    dispatch(loginStart());
     try {
       // Call the backend API for login using relative path
       const response = await axios.post("/auth/login", { email, password });
 
-      const payload  = response.data.user;
+      const payload = response.data.user;
       console.log("payload: ", response.data.user.sub);
+
+      // Dispatch login success action
+      dispatch(loginSuccess(payload));
 
       setFeedback(`Login successful! Welcome, ${payload.username}`);
       toast.success(`Login successful! Welcome, ${payload.username}`); // Optional: Show toast notification
@@ -27,7 +34,8 @@ function LoginPage() {
       setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
-    } catch (error : any ) {
+    } catch (error: any) {
+      dispatch(loginFailure());
       setFeedback(error.message || "Login failed. Please try again.");
       toast.error(error.message || "Login failed. Please try again."); // Optional
     }
@@ -86,6 +94,6 @@ function LoginPage() {
       </div>
     </div>
   );
-}
+};
 
-export default LoginPage;
+export default Login;
