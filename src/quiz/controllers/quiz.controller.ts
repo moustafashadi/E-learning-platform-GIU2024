@@ -30,11 +30,12 @@ export class QuizController {
     return this.quizService.getQuiz(quizId);
   }
 
-  @Get(':courseId/:studentId')
+  @Get('/:courseId/:studentId')
   async getStudentQuizResults(
     @Param('courseId') courseId: string,
     @Param('studentId') studentId: string,
   ) {
+    console.log('courseId', courseId);
     const quizResults = await this.quizService.getStudentQuizResults(
       courseId,
       studentId,
@@ -42,21 +43,9 @@ export class QuizController {
     return quizResults;
   }
 
-  @Post('submit')
-  async submitAnswer(
-    @Param('quizId') quizId: string,
-    @Body() { userId, questionId, chosenAnswer }: { userId: string; questionId: string; chosenAnswer: string }) {
-    const savedResponse = await this.responseService.evaluateResponse(userId, quizId, questionId, chosenAnswer);
-
-    // After evaluation, send real-time feedback
-    this.responseGateway.sendResponseToClient(userId, {
-      questionId: savedResponse.questionId,
-      isCorrect: await this.questionService.isCorrect(questionId, chosenAnswer),
-      feedbackMessage: savedResponse.feedbackMessage,
-    });
-
-    // Optionally return an immediate HTTP response as well
-    return { status: 'ok' };
-  }
+@Get('/course/:courseId')
+async getQuizzesByCourseId(@Param('courseId') courseId: string) {
+  return this.quizService.getQuizzesByCourseId(courseId);
+}
 }
 

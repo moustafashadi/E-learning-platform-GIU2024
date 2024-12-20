@@ -66,12 +66,14 @@ export class UserController {
 
   //TESTED - WORKING
   @UseGuards(AuthenticationGuard)
-  @Get('/:id/enrolledCourses')
-  getEnrolledCourses(@Param('id') id: string) {
-    return this.userService.getEnrolledCourses(id);
+  @Get(':userId/enrolledCourses')
+  async getEnrolledCourses(@Param('userId') userId: string) {
+    return this.userService.getEnrolledCourses(userId);
   }
+
   //add enroll course 
   @UseGuards(AuthenticationGuard)
+  @Roles(Role.Student)
   @Post(':id/enroll/:courseId')
   async enrollCourse(
     @Param('id') userId: string,
@@ -79,4 +81,12 @@ export class UserController {
   ) {
     return await this.userService.enrollCourse(userId, courseId);
   }
+
+  //get notifications
+  @Get(':userId/notifications')
+  async getNotifications(@Param('userId') userId: string) {
+    return this.userService.getNotifications(userId);
+  }
+
+  
 }

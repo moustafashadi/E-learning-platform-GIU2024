@@ -173,33 +173,39 @@ export class UserService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
+    // Hash password if it is being updated
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
-
-    const updatedStudent = await this.studentModel
-      .findByIdAndUpdate(id, updateStudentDto, { new: true })
-      .exec();
+  
+    // Update student model
+    const updatedStudent = await this.studentModel.findByIdAndUpdate(
+      id,
+      updateUserDto, // Correct variable name
+      { new: true }  // Return the updated document
+    );
     if (updatedStudent) return updatedStudent;
-
-    else if (!updatedStudent) {
-      const updatedInstructor = await this.instructorModel
-        .findByIdAndUpdate(id, updateUserDto, { new: true })
-        .exec();
-      if (updatedInstructor) return updatedInstructor;
-      else {
-        const updatedAdmin = await this.adminModel
-          .findByIdAndUpdate(id, updateUserDto, { new: true })
-          .exec();
-        if (updatedAdmin) {
-          return updatedAdmin;
-        }
-        else {
-          throw new NotFoundException(`User with ID ${id} not found`);
-        }
-      }
-    }
+  
+    // Update instructor model
+    const updatedInstructor = await this.instructorModel.findByIdAndUpdate(
+      id,
+      updateUserDto,
+      { new: true }
+    );
+    if (updatedInstructor) return updatedInstructor;
+  
+    // Update admin model
+    const updatedAdmin = await this.adminModel.findByIdAndUpdate(
+      id,
+      updateUserDto,
+      { new: true }
+    );
+    if (updatedAdmin) return updatedAdmin;
+  
+    // Throw if no matching user is found
+    throw new NotFoundException(`User with ID ${id} not found`);
   }
+  
 
   async remove(id: string): Promise<UserDocument> {
     const deletedStudent = await this.studentModel.findByIdAndDelete(id).exec();
@@ -303,5 +309,14 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
       throw new ConflictException('Admins cannot enter chat');
     }
     return user && user.role === role.toLowerCase();
+  }
+
+  //get notifications
+  async getNotifications(userId: string) {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user.notifications;
   }
 }

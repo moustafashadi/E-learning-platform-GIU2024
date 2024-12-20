@@ -104,10 +104,14 @@ async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> 
   }
 
   async findOne(course_code: string): Promise<Course> {
-    const course = await this.courseModel.findOne({ course_code }).populate('instructor').exec();
+    const course = await this.courseModel.findOne({
+      _id: new Types.ObjectId(course_code), // Convert string to ObjectId
+    }).populate('instructor').exec();
+  
     if (!course) {
       throw new NotFoundException(`Course with code ${course_code} not found`);
     }
+  
     return course;
   }
   async findOneByCourseId(course_id: string): Promise<Course> {

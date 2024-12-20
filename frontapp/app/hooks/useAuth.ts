@@ -1,4 +1,3 @@
-// filepath: /f:/E-learning-platform-GIU2024/frontapp/app/hooks/useAuth.ts
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 

@@ -16,7 +16,7 @@ export class User {
   @Prop({ default: '' })
   profilePicUrl: string;
 
-  @Prop({enum: ['admin', 'student', 'instructor'], default: 'student' })
+  @Prop({ enum: ['admin', 'student', 'instructor'], default: 'student' })
   role: String;
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Notification' }], default: [] })
@@ -28,7 +28,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 // Admin Schema
 @Schema()
-export class Admin extends User {}
+export class Admin extends User { }
 
 export type AdminDocument = Admin & Document;
 export const AdminSchema = SchemaFactory.createForClass(Admin);
@@ -44,12 +44,12 @@ export class Student extends User {
   completedCourses: MongooseSchema.Types.ObjectId[]; // List of course IDs the student completed
 
   //map that stores completed quizzes along with their grades
-  @Prop({ type: Map,of: Types.ObjectId, default: {} })
-  quizGrades: Map<MongooseSchema.Types.ObjectId, Number>;
+  @Prop({ type: Map, of: Number, default: {} })
+  quizGrades: Map<string, number>;
 
   //map that stores questions solved by the student
-  @Prop({ type: Map,of: Types.ObjectId, default: {} })
-  questionsSolved: Map<MongooseSchema.Types.ObjectId, Boolean>;
+  @Prop({ type: [String], default: [] })
+  questionsSolved: string[];
 }
 
 export type StudentDocument = Student & Document;

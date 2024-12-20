@@ -1,12 +1,10 @@
+"use client";
 // app/layout.tsx
+import Providers from './providers';
 import Navbar from './components/NavBar';
-import Footer from './components/Footer'; // Import the Footer component
-import './globals.css'; // Import global styles
+import Footer from './components/Footer';
+import './globals.css';
 
-export const metadata = {
-  title: 'My E-Learning Platform',
-  description: 'An e-learning platform',
-};
 
 export default function RootLayout({
   children,
@@ -16,9 +14,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Navbar />
-        {children}
-        <Footer /> {/* Add the Footer here */}
+        <Providers>
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

@@ -7,7 +7,7 @@ import { AuthenticationGuard } from "src/auth/guards/authentication.guard";
 import path from "path";
 
 @UseGuards(AuthenticationGuard)
-@Controller("notification")
+@Controller("notifications")
 export class NotificationController {
     constructor(private readonly notificationService: NotificationService) { }
 
