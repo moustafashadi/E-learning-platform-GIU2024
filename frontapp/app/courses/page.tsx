@@ -6,6 +6,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import StudentCourses from "./components/StudentCourses"; // Import the StudentCourses component
 import useAuth from "../hooks/useAuth";
+import InstructorCourses from "./components/InstructorCourses";
 
 function CoursePage() {
   const router = useRouter();
@@ -47,7 +48,8 @@ function CoursePage() {
       case "admin":
         return <div>Admin Dashboard</div>;
       case "instructor":
-        return <div>Instructor Dashboard</div>;
+        return <InstructorCourses />; // Render StudentCourses component for students
+
       case "student":
         return <StudentCourses />; // Render StudentCourses component for students
       default:
