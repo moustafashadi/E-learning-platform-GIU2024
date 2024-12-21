@@ -23,16 +23,17 @@ interface Course {
 function InstructorCourses() {
   const [teachingCourses, setTeachingCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null); // To store the instructor's userId
-  const [viewingCourseId, setViewingCourseId] = useState<string | null>(null); // Track the course being viewed
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null); // Track course being edited
-  const [creatingCourse, setCreatingCourse] = useState<boolean>(false); // Track if the instructor is creating a new course
+  const [userId, setUserId] = useState<string | null>(null);
+  const [viewingCourseId, setViewingCourseId] = useState<string | null>(null);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [creatingCourse, setCreatingCourse] = useState<boolean>(false);
   const [formValues, setFormValues] = useState({
     title: "",
     description: "",
     category: "",
     difficulty: "",
   });
+  const [showAllCourses, setShowAllCourses] = useState(false);
 
   const dispatch = useDispatch();
   const router = useRouter();
@@ -42,7 +43,7 @@ function InstructorCourses() {
     const fetchCourses = async () => {
       try {
         const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
-        setUserId(authData.id); // Set the user ID using the 'sub' field
+        setUserId(authData.id);
 
         const response = await axios.get(`http://localhost:3000/courses/teacher/${authData.id}`, {
           withCredentials: true,
@@ -50,7 +51,7 @@ function InstructorCourses() {
         setTeachingCourses(response.data);
       } catch (error) {
         toast.error("Failed to fetch courses. Please try again.");
-        console.error(error); // Log the error for debugging
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -60,11 +61,15 @@ function InstructorCourses() {
   }, []);
 
   const toggleCourseDetails = (courseId: string) => {
-    setViewingCourseId(courseId); // Set the course ID for viewing
+    if (viewingCourseId === courseId) {
+      setViewingCourseId(null); // Hide course details if already viewing
+    } else {
+      setViewingCourseId(courseId); // Show the course details
+    }
   };
 
   const handleEditClick = (course: Course) => {
-    setEditingCourse(course); // Set the course to be edited
+    setEditingCourse(course);
     setFormValues({
       title: course.title,
       description: course.description,
@@ -74,7 +79,7 @@ function InstructorCourses() {
   };
 
   const handleCreateClick = () => {
-    setCreatingCourse(true); // Show the create course form
+    setCreatingCourse(true);
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -108,7 +113,7 @@ function InstructorCourses() {
           course._id === editingCourse._id ? updatedCourse : course
         )
       );
-      setEditingCourse(null); // Close the editing form
+      setEditingCourse(null);
     } catch (error) {
       toast.error("Failed to update the course.");
       console.error(error);
@@ -122,38 +127,32 @@ function InstructorCourses() {
         description: formValues.description,
         category: formValues.category,
         difficulty: formValues.difficulty,
-        instructor: userId, // Ensure this is correct
-        // Generate a course_code or handle it backend-side
-        course_code: `C-${Math.random().toString(36).substring(2, 7).toUpperCase()}`, // Random example
-        numberofQuizzes: 0, // Default value if you don't capture quiz count
+        instructor: userId,
+        course_code: `C-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+        numberofQuizzes: 0,
       };
-  
-      console.log("Creating course with data:", newCourse); // Log the data for debugging
-  
+
       const response = await axios.post("http://localhost:3000/courses", newCourse, {
         withCredentials: true,
       });
-  
+
       toast.success("Course created successfully!");
-  
-      // Add the new course to the list
+
       setTeachingCourses((prevCourses) => [...prevCourses, response.data]);
-  
-      // Reset the form
+
       setFormValues({
         title: "",
         description: "",
         category: "",
         difficulty: "",
       });
-  
-      setCreatingCourse(false); // Close the create course form
+
+      setCreatingCourse(false);
     } catch (error) {
       toast.error("Failed to create the course.");
       console.error(error);
     }
   };
-  
 
   if (loading) {
     return (
@@ -167,8 +166,16 @@ function InstructorCourses() {
     <div className="mt-[2rem] p-6 space-y-6 bg-gray-100">
       <section>
         <h2 className="text-2xl font-bold mb-4">Your Courses</h2>
-        {teachingCourses.length > 0 ? (
-          <ul className="space-y-4">
+
+        <button
+          onClick={() => setShowAllCourses(!showAllCourses)}
+          className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
+        >
+          {showAllCourses ? "Hide Courses" : "View All Courses"}
+        </button>
+
+        {showAllCourses && (
+          <ul className="space-y-4 mt-4">
             {teachingCourses.map((course) => (
               <li key={course._id} className="p-4 bg-white rounded shadow-md border border-gray-200">
                 <div className="flex justify-between items-center">
@@ -181,24 +188,37 @@ function InstructorCourses() {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => toggleCourseDetails(course._id)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                    >
-                      View Course
-                    </button>
-                    <button
                       onClick={() => handleEditClick(course)}
                       className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                     >
                       Edit Course
                     </button>
+                    <button
+                      onClick={() => toggleCourseDetails(course._id)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    >
+                      {viewingCourseId === course._id ? "Hide Details" : "View Details"}
+                    </button>
                   </div>
                 </div>
+
+                {/* Display course details if viewingCourseId matches the course */}
+                {viewingCourseId === course._id && (
+                  <div className="mt-4 bg-gray-100 p-4 rounded-md shadow-md">
+                    <h4 className="text-lg font-semibold">Course Details</h4>
+                    <p><strong>Title:</strong> {course.title}</p>
+                    <p><strong>Description:</strong> {course.description}</p>
+                    <p><strong>Category:</strong> {course.category}</p>
+                    <p><strong>Difficulty:</strong> {course.difficulty}</p>
+                    <p><strong>Instructor:</strong> {course.instructor}</p>
+                    <p><strong>Resources:</strong> {course.resources.join(", ")}</p>
+                    <p><strong>Quizzes:</strong> {course.quizzes.join(", ")}</p>
+                    <p><strong>Students:</strong> {course.students.length} students</p>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="text-gray-500">You are not teaching any courses yet.</p>
         )}
       </section>
 
@@ -255,9 +275,9 @@ function InstructorCourses() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-600"
               >
                 <option value="">Select Difficulty</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
               </select>
             </div>
 
@@ -267,69 +287,6 @@ function InstructorCourses() {
               className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
             >
               Create Course
-            </button>
-          </form>
-        </div>
-      )}
-
-      {editingCourse && (
-        <div className="mt-6 p-4 bg-white rounded shadow-md border border-gray-200">
-          <h3 className="text-xl font-semibold mb-4">Edit Course</h3>
-          <form>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                type="text"
-                name="title"
-                value={formValues.title}
-                onChange={handleFormChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <input
-                type="text"
-                name="description"
-                value={formValues.description}
-                onChange={handleFormChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Category</label>
-              <input
-                type="text"
-                name="category"
-                value={formValues.category}
-                onChange={handleFormChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Difficulty</label>
-              <select
-                name="difficulty"
-                value={formValues.difficulty}
-                onChange={handleFormChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-              >
-                <option value="">Select Difficulty</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-              </select>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSaveChanges}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Save Changes
             </button>
           </form>
         </div>
