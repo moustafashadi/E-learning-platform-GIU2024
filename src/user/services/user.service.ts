@@ -130,7 +130,7 @@ export class UserService {
     const students = await this.studentModel.find().exec();
     const instructors = await this.instructorModel.find().exec();
     const admins = await this.adminModel.find().exec();
-    return [...students, ...instructors, ...admins]
+    return [...students, ...instructors, ...admins];
   }
 
   async findOne(id: string): Promise<UserDocument> {
