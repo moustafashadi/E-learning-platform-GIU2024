@@ -17,17 +17,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from './auth/auth.module';
 import { CourseModule } from './course/course.module';
 import { QuizModule } from './quiz/quiz.module';
-import { ChatGateway } from './communication/chat/chat.gateway';
-import { MessageService } from './communication/messages/message.service';
-import { AuthService } from './auth/auth.service';
-import { MessageSchema } from './communication/messages/message.schema';
+import { ChatGateway } from './chat/chat.gateway';
+
 dotenv.config();
 
 @Module({
-  imports:
-   [MongooseModule.forFeature([{name:'Message',schema:MessageSchema}]),
-    MongooseModule.forRoot(process.env.MONGO_URI),
-       UserModule, AnalyticsModule, NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule, AuthModule,
+  imports: [MongooseModule.forRoot(process.env.MONGO_URI),
+       UserModule, AnalyticsModule,  NotesModule, ProgressModule,  ResponsesModule, ModulesModule, CommunicationModule, AuthModule,
        CourseModule, QuizModule,
        JwtModule.register({
         secret: process.env.JWT_SECRET,
@@ -39,10 +35,6 @@ dotenv.config();
     AuthenticationGuard,
     AuthorizationGuard,
     ChatGateway,
-    MessageService,
-    AuthService
-    
-
   ],
 })
 export class AppModule {}
