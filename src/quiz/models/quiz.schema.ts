@@ -7,6 +7,10 @@ import { Types } from 'mongoose';
 
 @Schema({ timestamps: true }) //date4creation und updates
 export class Quiz {
+  //title
+  @Prop({ required: true })
+  title: string;
+
   @Prop({type: {type: MongooseSchema.Types.ObjectId, ref: 'Module'} })
   module_id: MongooseSchema.Types.ObjectId; 
 

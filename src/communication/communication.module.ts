@@ -26,6 +26,8 @@ import { QuizService } from 'src/quiz/services/quiz.service';
 import { QuizSchema } from 'src/quiz/models/quiz.schema';
 import { Question } from 'src/quiz/models/question.schema';
 import { QuestionService } from 'src/quiz/services/question.service';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { ProgressSchema } from 'src/progress/models/progress.schema';
 
 @Module({
 
@@ -41,6 +43,8 @@ import { QuestionService } from 'src/quiz/services/question.service';
     MongooseModule.forFeature([{ name: 'Student', schema: StudentSchema }]),
     MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
     MongooseModule.forFeature([{ name: 'Question', schema: Question }]),
+    MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
+
         UserModule, JwtModule.register({
             secret: process.env.JWT_SECRET,
             signOptions: { expiresIn: '1d' },
@@ -49,7 +53,7 @@ import { QuestionService } from 'src/quiz/services/question.service';
         timeout: 5000,
     }),],
     controllers: [ChatController, NotificationController, MessageController, ForumController],
-    providers: [ChatService, NotificationService, ChatGateway, MessageService, ForumServices, CourseService, JwtService, AuthService, QuizService, QuestionService],
+    providers: [ChatService, NotificationService, ChatGateway, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
 })
 
 export class CommunicationModule { }

@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsNotEmpty, IsMongoId } from 'class-validator';
+import { IsString, IsEnum, IsNotEmpty, IsMongoId, IsNumber } from 'class-validator';
 import { Schema } from 'mongoose';
 
 export class CreateCourseDto {
@@ -9,6 +9,11 @@ export class CreateCourseDto {
   @IsString()
   @IsNotEmpty()
   title: string;
+
+  //NUMBER OF QUIZZES
+  @IsNotEmpty()
+  @IsNumber()
+  numOfQuizzes: number;
 
   @IsString()
   @IsNotEmpty()
