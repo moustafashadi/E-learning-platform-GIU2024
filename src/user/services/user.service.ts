@@ -242,15 +242,21 @@ export class UserService {
     }
   }
 
-  async getEnrolledCourses(userId: string) {
-    const student = await this.studentModel.findById(userId).exec();
 
-    if (!student) {
-      throw new NotFoundException('Student not found');
-    }
+async getEnrolledCourses(userId: string): Promise<Course[]> {
+  // Fetch the student by ID, and populate the enrolledCourses field
+  const student = await this.studentModel
+    .findById(userId)
+    .populate<{ enrolledCourses: Course[] }>('enrolledCourses') 
+    .exec();
 
-    return student.enrolledCourses;
+  if (!student) {
+    throw new NotFoundException(`Student with id ${userId} not found`);
   }
+
+  // Return the populated courses (enrolledCourses is now of type Course[])
+  return student.enrolledCourses; 
+}
 
   async getCompletedCourses(userId: string) {
     try {

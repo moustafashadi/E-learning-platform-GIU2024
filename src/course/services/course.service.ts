@@ -114,6 +114,15 @@ async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> 
   
     return course;
   }
+  async findOneByCourseId(course_id: string): Promise<Course> {
+    const course = await this.courseModel.findById(course_id).populate('instructor').exec();
+    
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${course_id} not found`);
+    }
+  
+    return course;
+  }
 
   async update(course_code: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
     const updatedCourse = await this.courseModel
