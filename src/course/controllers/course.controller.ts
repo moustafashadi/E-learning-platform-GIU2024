@@ -22,7 +22,7 @@ import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { Express } from 'express';
+import { Express, Request } from 'express';
 import { Response } from 'express';
 import { Module } from '@nestjs/common';
 import { Course } from '../models/course.schema';
@@ -37,10 +37,11 @@ export class CourseController {
 
   @Roles(Role.Instructor)
   @Post()
-  async create(@Body() createCourseDto: CreateCourseDto) {
+  async create(@Req() req: Request,
+   @Body() { course_code, title, description, category, difficulty }: { course_code: string, title: string, description: string, category: string, difficulty: string }) {
     console.log("createCourseDto");
 
-    return await this.courseService.create(createCourseDto);
+    return await this.courseService.create(req, { course_code, title, description, category, difficulty });
   }
 
   @Get()
@@ -53,7 +54,7 @@ export class CourseController {
     return await this.courseService.findOne(course_code);
   }
 
-  @Get('/by-id/:course_id')
+  @Get('/:course_id')
   async findOneByCourseId(@Param('course_id') course_id: string) {
     return await this.courseService.findOneByCourseId(course_id);
   }
@@ -67,7 +68,7 @@ export class CourseController {
 
 
   @Delete('/:id')
-  async delete(@Param('course_code') id: string) {
+  async delete(@Param('id') id: string) {
     return await this.courseService.delete(id);
   }
 

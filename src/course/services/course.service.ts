@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException, InternalServerErrorException, Req } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from '../models/course.schema';
@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Quiz } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
+import { Request } from 'express';
 
 
 @Injectable()
@@ -93,15 +94,21 @@ export class CourseService {
     return course.students;
   }
 
-  async create(createCourseDto: CreateCourseDto): Promise<Course> {
+  async create(@Req() req : Request, {course_code, title, description, category, difficulty }): Promise<Course> {
     try {
       const course = new this.courseModel({
-        ...createCourseDto,
-        instructor: createCourseDto.instructor
+        course_code: course_code,
+        title,
+        description,
+        category,
+        difficulty,
+        instructor: req.user['sub'],
       });
       //update the instructor's courses taught
-      const instructor = await this.instructorModel.findById(createCourseDto.instructor);
-      instructor.coursesTaught.push(course._id as any);
+      
+      const instructor = await this.instructorModel.findById(course.instructor);
+      instructor.coursesTaught.push(course._id as unknown as mongoose.ObjectId);
+      await instructor.save();
       return await course.save();
     } catch (error) {
       throw new BadRequestException('Invalid course data');
@@ -167,8 +174,5 @@ export class CourseService {
   async searchCoursesByDifficulty(difficulty: string): Promise<Course[]> {
     return await this.courseModel.find({ difficulty }).exec();
   }
-
-
-
 
 }
