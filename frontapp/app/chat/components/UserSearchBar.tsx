@@ -12,7 +12,7 @@ const UserSearchBar: React.FC<{ onUserSelect: (userId: string) => void; courseId
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("/api/users");
+        const response = await axios.get("http://localhost:3000/users/");
         console.log("Fetched users:", response.data); // Log the fetched users
         setUsers(response.data);
       } catch (error) {
