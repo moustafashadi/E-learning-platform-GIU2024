@@ -51,10 +51,10 @@ function Notes() {
         {notes.map((note: any) => (
           <li
             key={note._id}
-            className="p-4 bg-gray-800 text-white rounded shadow"
+            className="p-4 bg-blue-800 text-white rounded shadow"
           >
             <p>{note.content}</p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-blue-400">
               Last Updated: {new Date(note.last_updated).toLocaleString()}
             </p>
           </li>
