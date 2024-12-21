@@ -95,12 +95,13 @@ export class CourseService {
     return course.students;
   }
 
-  async create(@Req() req : Request, {course_code, title, description, category, difficulty }): Promise<Course> {
+  async create(@Req() req : Request, {course_code, title, description, numberofQuizzes, category, difficulty }): Promise<Course> {
     try {
       const course = new this.courseModel({
         course_code: course_code,
         title,
         description,
+        numOfQuizzes: numberofQuizzes,
         category,
         difficulty,
         instructor: req.user['sub'],
@@ -141,13 +142,23 @@ export class CourseService {
     return course;
   }
 
-  async update(course_code: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
+  async update(id : string, updateCourseDto: UpdateCourseDto): Promise<Course> {
+    const course = await this.courseModel.findById(id).exec();
+
+    if(updateCourseDto.instructor ! == course.instructor){
+      throw new UnauthorizedException('You are not authorized to update this course');
+    }
+
+    if(updateCourseDto.numOfQuizzes < course.numOfQuizzes){
+      throw new BadRequestException('Number of quizzes cannot be decreased');
+    }
+
     const updatedCourse = await this.courseModel
-      .findOneAndUpdate({ course_code }, updateCourseDto, { new: true })
+      .findOneAndUpdate({ id }, updateCourseDto, { new: true })
       .populate('instructor')
       .exec();
     if (!updatedCourse) {
-      throw new NotFoundException(`Course with code ${course_code} not found`);
+      throw new NotFoundException(`Course with id ${id} not found`);
     }
     return updatedCourse;
   }

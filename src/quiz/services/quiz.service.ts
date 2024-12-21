@@ -4,16 +4,18 @@ import mongoose, { Model, ObjectId, Types } from 'mongoose';
 import { Quiz } from '../models/quiz.schema';
 import { Instructor, Student } from '../../user/models/user.schema';
 import { Course } from '../../course/models/course.schema';
-import { NotFoundException, ConflictException, Inject, Req, BadRequestException } from '@nestjs/common';
+import { NotFoundException, ConflictException, Inject, Req, BadRequestException, Body } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import { Request } from 'express';
 import { Question } from '../models/question.schema';
+import { ProgressService } from 'src/progress/services/progress.service';
 
 
 @Injectable()
 export class QuizService {
   constructor(
     private questionService: QuestionService,
+    private progressService: ProgressService,
     @InjectModel(Instructor.name) private readonly instructorModel: Model<Instructor>,
     @InjectModel(Course.name) private readonly courseModel: Model<Course>,
     @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
@@ -21,10 +23,17 @@ export class QuizService {
   ) { }
 
   //TESTED - WORKING
-  async createQuiz(userId: string, courseId: string) {
+  async createQuiz(@Body() title : string, userId: string, courseId: string) {
+
     const instructor = await this.instructorModel.findById(userId);
     const instructorId = instructor._id.toString();
+
     const course = await this.courseModel.findById(courseId);
+
+    if (course.quizzes.length == course.numOfQuizzes){
+      throw new BadRequestException('The number of quizzes for this course has been reached, update the course to add more quizzes');
+    }
+
     if (!instructor || !course) {
       throw new NotFoundException('Instructor or course not found');
     }
@@ -33,6 +42,7 @@ export class QuizService {
     }
 
     const quiz = {
+      title: title,
       course: new Types.ObjectId(courseId),
       questions: [],
     };
@@ -94,6 +104,7 @@ export class QuizService {
 
   //check if all questions in the array of questions are solved, if so then return true
   async checkIfAllQuestionsSolved(req: Request, quizId: string): Promise<boolean> {
+
     const studentId = req.user['sub'];
     console.log('quizId', quizId);
     const student = await this.studentModel.findById(studentId);
@@ -115,13 +126,13 @@ export class QuizService {
       questionIds = student.questionsSolved.map((questionId) => questionId.toString());
     }
 
-
     for (const question of questionIds) {
       // Check if the question's _id is not in the questionsSolved map
       if (!student.questionsSolved.includes(question)) {
         return false;
       }
     }
+    await this.progressService.updateProgress(studentId, quizId);
     return true;
   }
 

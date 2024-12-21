@@ -38,10 +38,10 @@ export class CourseController {
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
-    @Body() { course_code, title, description, category, difficulty }: { course_code: string, title: string, description: string, category: string, difficulty: string }) {
+    @Body() { course_code, title, description, numberofQuizzes, category, difficulty }: { course_code: string, title: string, description: string, numberofQuizzes: Number, category: string, difficulty: string }) {
     console.log("createCourseDto");
 
-    return await this.courseService.create(req, { course_code, title, description, category, difficulty });
+    return await this.courseService.create(req, { course_code, title, description, numberofQuizzes, category, difficulty });
   }
 
   @Get()
@@ -59,14 +59,14 @@ export class CourseController {
   async findOneByCourseId(@Param('course_id') course_id: string) {
     return await this.courseService.findOneByCourseId(course_id);
   }
-  @Patch('/:course_code')
+
+  @Patch('/:id')
   async update(
-    @Param('course_code') course_code: string,
+    @Param('id') id: string,
     @Body() updateCourseDto: UpdateCourseDto,
   ) {
-    return await this.courseService.update(course_code, updateCourseDto);
+    return await this.courseService.update(id, updateCourseDto);
   }
-
 
   @Delete('/:id')
   async delete(@Param('id') id: string) {

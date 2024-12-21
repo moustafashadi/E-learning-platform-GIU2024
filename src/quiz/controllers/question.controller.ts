@@ -1,5 +1,5 @@
-import { Get, Body, Controller, Param, Post, Put, UseGuards, Delete, Req, UsePipes, ValidationPipe } from '@nestjs/common'; // Add this import statement
-import { Request } from 'express'; // Add this import statement
+import { Get, Body, Controller, Param, Post, Put, UseGuards, Delete, Req, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Request } from 'express';
 import { QuestionService } from '../services/question.service';
 import { ResponseGateway } from 'src/response/gateway/response.gateway';
 import { ResponseService } from 'src/response/services/response.service';
@@ -8,12 +8,9 @@ import { UpdateQuestionDto } from '../dto/update-question.dto';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 import { Student, StudentDocument } from 'src/user/models/user.schema';
-import { InjectModel, MongooseModule } from '@nestjs/mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
-import { Types, ObjectId } from 'mongoose';
-import { QuizDocument } from '../models/quiz.schema';
-
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:quizId')
@@ -24,10 +21,8 @@ export class QuestionController {
     private readonly quizService: QuizService,
     private readonly responseService: ResponseService,
     @InjectModel(Student.name) private readonly studentModel: Model<StudentDocument>,
-    @InjectModel('Quiz') private readonly quizModal: Model<QuizDocument>,
-  ) { }
+  ) {}
 
-  //TESTED-WORKING
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post('/createQuestion')
@@ -38,7 +33,6 @@ export class QuestionController {
     return this.questionService.createQuestion(quizId, content, correctAnswer, difficulty);
   }
 
-  //TESTED-WORKING
   @Get('/questions')
   async getQuestions(@Param('quizId') quizId: string) {
     return this.questionService.getQuestions(quizId);
@@ -81,7 +75,7 @@ export class QuestionController {
     if (!student.questionsSolved) {
       student.questionsSolved = [];
     }
-    const quizId = await this.quizModal.findById(question.quiz);
+    const quizId = await this.quizService.getQuiz(question.quiz.toString());
     const parsedQuizId = quizId._id.toString();
 
     student.questionsSolved.push(questionId);
