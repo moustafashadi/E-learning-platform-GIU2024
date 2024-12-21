@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import useAuth from "./hooks/useAuth";
-import Footer from "./Chat/components/Footer";
+import Footer from "./components/Footer";
 
 function HomePage() {
   const { isAuthenticated, loading } = useAuth();
