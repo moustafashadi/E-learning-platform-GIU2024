@@ -27,5 +27,6 @@ import { QuestionController } from './controllers/question.controller';
      })],
   controllers: [QuizController, QuestionController],
   providers: [QuizService, ResponseService, ResponseGateway, QuestionService],
+  exports: [QuizService],
 })
 export class QuizModule {}

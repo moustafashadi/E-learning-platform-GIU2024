@@ -22,28 +22,34 @@ import { ThreadSchema } from './forum/Thread.schema';
 import { HttpService } from '@nestjs/axios';
 import { HttpModule } from '@nestjs/axios';
 import { AuthService } from 'src/auth/auth.service';
+import { QuizService } from 'src/quiz/services/quiz.service';
+import { QuizSchema } from 'src/quiz/models/quiz.schema';
+import { Question } from 'src/quiz/models/question.schema';
+import { QuestionService } from 'src/quiz/services/question.service';
 
 @Module({
-    
+
     imports: [MongooseModule.forFeature([{ name: 'Chat', schema: ChatSchema }]),
-              MongooseModule.forFeature([{ name: 'Forum', schema: ForumSchema }]),
-              MongooseModule.forFeature([{ name: 'Notification', schema: NotificationSchema }]),
-              MongooseModule.forFeature([{ name: 'Message', schema: MessageSchema }]),
-              MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),
-              MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
-              MongooseModule.forFeature([{ name: 'Instructor', schema: InstructorSchema }]),
-              MongooseModule.forFeature([{ name: 'Thread', schema: ThreadSchema }]),
-              MongooseModule.forFeature([{ name: 'Instructor', schema: InstructorSchema }]),
-              MongooseModule.forFeature([{ name: 'Student', schema: StudentSchema }]),
-            UserModule, JwtModule.register({
-                secret: process.env.JWT_SECRET,
-                signOptions: { expiresIn: '1d' },
-            }),
-        HttpModule.register({
-            timeout: 5000,
-        }),], 
-    controllers: [ChatController,NotificationController,MessageController,ForumController],
-    providers: [ChatService,NotificationService,ChatGateway,MessageService,ForumServices,CourseService, JwtService,AuthService],
+    MongooseModule.forFeature([{ name: 'Forum', schema: ForumSchema }]),
+    MongooseModule.forFeature([{ name: 'Notification', schema: NotificationSchema }]),
+    MongooseModule.forFeature([{ name: 'Message', schema: MessageSchema }]),
+    MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),
+    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: 'Instructor', schema: InstructorSchema }]),
+    MongooseModule.forFeature([{ name: 'Thread', schema: ThreadSchema }]),
+    MongooseModule.forFeature([{ name: 'Instructor', schema: InstructorSchema }]),
+    MongooseModule.forFeature([{ name: 'Student', schema: StudentSchema }]),
+    MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
+    MongooseModule.forFeature([{ name: 'Question', schema: Question }]),
+        UserModule, JwtModule.register({
+            secret: process.env.JWT_SECRET,
+            signOptions: { expiresIn: '1d' },
+        }),
+    HttpModule.register({
+        timeout: 5000,
+    }),],
+    controllers: [ChatController, NotificationController, MessageController, ForumController],
+    providers: [ChatService, NotificationService, ChatGateway, MessageService, ForumServices, CourseService, JwtService, AuthService, QuizService, QuestionService],
 })
-    
-export class CommunicationModule {}
+
+export class CommunicationModule { }
