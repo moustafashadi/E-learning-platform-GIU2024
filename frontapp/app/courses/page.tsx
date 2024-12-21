@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import StudentCourses from "./components/StudentCourses"; // Import the StudentCourses component
-import ViewCourseStudent from "./components/views/ViewCourseStudent";
+
 import useAuth from "../hooks/useAuth"; // Assume this hook handles authentication
 import InstructorCourses from "./components/InstructorCourses";
-import Notes from "./components/notes";
+import Notes from "./view/notes";
 
 function CoursePage() {
   const router = useRouter();
@@ -52,7 +52,7 @@ function CoursePage() {
          case "instructor":
         return <InstructorCourses />; // Render InstructorDashboard for instructors
       case "student":
-        return <Notes courseId="6754db31db6aad83cdf3b836"/>; // Render StudentCourses for students
+        return <StudentCourses/>; // Render StudentCourses for students
       default:
         return <div className="text-center mt-10">Invalid role</div>;
     }

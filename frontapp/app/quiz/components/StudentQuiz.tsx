@@ -64,7 +64,7 @@ function StudentQuiz() {
         const quizzesByCourse: { [courseId: string]: Quiz[] } = {};
         for (const course of formattedCourses) {
           try {
-            const quizResponse = await axiosInstance.get(`${course.id}/quizzes`, {
+            const quizResponse = await axiosInstance.get(`/courses/${course.id}/quizzes`, {
               withCredentials: true,
             });
             quizzesByCourse[course.id] = quizResponse.data.map((quiz: any) => ({
