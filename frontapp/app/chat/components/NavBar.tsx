@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../store";
-import { logout } from "../store/slices/authSlice";
+import { RootState } from "../../store";
+import { logout } from "../../store/slices/authSlice";
 import axios from "axios";
 
 const Navbar = () => {

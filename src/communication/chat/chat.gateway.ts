@@ -44,12 +44,10 @@ import {
   
     @SubscribeMessage('message')
     async handleMessage(client: Socket, createMessageDto: CreateMessageDto) {
-      console.log(
-        `Client ${client.id} sended message: ${createMessageDto.message} to chat: ${createMessageDto.chat}`,
-      );
+      console.log(`Client ${client.id} sent message: ${createMessageDto.message}`);
       const message = await this.messageService.createMessage(createMessageDto);
       client.emit('message', message);
-      client.to(message.chat.toString()).emit('message', message);
+      client.to(createMessageDto.chat.toString()).emit('message', message);
     }
   
     @SubscribeMessage('isTyping')
