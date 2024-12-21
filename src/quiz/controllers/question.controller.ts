@@ -12,6 +12,7 @@ import { InjectModel, MongooseModule } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { Types, ObjectId } from 'mongoose';
+import { QuizDocument } from '../models/quiz.schema';
 
 
 @UseGuards(AuthenticationGuard)
@@ -23,6 +24,7 @@ export class QuestionController {
     private readonly quizService: QuizService,
     private readonly responseService: ResponseService,
     @InjectModel(Student.name) private readonly studentModel: Model<StudentDocument>,
+    @InjectModel('Quiz') private readonly quizModal: Model<QuizDocument>,
   ) { }
 
   //TESTED-WORKING
@@ -66,20 +68,24 @@ export class QuestionController {
 
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Student)
-  @Post('/:quizId/:id/submit')
+  @Post('/:id/submit')
   async submitAnswer(
     @Req() req: Request,
-    @Param('quizId') quizId: string,
     @Param('id') questionId: string,
     @Body() { chosenAnswer }: { chosenAnswer: string },
   ) {
+    const question = await this.questionService.getQuestionById(questionId);
+
     const userId = req.user['sub'];
     const student = await this.studentModel.findById(userId);
     if (!student.questionsSolved) {
       student.questionsSolved = [];
     }
+    const quizId = await this.quizModal.findById(question.quiz);
+    const parsedQuizId = quizId._id.toString();
+
     student.questionsSolved.push(questionId);
-    const savedResponse = await this.responseService.evaluateResponse(userId, quizId, questionId, chosenAnswer);
+    const savedResponse = await this.responseService.evaluateResponse(userId, parsedQuizId, questionId, chosenAnswer);
 
     // After evaluation, send real-time feedback
     this.responseGateway.sendResponseToClient(userId, {
@@ -88,20 +94,20 @@ export class QuestionController {
       feedbackMessage: savedResponse.feedbackMessage,
     });
 
-    const quizDone = await this.quizService.checkIfAllQuestionsSolved(req, quizId);
+    const quizDone = await this.quizService.checkIfAllQuestionsSolved(req, parsedQuizId);
     if (quizDone) {
       // Calculate the grade
-      const responses = await this.responseService.getResponsesForQuiz(userId, quizId);
+      const responses = await this.responseService.getResponsesForQuiz(userId, parsedQuizId);
       const correctAnswers = responses.filter(response => response.isCorrect).length;
       const totalQuestions = responses.length;
       const grade = (correctAnswers / totalQuestions) * 100;
 
       // Push the grade to the quizGrades attribute in the student schema
-      student.quizGrades.set(quizId, grade);
+      student.quizGrades.set(parsedQuizId, grade);
       await student.save();
     } else {
       // Get next question
-      const nextQuestion = await this.questionService.getNextQuestion(req, quizId);
+      const nextQuestion = await this.questionService.getNextQuestion(req, parsedQuizId);
     }
 
     // Optionally return an immediate HTTP response as well
