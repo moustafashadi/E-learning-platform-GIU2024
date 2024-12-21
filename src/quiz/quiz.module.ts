@@ -12,6 +12,8 @@ import { QuestionService } from './services/question.service';
 import { CourseSchema } from 'src/course/models/course.schema';
 import { InstructorSchema, StudentSchema } from 'src/user/models/user.schema';
 import { QuestionController } from './controllers/question.controller';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { ProgressSchema } from 'src/progress/models/progress.schema';
 
 @Module({
   imports: [
@@ -21,12 +23,13 @@ import { QuestionController } from './controllers/question.controller';
     MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
     MongooseModule.forFeature([{ name: 'Response', schema: ResponseSchema }]),
     MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),
+    MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
      })],
   controllers: [QuizController, QuestionController],
-  providers: [QuizService, ResponseService, ResponseGateway, QuestionService],
+  providers: [QuizService, ResponseService, ResponseGateway, QuestionService, ProgressService],
   exports: [QuizService],
 })
 export class QuizModule {}

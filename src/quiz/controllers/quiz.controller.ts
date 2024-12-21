@@ -16,9 +16,10 @@ export class QuizController {
   @UseGuards(AuthenticationGuard)
   @Post('/:courseId')
   async createQuiz(
+    @Body() title: string,
     @Req() req,
     @Param('courseId') courseId: string,) {
-    return await this.quizService.createQuiz(req.user.sub, courseId);
+    return await this.quizService.createQuiz(title, req.user.sub, courseId);
   }
 
   //getQuiz by id
@@ -38,11 +39,6 @@ export class QuizController {
       studentId,
     );
     return quizResults;
-  }
-
-  @Get('/course/:courseId')
-  async getQuizzesByCourseId(@Param('courseId') courseId: string) {
-    return this.quizService.getQuizzesByCourseId(courseId);
   }
 
   @UseGuards(AuthorizationGuard)

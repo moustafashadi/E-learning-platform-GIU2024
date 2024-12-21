@@ -8,6 +8,8 @@ import { CourseSchema } from 'src/course/models/course.schema';
 import { QuizSchema } from 'src/quiz/models/quiz.schema';
 import { QuestionService } from 'src/quiz/services/question.service';
 import { QuestionSchema } from 'src/quiz/models/question.schema';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { ProgressSchema } from 'src/progress/models/progress.schema';
 
 @Module({
     imports: [
@@ -18,8 +20,9 @@ import { QuestionSchema } from 'src/quiz/models/question.schema';
       MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
       MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
       MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
+      MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
     ],
     controllers: [AnalyticsController],
-    providers: [QuizService,QuestionService],
+    providers: [QuizService,QuestionService, ProgressService],
   })
   export class AnalyticsModule {}
