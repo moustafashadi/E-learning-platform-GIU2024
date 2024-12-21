@@ -175,4 +175,35 @@ export class CourseService {
     return await this.courseModel.find({ difficulty }).exec();
   }
 
+  async findCoursesByInstructor(instructorId: string): Promise<Course[]> {
+    // Find the instructor by their ID and populate the 'coursesTaught' field
+    const instructor = await this.instructorModel.findById(instructorId).exec();
+  
+    if (!instructor || instructor.role !== 'instructor') {
+      throw new NotFoundException(`Instructor with ID ${instructorId} not found or invalid role`);
+    }
+  
+    // Fetch the list of courses taught by the instructor
+    const courseIds = instructor.coursesTaught;
+    
+    if (!courseIds || courseIds.length === 0) {
+      throw new NotFoundException(`No courses found for instructor with ID ${instructorId}`);
+    }
+  
+    // Now find the courses using the list of courseIds
+    const courses = await this.courseModel.find({
+      _id: { $in: courseIds },
+    }).exec();
+  
+    if (!courses || courses.length === 0) {
+      throw new NotFoundException(`No courses found for instructor with ID ${instructorId}`);
+    }
+  
+    return courses;
+  }
+  
+  
+
+  
+
 }
