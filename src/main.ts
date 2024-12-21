@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
+import { join } from 'path'; // Import path module to handle paths
 
 dotenv.config();
 
