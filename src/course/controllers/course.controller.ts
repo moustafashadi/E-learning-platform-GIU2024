@@ -9,28 +9,26 @@ import {
   Delete,
   UploadedFile,
   UseInterceptors,
-  Req,Res,
+  Req, Res,
   UseGuards,
   BadRequestException,
   NotFoundException
 }
   from '@nestjs/common';
 
-  
+
 import { CourseService } from '../services/course.service';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { Express } from 'express'; 
+import { Express, Request } from 'express';
 import { Response } from 'express';
 import { Module } from '@nestjs/common';
 import { Course } from '../models/course.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
-import * as path from 'path';
-import * as fs from 'fs';
 
 @UseGuards(AuthenticationGuard)
 @Controller('courses')
@@ -39,10 +37,11 @@ export class CourseController {
 
   @Roles(Role.Instructor)
   @Post()
-  async create(@Body() createCourseDto: CreateCourseDto) {
+  async create(@Req() req: Request,
+   @Body() { course_code, title, description, category, difficulty }: { course_code: string, title: string, description: string, category: string, difficulty: string }) {
     console.log("createCourseDto");
 
-    return await this.courseService.create(createCourseDto);
+    return await this.courseService.create(req, { course_code, title, description, category, difficulty });
   }
 
   @Get()
@@ -55,6 +54,10 @@ export class CourseController {
     return await this.courseService.findOne(course_code);
   }
 
+  @Get('/:course_id')
+  async findOneByCourseId(@Param('course_id') course_id: string) {
+    return await this.courseService.findOneByCourseId(course_id);
+  }
   @Patch('/:course_code')
   async update(
     @Param('course_code') course_code: string,
@@ -62,14 +65,18 @@ export class CourseController {
   ) {
     return await this.courseService.update(course_code, updateCourseDto);
   }
-  
 
-  @Delete('/:course_code')
-  async delete(@Param('course_code') course_code: string) {
-    return await this.courseService.delete(course_code);
+
+  @Delete('/:id')
+  async delete(@Param('id') id: string) {
+    return await this.courseService.delete(id);
   }
 
-
+  //GET ENROLLED STUDENTS
+  @Get('/:id/students')
+  async getEnrolledStudents(@Param('id') id: string) {
+    return await this.courseService.getEnrolledStudents(id);
+  }
 
   @Get('search/category')
   async searchByCategory(@Query('category') category: string) {
@@ -82,15 +89,15 @@ export class CourseController {
   }
 
 
-@Post(':courseCode/upload-resource')
-@UseInterceptors(FileInterceptor('file', { storage: CourseService.storage })) 
-async uploadResource(
-  @Param('courseCode') courseCode: string,
-  @UploadedFile() file: Express.Multer.File
-) {
-  console.log('Received file in controller:', file);
-  return this.courseService.uploadResource(courseCode, file);
-}
+  @Post(':courseCode/upload-resource')
+  @UseInterceptors(FileInterceptor('file', { storage: CourseService.storage }))
+  async uploadResource(
+    @Param('courseCode') courseCode: string,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    console.log('Received file in controller:', file);
+    return this.courseService.uploadResource(courseCode, file);
+  }
 
 
   @Get(':courseCode/resource/:fileName')
@@ -101,7 +108,7 @@ async uploadResource(
   ) {
     try {
       const fileStream = await this.courseService.getResource(courseCode, fileName);
-      
+
       // Pipe the file stream to the response
       fileStream.pipe(res);
     } catch (error) {

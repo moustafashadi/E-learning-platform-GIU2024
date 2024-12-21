@@ -1,6 +1,6 @@
-import { Injectable, Param, Req } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Param, Req } from '@nestjs/common';
 import { Question } from '../models/question.schema';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateQuestionDto } from '../dto/create-question.dto';
 import { Quiz } from '../models/quiz.schema';
@@ -65,6 +65,17 @@ export class QuestionService {
             return unsolvedQuestions[0];
         } catch (error) {
             console.log(error.message);
+        }
+    }
+
+    //delete questions
+    async deleteQuestions(questions: ObjectId[]) {
+        try {
+            for (const questionId of questions) {
+                await this.questionModel.findByIdAndDelete(questionId).exec();
+            }
+        } catch (error) {
+            throw new InternalServerErrorException('Error deleting questions');
         }
     }
 }

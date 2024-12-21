@@ -1,24 +1,24 @@
+"use client";
 // app/layout.tsx
-import Navbar from './chat/components/NavBar';
-import Footer from './chat/components/Footer'; // Import the Footer component
-import './globals.css'; // Import global styles
+import Providers from './providers';
+import Navbar from './components/NavBar';
+import Footer from './components/Footer';
+import './globals.css';
 
-export const metadata = {
-  title: 'My E-Learning Platform',
-  description: 'An e-learning platform',
-};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-return (
+  return (
     <html lang="en">
-      <body className="flex flex-col min-h-screen">
-        {/* Navbar */}
-        <Navbar />
-        {children}
+      <body>
+        <Providers>
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

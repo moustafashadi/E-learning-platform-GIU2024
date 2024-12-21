@@ -1,26 +1,29 @@
-import { Injectable, NotFoundException, UnauthorizedException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException, InternalServerErrorException, Req } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from '../models/course.schema';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
-import { Instructor, User, UserDocument } from 'src/user/models/user.schema';
+import { Instructor, Student, User, UserDocument } from 'src/user/models/user.schema';
 import * as mongoose from 'mongoose';
 import * as Grid from 'gridfs-stream';
 import { Readable } from 'stream';
 import * as multer from 'multer';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Quiz } from 'src/quiz/models/quiz.schema';
+import { QuizService } from 'src/quiz/services/quiz.service';
+import { Request } from 'express';
 
 
 @Injectable()
 export class CourseService {
-
   constructor(
+    //quiz service
+    private quizService: QuizService,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
-  ) {}
+  ) { }
 
   static get storage() {
     return multer.diskStorage({
@@ -40,59 +43,72 @@ export class CourseService {
 
 
 
-async uploadResource(courseCode: string, file: Express.Multer.File): Promise<Course> {
-  console.log('File received:', file);
+  async uploadResource(courseCode: string, file: Express.Multer.File): Promise<Course> {
+    console.log('File received:', file);
 
-  if (!file) {
-    throw new BadRequestException('No file uploaded');
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Check if filename exists on the file object
+    if (!file.filename) {
+      throw new BadRequestException('File is missing or filename not set properly');
+    }
+
+    console.log('File upload initiated:', file);
+
+    // Find the course by course code
+    const course = await this.courseModel.findOne({ course_code: courseCode });
+    if (!course) {
+      throw new NotFoundException(`Course with code ${courseCode} not found`);
+    }
+
+    // Save the file metadata to the course
+    const filePath = path.join('/uploads', file.filename);  // Save path relative to the server
+    course.resources.push(filePath);
+
+    await course.save();
+    console.log('Resource added to course:', filePath);
+    return course;
+  }
+  async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> {
+    // Construct the file path to the 'uploads' directory
+    const filePath = path.join(__dirname, '../../uploads', fileName);
+
+    // Check if the file exists
+    if (!fs.existsSync(filePath)) {
+      // If the file does not exist, throw a NotFoundException
+      throw new NotFoundException(`File not found: ${fileName}`);
+    }
+
+    // Return the file stream if the file exists
+    return fs.createReadStream(filePath);
   }
 
-  // Check if filename exists on the file object
-  if (!file.filename) {
-    throw new BadRequestException('File is missing or filename not set properly');
+  //get enrolled students
+  async getEnrolledStudents(course_id: string): Promise<mongoose.ObjectId[]> {
+    const course = await this.courseModel.findById(course_id).populate('students').exec();
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${course_id} not found`);
+    }
+    return course.students;
   }
 
-  console.log('File upload initiated:', file);
-
-  // Find the course by course code
-  const course = await this.courseModel.findOne({ course_code: courseCode });
-  if (!course) {
-    throw new NotFoundException(`Course with code ${courseCode} not found`);
-  }
-
-  // Save the file metadata to the course
-  const filePath = path.join('/uploads', file.filename);  // Save path relative to the server
-  course.resources.push(filePath);  
-
-  await course.save();
-  console.log('Resource added to course:', filePath);
-  return course;
-}
-async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> {
-  // Construct the file path to the 'uploads' directory
-  const filePath = path.join(__dirname, '../../uploads', fileName);
-
-  // Check if the file exists
-  if (!fs.existsSync(filePath)) {
-    // If the file does not exist, throw a NotFoundException
-    throw new NotFoundException(`File not found: ${fileName}`);
-  }
-
-  // Return the file stream if the file exists
-  return fs.createReadStream(filePath);
-}
-
-
-
-  async create(createCourseDto: CreateCourseDto): Promise<Course> {
+  async create(@Req() req : Request, {course_code, title, description, category, difficulty }): Promise<Course> {
     try {
       const course = new this.courseModel({
-        ...createCourseDto,
-        instructor: createCourseDto.instructor
+        course_code: course_code,
+        title,
+        description,
+        category,
+        difficulty,
+        instructor: req.user['sub'],
       });
       //update the instructor's courses taught
-      const instructor = await this.instructorModel.findById(createCourseDto.instructor);
-      instructor.coursesTaught.push(course._id as any);
+      
+      const instructor = await this.instructorModel.findById(course.instructor);
+      instructor.coursesTaught.push(course._id as unknown as mongoose.ObjectId);
+      await instructor.save();
       return await course.save();
     } catch (error) {
       throw new BadRequestException('Invalid course data');
@@ -107,11 +123,20 @@ async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> 
     const course = await this.courseModel.findOne({
       _id: new Types.ObjectId(course_code), // Convert string to ObjectId
     }).populate('instructor').exec();
-  
+
     if (!course) {
       throw new NotFoundException(`Course with code ${course_code} not found`);
     }
-  
+
+    return course;
+  }
+  async findOneByCourseId(course_id: string): Promise<Course> {
+    const course = await this.courseModel.findById(course_id).populate('instructor').exec();
+
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${course_id} not found`);
+    }
+
     return course;
   }
 
@@ -126,11 +151,19 @@ async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> 
     return updatedCourse;
   }
 
-  async delete(course_code: string): Promise<void> {
-    const result = await this.courseModel.deleteOne({ course_code }).exec();
-    console.log(result);
-    if (result.deletedCount === 0) {
-      throw new NotFoundException(`Course with code ${course_code} not found`);
+  async delete(id: string): Promise<void> {
+    try {
+      const course = await this.courseModel.findById(id).exec();
+      //delete all quizzes in this course
+      const quizzes = course.quizzes;
+      await this.quizService.deleteQuizzes(quizzes);
+      const result = await this.courseModel.findByIdAndDelete(id).exec();
+      console.log(result);
+      if (!result) {
+        throw new NotFoundException(`Course with code ${id} not found`);
+      }
+    } catch (error) {
+      throw new InternalServerErrorException('Error deleting course');
     }
   }
 
@@ -142,7 +175,4 @@ async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> 
     return await this.courseModel.find({ difficulty }).exec();
   }
 
-
-
-  
 }
