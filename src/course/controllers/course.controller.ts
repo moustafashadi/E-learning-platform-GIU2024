@@ -54,6 +54,7 @@ export class CourseController {
     return await this.courseService.findOne(course_code);
   }
 
+
   @Get('/:course_id')
   async findOneByCourseId(@Param('course_id') course_id: string) {
     return await this.courseService.findOneByCourseId(course_id);
@@ -117,5 +118,13 @@ export class CourseController {
   }
 
 
+
+  @Get('/teacher/:instructorId')
+  async findCoursesByInstructor(
+    @Param('instructorId') instructorId: string,
+  ) {
+    return await this.courseService.findCoursesByInstructor(instructorId);
+  }
+  
 }
 

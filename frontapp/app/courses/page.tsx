@@ -1,3 +1,5 @@
+// CoursePage.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,7 +7,8 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import StudentCourses from "./components/StudentCourses"; // Import the StudentCourses component
-import useAuth from "../hooks/useAuth";
+import ViewCourseStudent from "./components/views/ViewCourseStudent";
+import useAuth from "../hooks/useAuth"; // Assume this hook handles authentication
 import InstructorCourses from "./components/InstructorCourses";
 
 function CoursePage() {
@@ -39,19 +42,16 @@ function CoursePage() {
       <div className="flex items-center justify-center h-screen bg-gray-100">
         <p className="text-lg font-semibold">Loading...</p>
       </div>
-    ); // Show a fullscreen loader while determining the user's role
+    );
   }
 
   // Determine the dashboard content based on the user's role
   const renderCourse = () => {
     switch (role) {
-      case "admin":
-        return <div>Admin Dashboard</div>;
-      case "instructor":
-        return <InstructorCourses />; // Render StudentCourses component for students
-
+         case "instructor":
+        return <InstructorCourses />; // Render InstructorDashboard for instructors
       case "student":
-        return <StudentCourses />; // Render StudentCourses component for students
+        return <StudentCourses />; // Render StudentCourses for students
       default:
         return <div className="text-center mt-10">Invalid role</div>;
     }
