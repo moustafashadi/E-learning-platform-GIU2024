@@ -38,11 +38,17 @@ export class CourseController {
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
-    @Body() { course_code, title, description, numberofQuizzes, category, difficulty }: { course_code: string, title: string, description: string, numberofQuizzes: Number, category: string, difficulty: string }) {
+    @Body() { title, description, category, difficulty, course_code, numberofQuizzes }: { title: string, description: string, category: string, difficulty: string, course_code: string, numberofQuizzes: number }) {
     console.log("createCourseDto");
-
+  
+    // Add additional validation if needed
+    if (!course_code || !title || !description || !category || !difficulty) {
+      throw new BadRequestException("Missing required fields");
+    }
+  
     return await this.courseService.create(req, { course_code, title, description, numberofQuizzes, category, difficulty });
   }
+  
 
   @Get()
   async findAll() {
