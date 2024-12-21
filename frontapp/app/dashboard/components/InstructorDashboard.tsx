@@ -12,6 +12,7 @@ interface Course {
   id: string;
   name: string;
   progress: number; // Percentage
+  students: any[]; // Array of students (populated from the backend)
 }
 
 interface Notification {
@@ -48,10 +49,12 @@ function InstructorDashboard() {
 
           console.log(`Courses taught by instructor ${userId}:`, response.data);
 
+          // Format courses and calculate the student count
           const formattedCourses = response.data.map((course: any) => ({
             id: course.id || course._id || "unknown-id", // Handle `_id` or fallback to a default
             name: course.name || course.title || "Unnamed Course", // Handle `title` or fallback
             progress: course.progress || 0, // Default progress to 0 if not provided
+            students: Array.isArray(course.students) ? course.students : [], // Ensure students is always an array
           }));
 
           console.log("Formatted Courses for Instructor Dashboard:", formattedCourses);
@@ -142,18 +145,10 @@ function InstructorDashboard() {
                 {/* Render course name */}
                 <h3 className="text-lg font-semibold mb-2">{course.name || "Unnamed Course"}</h3>
 
-                {/* Render progress bar */}
-                <div className="h-2 bg-gray-200 rounded-full mb-2">
-                  <div
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{ width: `${course.progress || 0}%` }}
-                  ></div>
-                </div>
-
-                {/* Render progress percentage */}
-                <span className="text-sm text-gray-600">
-                  Progress: {course.progress || 0}%
-                </span>
+                {/* Display student count */}
+                <p className="text-sm text-gray-600">
+                  Students Enrolled: {course.students.length}
+                </p>
               </div>
             ))
           ) : (
