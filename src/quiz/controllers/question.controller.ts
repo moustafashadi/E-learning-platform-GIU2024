@@ -64,6 +64,8 @@ export class QuestionController {
     return this.questionService.getQuestionById(id);
   }
 
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Student)
   @Post('/:quizId/:id/submit')
   async submitAnswer(
     @Req() req: Request,

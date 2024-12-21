@@ -1,17 +1,14 @@
-import { Controller, Post, Body, Req, UseGuards, Param, Get } from '@nestjs/common';
-import { ResponseService } from '../../response/services/response.service';
-import { ResponseGateway } from '../../response/gateway/response.gateway';
-import { QuestionService } from '../services/question.service';
+import { Controller, Post, Body, Req, UseGuards, Param, Get, Delete } from '@nestjs/common';
 import { AuthenticationGuard } from '../../auth/guards/authentication.guard';
 import { QuizService } from '../services/quiz.service';
+import { Role } from 'src/auth/decorators/roles.decorator';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 
 @UseGuards(AuthenticationGuard)
 @Controller('quiz')
 export class QuizController {
   constructor(
-    private readonly responseService: ResponseService,
-    private readonly questionService: QuestionService,
-    private readonly responseGateway: ResponseGateway,
     private readonly quizService: QuizService,
   ) { }
 
@@ -43,9 +40,18 @@ export class QuizController {
     return quizResults;
   }
 
-@Get('/course/:courseId')
-async getQuizzesByCourseId(@Param('courseId') courseId: string) {
-  return this.quizService.getQuizzesByCourseId(courseId);
-}
-}
+  @Get('/course/:courseId')
+  async getQuizzesByCourseId(@Param('courseId') courseId: string) {
+    return this.quizService.getQuizzesByCourseId(courseId);
+  }
 
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
+  @Delete('/:quizId')
+  async deleteQuiz(
+    @Param('quizId') quizId: string,
+  ) {
+    console.log('API called')
+    return this.quizService.deleteQuiz(quizId);
+  }
+}

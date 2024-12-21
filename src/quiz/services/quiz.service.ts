@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, ObjectId, Types } from 'mongoose';
 import { Quiz } from '../models/quiz.schema';
@@ -129,11 +129,11 @@ export class QuizService {
       const quizzes = await this.quizModel
         .find({ course: new mongoose.Types.ObjectId(courseId) })
         .exec();
-  
+
       if (!quizzes || quizzes.length === 0) {
         throw new NotFoundException(`No quizzes found for course ID: ${courseId}`);
       }
-  
+
       return quizzes;
     } catch (error) {
       throw new BadRequestException(
@@ -143,6 +143,48 @@ export class QuizService {
 
   }
 
+  //delete quiz
+  async deleteQuiz(quizId: string) {
+    try {
+      const quiz = await this.quizModel.findById(quizId).exec();
+
+      if (!quiz) {
+        throw new NotFoundException('Quiz not found');
+      }
+
+      //remove the quiz from the course
+      const CourseId = quiz.course;
+      const course = await this.courseModel.findById(CourseId).exec();
+      const quizzes = course.quizzes;
+      await this.courseModel.findByIdAndUpdate(CourseId, { quizzes: quizzes.filter((quiz) => quiz.toString() !== quizId) }).exec();
+
+      console.log('quiz removed from course', course._id)
+
+      //delete all questions in this quiz
+      const questions = quiz.questions;
+      await this.questionService.deleteQuestions(questions);
+
+      console.log('questions deleted');
+
+      //remove the quiz from the quizGrades attribute of all students
+      //GET ONLY THE STUDENTS THAT ARE ENROLLED IN THE COURSE. BE EFFICIENT FFS
+      const students = await this.studentModel.find({ enrolledCourses: CourseId }).exec();
+      for (const student of students) {
+        const parsedQuizId = quizId.toString();
+        student.quizGrades.delete(parsedQuizId);
+        await student.save();
+      }
+      console.log('quiz removed from students');
+
+      await this.quizModel.findByIdAndDelete(quizId).exec();
+      console.log('quiz deleted');
+      return HttpStatus.OK;
+    } catch (error) {
+      throw new BadRequestException('Error deleting quiz');
+    }
+  }
+
+  //used in course service to delete all quizzes in a course when the course is deleted
   async deleteQuizzes(quizzes: ObjectId[]) {
     try {
       for (const quizId of quizzes) {
@@ -150,6 +192,15 @@ export class QuizService {
         const quiz = await this.quizModel.findById(quizId).exec();
         const questions = quiz.questions;
         await this.questionService.deleteQuestions(questions);
+
+        //delete the quiz in the quizGrades attribute of all students
+        const students = await this.studentModel.find().exec();
+        for (const student of students) {
+          const parsedQuizId = quizId.toString();
+          student.quizGrades.delete(parsedQuizId);
+          await student.save();
+        }
+
         await this.quizModel.findByIdAndDelete(quizId).exec();
       }
     } catch (error) {

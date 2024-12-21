@@ -40,10 +40,6 @@ export class QuestionService {
         return this.questionModel.findByIdAndUpdate(questionId, updateQuestionDto, { new: true });
     }
 
-    async deleteQuestion(questionId: string): Promise<Question> {
-        return this.questionModel.findByIdAndDelete(questionId);
-    }
-
     async isCorrect(questionId: string, chosenAnswer: string): Promise<boolean> {
         const question = await this.questionModel.findById(questionId);
         return question.correctAnswer === chosenAnswer;
@@ -68,10 +64,36 @@ export class QuestionService {
         }
     }
 
+    async deleteQuestion(questionId: string): Promise<Question> {
+        //delete the question from the quiz
+        const question = await this.questionModel.findById(questionId);
+        const quiz = await this.quizModel.findById(question.quiz);
+        quiz.questions = quiz.questions.filter((q) => q.toString() !== questionId);
+        await quiz.save();
+        return this.questionModel.findById(questionId).exec();
+    }
+
     //delete questions
+    //used by quiz service to delete questions when a quiz is deleted
     async deleteQuestions(questions: ObjectId[]) {
         try {
             for (const questionId of questions) {
+                //get quizId from question
+                const question = await this.questionModel.findById(questionId);
+                const quizId = question.quiz;
+
+                //get courseId from quiz
+                const quiz = await this.quizModel.findById(quizId);
+                const courseId = quiz.course;
+
+                //get students in the course
+                const students = await this.studentModel.find({ enrolledCourses : courseId });
+
+                //delete the question from questionsSolved attribute in students
+                for (const student of students) {
+                    student.questionsSolved = student.questionsSolved.filter((questionId) => questionId.toString() !== questionId.toString());
+                    await student.save();
+                }
                 await this.questionModel.findByIdAndDelete(questionId).exec();
             }
         } catch (error) {
