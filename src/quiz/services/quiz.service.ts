@@ -61,6 +61,7 @@ export class QuizService {
     const student = await this.studentModel.findById(studentId);
     console.log('student', student);
 
+    
     const enrolledCourses = student.enrolledCourses;
     console.log('enrolledCourses', enrolledCourses);
 
@@ -122,25 +123,6 @@ export class QuizService {
       }
     }
     return true;
-  }
-
-  async getQuizzesByCourseId(courseId: string): Promise<Quiz[]> {
-    try {
-      const quizzes = await this.quizModel
-        .find({ course: new mongoose.Types.ObjectId(courseId) })
-        .exec();
-
-      if (!quizzes || quizzes.length === 0) {
-        throw new NotFoundException(`No quizzes found for course ID: ${courseId}`);
-      }
-
-      return quizzes;
-    } catch (error) {
-      throw new BadRequestException(
-        `Failed to retrieve quizzes for course ID: ${courseId}`
-      );
-    }
-
   }
 
   //delete quiz

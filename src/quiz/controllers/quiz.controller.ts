@@ -40,11 +40,6 @@ export class QuizController {
     return quizResults;
   }
 
-  @Get('/course/:courseId')
-  async getQuizzesByCourseId(@Param('courseId') courseId: string) {
-    return this.quizService.getQuizzesByCourseId(courseId);
-  }
-
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Delete('/:quizId')

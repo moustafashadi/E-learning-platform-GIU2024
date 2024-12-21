@@ -23,6 +23,7 @@ export class CourseService {
     private quizService: QuizService,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
+    @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
   ) { }
 
   static get storage() {
@@ -174,5 +175,47 @@ export class CourseService {
   async searchCoursesByDifficulty(difficulty: string): Promise<Course[]> {
     return await this.courseModel.find({ difficulty }).exec();
   }
+
+  async findCoursesByInstructor(instructorId: string): Promise<Course[]> {
+    // Find the instructor by their ID and populate the 'coursesTaught' field
+    const instructor = await this.instructorModel.findById(instructorId).exec();
+  
+    if (!instructor || instructor.role !== 'instructor') {
+      throw new NotFoundException(`Instructor with ID ${instructorId} not found or invalid role`);
+    }
+  
+    // Fetch the list of courses taught by the instructor
+    const courseIds = instructor.coursesTaught;
+    
+    if (!courseIds || courseIds.length === 0) {
+      throw new NotFoundException(`No courses found for instructor with ID ${instructorId}`);
+    }
+  
+    // Now find the courses using the list of courseIds
+    const courses = await this.courseModel.find({
+      _id: { $in: courseIds },
+    }).exec();
+  
+    if (!courses || courses.length === 0) {
+      throw new NotFoundException(`No courses found for instructor with ID ${instructorId}`);
+    }
+  
+    return courses;
+  }
+  
+  //GET COURSE QUIZZES
+  async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
+    const course = await this.courseModel.findById(courseId).populate('quizzes').exec();
+    
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    const quizIds = course.quizzes; 
+    const quizzes = await this.quizModal.find({ _id: { $in: quizIds } }).exec();
+    return quizzes;
+  }
+
+  
 
 }

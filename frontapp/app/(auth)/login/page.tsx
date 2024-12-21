@@ -1,8 +1,7 @@
-// filepath: /app/login/page.tsx
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "axios"; // Adjust the path if necessary
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast"; // Optional: For toast notifications
 import { useDispatch } from 'react-redux';
@@ -19,18 +18,20 @@ const Login = () => {
     event.preventDefault();
     dispatch(loginStart());
     try {
-      // Call the backend API for login
-      const response = await axios.post(
-        "/auth/login",
-        { email, password },
-        { withCredentials: true }
-      );
+      // Call the backend API for login using relative path
+      const response = await axios.post("/auth/login", { email, password });
 
       const payload = response.data.user;
       console.log("payload: ", response.data.user.sub);
 
       // Dispatch login success action
       dispatch(loginSuccess(payload));
+
+      // Persist authentication state in local storage
+      localStorage.setItem('authState', JSON.stringify({
+        isAuthenticated: true,
+        user: payload,
+      }));
 
       setFeedback(`Login successful! Welcome, ${payload.username}`);
       toast.success(`Login successful! Welcome, ${payload.username}`); // Optional: Show toast notification
@@ -65,6 +66,7 @@ const Login = () => {
               className="mt-1 w-full px-4 py-2 border rounded-md text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
           <div>
             <label htmlFor="password" className="block text-gray-700">
               Password
@@ -79,6 +81,7 @@ const Login = () => {
               className="mt-1 w-full px-4 py-2 border rounded-md text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-200"
@@ -88,9 +91,8 @@ const Login = () => {
         </form>
         {feedback && (
           <p
-            className={`mt-4 text-center ${
-              feedback.toLowerCase().includes("successful") ? "text-green-600" : "text-red-600"
-            }`}
+            className={`mt-4 text-center ${feedback.toLowerCase().includes("successful") ? "text-green-600" : "text-red-600"
+              }`}
           >
             {feedback}
           </p>

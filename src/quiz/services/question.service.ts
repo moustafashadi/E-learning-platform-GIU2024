@@ -65,18 +65,29 @@ export class QuestionService {
     }
 
     async deleteQuestion(questionId: string): Promise<Question> {
-        //delete the question from the quiz
+
         const question = await this.questionModel.findById(questionId);
+
+        //delete the question from the quiz
         const quiz = await this.quizModel.findById(question.quiz);
         quiz.questions = quiz.questions.filter((q) => q.toString() !== questionId);
         await quiz.save();
-        return this.questionModel.findById(questionId).exec();
+
+        //remove the question from the students who have solved it
+        const students = await this.studentModel.find({ questionsSolved: questionId });
+        for (const student of students) {
+            student.questionsSolved = student.questionsSolved.filter((q) => q.toString() !== questionId);
+            await student.save();
+        }
+
+        return this.questionModel.findByIdAndDelete(questionId);
     }
 
     //delete questions
     //used by quiz service to delete questions when a quiz is deleted
     async deleteQuestions(questions: ObjectId[]) {
         try {
+            
             for (const questionId of questions) {
                 //get quizId from question
                 const question = await this.questionModel.findById(questionId);
@@ -96,6 +107,7 @@ export class QuestionService {
                 }
                 await this.questionModel.findByIdAndDelete(questionId).exec();
             }
+
         } catch (error) {
             throw new InternalServerErrorException('Error deleting questions');
         }
