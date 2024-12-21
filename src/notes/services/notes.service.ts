@@ -53,20 +53,36 @@ export class NotesService {
     }
   }
 
-  async findAll(userId: string): Promise<Note[]> {
-    //parse userId to ObjectId
-    const parsedUserId = new Types.ObjectId(userId);
-    try {
-      const notes = await this.noteModel.find({ userId: parsedUserId }).exec();
+async findAll(userId: string): Promise<any[]> {
+  // Parse userId to ObjectId
+  const parsedUserId = new Types.ObjectId(userId);
 
-      if (!notes) {
-        throw new NotFoundException('No notes found');
-      }
-      return notes;
-    } catch (error) {
-      throw new Error('Error fetching notes');
+  try {
+    // Find notes and populate the courseId field to fetch course title
+    const notes = await this.noteModel
+      .find({ userId: parsedUserId })
+      .populate('courseId', 'title') // Populate courseId to fetch only the 'title' field from Course
+      .exec();
+
+    if (!notes || notes.length === 0) {
+      throw new NotFoundException('No notes found');
     }
+
+    // Map notes to include the course title in the response
+    const notesWithCourseTitle = notes.map(note => ({
+      _id: note._id,
+      content: note.content,
+      last_updated: note.last_updated,
+      courseTitle: (note.courseId as any)?.title || 'Unknown Course', // Access title via courseId
+    }));
+
+    return notesWithCourseTitle;
+  } catch (error) {
+    console.error('Error fetching notes:', error);
+    throw new Error('Error fetching notes');
   }
+}
+
 
   async findOne(id: string): Promise<Note> {
     const note = await this.noteModel.findById(id).exec();
