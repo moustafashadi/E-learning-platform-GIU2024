@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useDispatch, UseDispatch, useSelector } from "react-redux";
-import { UseSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { RootState } from "@/app/store";
+import ViewCourseStudent from "./views/ViewCourseStudent"; 
 
 interface Course {
   _id: string;
@@ -21,16 +21,13 @@ interface Course {
 function StudentCourses() {
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
-  const [courseInstructor, setCourseInstructor] = useState<string | null>(null); 
-
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null); // To store the userId
   const [viewingCourseId, setViewingCourseId] = useState<string | null>(null); // Track the course being viewed
 
-  const dispatch = useDispatch;
-  const router = useRouter;
+  const dispatch = useDispatch();
+  const router = useRouter();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -38,18 +35,18 @@ function StudentCourses() {
         // Fetch the logged-in user's data
         const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
         setUserId(authData.id); // Set the user ID using the 'sub' field
-  
+
         // Fetch enrolled courses using the provided endpoint
         const enrolledResponse = await axios.get(`http://localhost:3000/users/${authData.id}/enrolledCourses`, {
           withCredentials: true,
         });
         setEnrolledCourses(enrolledResponse.data);
-  
+
         // Fetch all available courses
         const allCoursesResponse = await axios.get("http://localhost:3000/courses", {
           withCredentials: true,
         });
-  
+
         // Filter courses to show only those the user isn't enrolled in
         const enrolledCourseIds = new Set(
           enrolledResponse.data.map((course: Course) => course._id) // Use _id for comparison
@@ -65,7 +62,7 @@ function StudentCourses() {
         setLoading(false);
       }
     };
-  
+
     fetchCourses();
   }, []);
 
@@ -73,22 +70,19 @@ function StudentCourses() {
     if (!userId) {
       toast.error("User not authenticated. Please log in.");
       return;
-      console.log("******************************************************");
-      console.log(userId)
     }
-
 
     try {
       // Send enrollment request with courseId as the URL parameter and userId as part of the URL
       await axios.post(`http://localhost:3000/users/${userId}/enroll/${courseId}`, {}, { withCredentials: true });
-      
+
       toast.success("Successfully enrolled in the course!");
 
       // Refresh course lists
-      const enrolledCourse = availableCourses.find((course) => course._id === courseId); 
+      const enrolledCourse = availableCourses.find((course) => course._id === courseId);
       if (enrolledCourse) {
         setEnrolledCourses((prev) => [...prev, enrolledCourse]);
-        setAvailableCourses((prev) => prev.filter((course) => course._id !== courseId)); 
+        setAvailableCourses((prev) => prev.filter((course) => course._id !== courseId));
       }
     } catch (error) {
       toast.error("Failed to enroll in the course.");
@@ -96,7 +90,7 @@ function StudentCourses() {
   };
 
   const toggleCourseDetails = (courseId: string) => {
-    setViewingCourseId(viewingCourseId === courseId ? null : courseId); // Toggle the viewing state
+    setViewingCourseId(courseId); // Set the course ID for viewing
   };
 
   if (loading) {
@@ -115,10 +109,7 @@ function StudentCourses() {
         {enrolledCourses.length > 0 ? (
           <ul className="space-y-4">
             {enrolledCourses.map((course) => (
-              <li
-                key={course._id}
-                className="p-4 bg-white rounded shadow-md border border-gray-200"
-              >
+              <li key={course._id} className="p-4 bg-white rounded shadow-md border border-gray-200">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="text-xl font-semibold">{course.title}</h3>
@@ -126,32 +117,13 @@ function StudentCourses() {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => toggleCourseDetails(course._id)} // Toggle the course details
+                      onClick={() => toggleCourseDetails(course._id)} // Set the course ID to viewingCourseId
                       className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                     >
                       View Course
                     </button>
                   </div>
                 </div>
-
-                {/* Course Details */}
-                {viewingCourseId === course._id && (
-                  <div className="mt-4 p-4 bg-gray-50 border rounded">
-                    <h4 className="text-lg font-semibold">Course Details</h4>
-                    <p><strong>Course Code:</strong> {course.course_code}</p>
-                    <p><strong>Category:</strong> {course.category}</p>
-                    <p><strong>Difficulty:</strong> {course.difficulty}</p>
-                    <p><strong>Instructor:</strong> {course.instructor}</p>
-                     <p><strong>Resources:</strong> {course.resources}</p>
-                     <p><strong>Quizzes:</strong> {course.quizzes}</p>
-                    <ul className="list-disc pl-5">
-                      {course.resources.map((resource, index) => (
-                        <li key={index}>{resource}</li>
-                      ))}
-                    </ul>
-                    {/* You can also display quizzes or other relevant course data */}
-                  </div>
-                )}
               </li>
             ))}
           </ul>
@@ -187,6 +159,9 @@ function StudentCourses() {
           <p className="text-gray-500">No courses available for enrollment.</p>
         )}
       </section>
+
+      {/* Render the ViewCourseStudent Component if viewingCourseId is set */}
+      {viewingCourseId && <ViewCourseStudent courseid={viewingCourseId} />}
     </div>
   );
 }
