@@ -38,7 +38,7 @@ export class CourseController {
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
-   @Body() { course_code, title, description, category, difficulty }: { course_code: string, title: string, description: string, category: string, difficulty: string }) {
+    @Body() { course_code, title, description, category, difficulty }: { course_code: string, title: string, description: string, category: string, difficulty: string }) {
     console.log("createCourseDto");
 
     return await this.courseService.create(req, { course_code, title, description, category, difficulty });
@@ -117,7 +117,11 @@ export class CourseController {
     }
   }
 
-
+  //GET COURSE QUIZZES
+  @Get('/:courseId/quizzes')
+  async getCourseQuizzes(@Param('courseId') courseId: string) {
+    return await this.courseService.getCourseQuizzes(courseId);
+  }
 
   @Get('/teacher/:instructorId')
   async findCoursesByInstructor(
@@ -125,6 +129,6 @@ export class CourseController {
   ) {
     return await this.courseService.findCoursesByInstructor(instructorId);
   }
-  
+
 }
 

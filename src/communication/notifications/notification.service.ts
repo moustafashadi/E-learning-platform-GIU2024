@@ -1,12 +1,13 @@
 import { Model } from "mongoose";
 import { NotificationDocument } from "./notification.schema";
 import { InjectModel } from "@nestjs/mongoose";
-import { CreateNotificationDto } from "./create-notifications.dto";
 import { Chat, ChatDocument } from "../chat/chat.schema";
 import { Notification } from "./notification.schema";
 import { UserService } from "src/user/services/user.service";
 import { Body, Injectable, NotFoundException, Req } from "@nestjs/common";
 import { Request } from "express";
+
+
 @Injectable()
 export class NotificationService {
     constructor(

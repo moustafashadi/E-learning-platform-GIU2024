@@ -23,6 +23,7 @@ export class CourseService {
     private quizService: QuizService,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
+    @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
   ) { }
 
   static get storage() {
@@ -202,7 +203,18 @@ export class CourseService {
     return courses;
   }
   
-  
+  //GET COURSE QUIZZES
+  async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
+    const course = await this.courseModel.findById(courseId).populate('quizzes').exec();
+    
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    const quizIds = course.quizzes; 
+    const quizzes = await this.quizModal.find({ _id: { $in: quizIds } }).exec();
+    return quizzes;
+  }
 
   
 
