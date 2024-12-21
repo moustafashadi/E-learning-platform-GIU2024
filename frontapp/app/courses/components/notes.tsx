@@ -2,15 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axiosInstance from "../../_utils/axiosInstance"; 
+import axiosInstance from "../../_utils/axiosInstance"; // Corrected import path
 import toast from "react-hot-toast";
-import Sidebar from "../../dashboard/components/Sidebar";
 import useAuth from "../../hooks/useAuth";
 
-function Notes() {
+// Define the type for a note
+interface Note {
+  _id: string;
+  content: string;
+  last_updated: string;
+}
+interface NotesProps {
+  courseId: string; // Course ID passed as a prop
+}
+
+function Notes({ courseId }: NotesProps) {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
-  const [notes, setNotes] = useState([]);
+  const [notes, setNotes] = useState<Note[]>([]); // Explicitly define the type
   const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
@@ -26,7 +35,8 @@ function Notes() {
 
     const fetchNotes = async () => {
       try {
-        const response = await axiosInstance.get("/notes");
+        // Include the course ID in the endpoint
+        const response = await axiosInstance.get(`/notes?courseId=${courseId}`);
         setNotes(response.data.notes);
       } catch (error) {
         toast.error("Failed to load notes.");
@@ -39,30 +49,68 @@ function Notes() {
     } else if (!loading) {
       router.push("/login");
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, loading, router, courseId]);
+
+  const handleCreateNote = async () => {
+    const content = prompt("Enter note content:");
+    if (content) {
+      try {
+        // Use the course ID in the API endpoint
+        const response = await axiosInstance.post(`/notes/${courseId}`, {
+          content,
+        });
+        setNotes((prevNotes) => [...prevNotes, response.data]); // Update notes correctly
+        toast.success("Note created successfully.");
+      } catch (error) {
+        toast.error("Failed to create note.");
+      }
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (confirm("Are you sure you want to delete this note?")) {
+      try {
+        await axiosInstance.delete(`/notes/${noteId}`); // Add missing backticks
+        setNotes((prevNotes) =>
+          prevNotes.filter((note) => note._id !== noteId)
+        ); // Correct filter function
+        toast.success("Note deleted successfully.");
+      } catch (error) {
+        toast.error("Failed to delete note.");
+      }
+    }
+  };
 
   const renderNotes = () => {
     if (notes.length === 0) {
       return <p className="text-lg font-semibold text-center">No notes found.</p>;
     }
-
+  
     return (
       <ul className="space-y-4">
-        {notes.map((note: any) => (
+        {notes.map((note) => (
           <li
             key={note._id}
             className="p-4 bg-blue-800 text-white rounded shadow"
           >
-            <p>{note.content}</p>
+            <p>
+              <strong>{note.courseName}:</strong> {note.content}
+            </p>
             <p className="text-sm text-blue-400">
               Last Updated: {new Date(note.last_updated).toLocaleString()}
             </p>
+            <button
+              className="text-red-500 mt-2"
+              onClick={() => handleDeleteNote(note._id)}
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
     );
   };
-
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -73,7 +121,15 @@ function Notes() {
 
   return (
     <div className="flex">
-      {role && <Sidebar role={role} />}
+      <aside className="w-64 p-4 bg-gray-800 text-white">
+        <h2 className="text-2xl font-bold mb-4">Actions</h2>
+        <button
+          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded mb-2"
+          onClick={handleCreateNote}
+        >
+          Create Note
+        </button>
+      </aside>
       <main className="flex-1 p-6 bg-gray-900 text-white">
         <h1 className="text-3xl font-bold mb-4">Notes</h1>
         {renderNotes()}
@@ -82,4 +138,4 @@ function Notes() {
   );
 }
 
-export default Notes;
+export default Notes;
