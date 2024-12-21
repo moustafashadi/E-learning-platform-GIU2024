@@ -11,7 +11,9 @@ interface Note {
   _id: string;
   content: string;
   last_updated: string;
+  courseTitle: string; // Adjusted to match the backend
 }
+
 interface NotesProps {
   courseId: string; // Course ID passed as a prop
 }
@@ -70,7 +72,7 @@ function Notes({ courseId }: NotesProps) {
   const handleDeleteNote = async (noteId: string) => {
     if (confirm("Are you sure you want to delete this note?")) {
       try {
-        await axiosInstance.delete(`/notes/${noteId}`); // Add missing backticks
+        await axiosInstance.delete(`/notes/${noteId}`);
         setNotes((prevNotes) =>
           prevNotes.filter((note) => note._id !== noteId)
         ); // Correct filter function
@@ -81,11 +83,34 @@ function Notes({ courseId }: NotesProps) {
     }
   };
 
+  const handleEditNote = async (noteId: string, currentContent: string) => {
+    const newContent = prompt("Edit your note content:", currentContent);
+    if (newContent && newContent !== currentContent) {
+      try {
+        const response = await axiosInstance.put(`/notes/${noteId}`, {
+          content: newContent,
+        });
+        setNotes((prevNotes) =>
+          prevNotes.map((note) =>
+            note._id === noteId
+              ? { ...note, content: response.data.note.content, last_updated: response.data.note.last_updated }
+              : note
+          )
+        );
+        toast.success("Note updated successfully.");
+      } catch (error) {
+        console.error('Error updating note:', error); // Log error for debugging
+        toast.error("Failed to update note.");
+      }
+    }
+  };
+  
+
   const renderNotes = () => {
     if (notes.length === 0) {
       return <p className="text-lg font-semibold text-center">No notes found.</p>;
     }
-  
+
     return (
       <ul className="space-y-4">
         {notes.map((note) => (
@@ -94,23 +119,31 @@ function Notes({ courseId }: NotesProps) {
             className="p-4 bg-blue-800 text-white rounded shadow"
           >
             <p>
-              <strong>{note.courseName}:</strong> {note.content}
+              <strong>{note.courseTitle || "Unknown Course"}:</strong> {note.content}
             </p>
             <p className="text-sm text-blue-400">
               Last Updated: {new Date(note.last_updated).toLocaleString()}
             </p>
-            <button
-              className="text-red-500 mt-2"
-              onClick={() => handleDeleteNote(note._id)}
-            >
-              Delete
-            </button>
+            <div className="mt-2 space-x-2">
+              <button
+                className="text-yellow-500"
+                onClick={() => handleEditNote(note._id, note.content)}
+              >
+                Edit
+              </button>
+              <button
+                className="text-red-500"
+                onClick={() => handleDeleteNote(note._id)}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
     );
   };
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">

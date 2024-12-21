@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { RootState } from "@/app/store";
-import ViewCourseStudent from "./views/ViewCourseStudent"; 
+import ViewCourseStudent from "../view/ViewCourseStudent";
 
 interface Course {
   _id: string;
@@ -147,7 +147,7 @@ function StudentCourses() {
                   <p className="text-gray-700">{course.description}</p>
                 </div>
                 <button
-                  onClick={() => enrollInCourse(course._id)}
+                  onClick={() => router.push(`/courses/view?courseid=${course._id}`)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   Enroll
