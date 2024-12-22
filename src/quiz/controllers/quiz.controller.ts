@@ -4,6 +4,7 @@ import { QuizService } from '../services/quiz.service';
 import { Role } from 'src/auth/decorators/roles.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
+import { Question } from '../models/question.schema';
 
 @UseGuards(AuthenticationGuard)
 @Controller('quiz')
@@ -16,10 +17,10 @@ export class QuizController {
   @UseGuards(AuthenticationGuard)
   @Post('/:courseId')
   async createQuiz(
-    @Body() title: string,
+    @Body() createQuizDto: { title: string; questions: Question[] },
     @Req() req,
     @Param('courseId') courseId: string,) {
-    return await this.quizService.createQuiz(title, req.user.sub, courseId);
+    return await this.quizService.createQuiz(createQuizDto, req.user.sub, courseId);
   }
 
   //getQuiz by id
