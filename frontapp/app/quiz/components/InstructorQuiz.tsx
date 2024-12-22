@@ -15,6 +15,7 @@ interface Course {
 
   function InstructorQuiz () {
   const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [showQuizModal, setShowQuizModal] = useState(false);
@@ -68,20 +69,48 @@ useEffect(() => {
       toast.error("Please fill in all fields.");
       return;
     }
-
+  
     try {
-      await axiosInstance.post(
+      // Step 1: Create the quiz
+      const createdQuizResponse = await axiosInstance.post(
         `/quiz/${selectedCourseId}`,
-        { title: quizTitle, questions },
+        { title: quizTitle },
         { withCredentials: true }
       );
-
+  
+      const createdQuizId = createdQuizResponse.data._id; // Assuming the created quiz ID is returned
       toast.success("Quiz created successfully!");
+  
+      // Step 2: Add questions to the quiz
+      for (const question of questions) {
+        const { question: content, options } = question;
+  
+        const correctOption = options.find((option) => option.isCorrect);
+        if (!correctOption) {
+          toast.error("Each question must have one correct answer.");
+          return;
+        }
+  
+        const correctAnswer = correctOption.text;
+  
+        await axiosInstance.post(
+          `/questions/${createdQuizId}`,
+          {
+            content,
+            correctAnswer,
+            difficulty: "medium", // Set default difficulty; customize as needed
+          },
+          { withCredentials: true }
+        );
+      }
+  
+      // Clear form and close modal
       setShowQuizModal(false);
       setQuestions([]);
       setQuizTitle("");
+      toast.success("All questions added successfully!");
     } catch (error) {
-      toast.error("Failed to create quiz.");
+      toast.error("Failed to create quiz or add questions.");
       console.error(error);
     }
   };
@@ -217,9 +246,6 @@ useEffect(() => {
     </div>
   );
 };
-
 export default InstructorQuiz;
-function setLoading(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
+
 
