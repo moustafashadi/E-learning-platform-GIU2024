@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
-import websocketService from '../_utils/websocket.service';
+import { RootState } from '../../store/index';
+import websocketService from '../../_utils/websocket.service';
 import { AiOutlineBell } from 'react-icons/ai';
 import NotificationsModal from './NotificationModal';
 

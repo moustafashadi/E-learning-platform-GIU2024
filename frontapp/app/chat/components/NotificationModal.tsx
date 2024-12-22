@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { markAsRead, markAllAsRead } from '../store/slices/notificationSlice';
+import { RootState } from '../../store/index';
+import { markAsRead, markAllAsRead } from '../../store/slices/notificationSlice';
 
 interface NotificationsModalProps {
   isOpen: boolean;
