@@ -19,10 +19,7 @@ export class Question {
   hint: string;
 
   @Prop({ required: true })
-  difficulty: string; // easy, medium, hard
-
-  @Prop({ required: true })
-  index: number; // Index of the question within the quiz
+  index: number;
 }
 
 export type QuestionDocument = Question & Document;

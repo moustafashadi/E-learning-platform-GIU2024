@@ -38,11 +38,19 @@ export class CourseController {
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
-    @Body() { course_code, title, description, numberofQuizzes, category, difficulty }: { course_code: string, title: string, description: string, numberofQuizzes: Number, category: string, difficulty: string }) {
+    @Body() 
+    { title, description, category, difficulty, course_code, numberofQuizzes }: 
+    { title: string, description: string, category: string, difficulty: string, course_code: string, numberofQuizzes: number }) {
     console.log("createCourseDto");
-
+  
+    // Add additional validation if needed
+    if (!course_code || !title || !description || !category || !difficulty) {
+      throw new BadRequestException("Missing required fields");
+    }
+  
     return await this.courseService.create(req, { course_code, title, description, numberofQuizzes, category, difficulty });
   }
+  
 
   @Get()
   async findAll() {
@@ -62,10 +70,14 @@ export class CourseController {
 
   @Patch('/:id')
   async update(
-    @Param('id') id: string,
-    @Body() updateCourseDto: UpdateCourseDto,
+    @Req() req: Request,
+    @Param('id') courseId: string,
+    @Body() { title, description, category, difficulty, numOfQuizzes }: 
+    { title: string, description: string, category: string, difficulty: string, numOfQuizzes: number }
   ) {
-    return await this.courseService.update(id, updateCourseDto);
+    console.log('gets called')
+    console.log(courseId);
+    return await this.courseService.update(req, courseId, { title, description, category, difficulty, numOfQuizzes });
   }
 
   @Delete('/:id')
