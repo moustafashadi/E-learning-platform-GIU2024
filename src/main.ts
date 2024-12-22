@@ -11,17 +11,27 @@ async function bootstrap() {
 
   // Enable CORS with explicit configuration
   app.enableCors({
-    origin: (origin, callback) => {
-      const allowedOrigins = ['http://localhost:3000', 'http://localhost:4000'];
-      // Allow requests with no origin (e.g., mobile apps or Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    credentials: true, // Allow cookies and credentials
+    origin: 'http://localhost:4000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+  });
+
+  // Add WebSocket CORS configuration
+  const server = app.getHttpServer();
+  server.prependListener('upgrade', (req, socket, head) => {
+    if (req.headers.origin === 'http://localhost:4000') {
+      socket.write([
+        'HTTP/1.1 101 Switching Protocols',
+        'Upgrade: websocket',
+        'Connection: Upgrade',
+        'Access-Control-Allow-Origin: http://localhost:4000',
+        'Access-Control-Allow-Credentials: true'
+      ].join('\r\n') + '\r\n\r\n');
+      socket.pipe(socket);
+    }
   });
 
   // Middleware for parsing cookies
@@ -31,7 +41,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   // Start listening
-  await app.listen(process.env.PORT || 3000);
+  await app.listen(3000);
 }
 
 bootstrap();

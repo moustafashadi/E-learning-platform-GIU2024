@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { io } from "socket.io-client";
 
 const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUserId }) => {
   if (!selectedUserId) {
@@ -13,18 +13,35 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:3000/chat");
-    setSocket(ws);
+    const socket = io('http://localhost:3000/ws', {
+      withCredentials: true,
+      auth: {
+        token: localStorage.getItem('token')
+      }
+    });
 
-    ws.onmessage = (event) => {
+    socket.on('connect', () => {
+      console.log('Connected to chat server');
+      if (selectedUserId) {
+        socket.emit('join', selectedUserId);
+      }
+    });
+
+    setSocket(socket);
+
+    socket.onmessage = (event) => {
       const newMessage = JSON.parse(event.data);
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     };
 
-    return () => {
-      ws.close();
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
     };
-  }, []);
+
+    return () => {
+      socket.close();
+    };
+  }, [selectedUserId]);
 
   const handleSendMessage = async () => {
     if (input.trim() && selectedUserId) {
@@ -51,12 +68,12 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
           onChange={(e) => setInput(e.target.value)}
           className="flex-1 border rounded p-2"
           placeholder="Type your message..."
-          disabled={!selectedUserId} // Disable input if no user is selected
+          disabled={!selectedUserId}
         />
         <button
           onClick={handleSendMessage}
           className="ml-2 bg-blue-600 text-white rounded p-2"
-          disabled={!selectedUserId} // Disable button if no user is selected
+          disabled={!selectedUserId}
         >
           Send
         </button>
