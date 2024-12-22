@@ -70,11 +70,12 @@ useEffect(() => {
     }
 
     try {
-      const response = await axiosInstance.post(
+      await axiosInstance.post(
         `/quiz/${selectedCourseId}`,
-        { title: quizTitle},
+        { title: quizTitle, questions },
         { withCredentials: true }
       );
+
       toast.success("Quiz created successfully!");
       setShowQuizModal(false);
       setQuestions([]);
@@ -84,6 +85,7 @@ useEffect(() => {
       console.error(error);
     }
   };
+
 
   return (
     <div className="p-6">
