@@ -14,7 +14,4 @@ export class CreateQuestionDto {
   @IsNotEmpty()
   correctAnswer: string;
 
-  @IsString()
-  @IsNotEmpty()
-  difficulty: string; // easy, medium, hard
 }
