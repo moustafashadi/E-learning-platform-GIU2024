@@ -17,10 +17,10 @@ export class QuizController {
   @UseGuards(AuthenticationGuard)
   @Post('/:courseId')
   async createQuiz(
-    @Body() createQuizDto: { title: string; questions: Question[] },
+    @Body() title: string,
     @Req() req,
     @Param('courseId') courseId: string,) {
-    return await this.quizService.createQuiz(createQuizDto, req.user.sub, courseId);
+    return await this.quizService.createQuiz(title , req.user.sub, courseId);
   }
 
   //getQuiz by id
