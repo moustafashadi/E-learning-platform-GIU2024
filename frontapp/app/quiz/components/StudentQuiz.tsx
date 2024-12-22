@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "@/app/_utils/axiosInstance";
 import toast from "react-hot-toast";
 import { ObjectId } from "mongodb";
+import { useRouter } from "next/navigation";
 
 interface Course {
   id: string;
@@ -16,6 +17,7 @@ interface Quiz {
 }
 
 function StudentQuiz() {
+  const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [quizzes, setQuizzes] = useState<{ [courseId: string]: Quiz[] }>({});
@@ -64,7 +66,7 @@ function StudentQuiz() {
         const quizzesByCourse: { [courseId: string]: Quiz[] } = {};
         for (const course of formattedCourses) {
           try {
-            const quizResponse = await axiosInstance.get(`/quiz/course/${course.id}`, {
+            const quizResponse = await axiosInstance.get(`/courses/${course.id}/quizzes`, {
               withCredentials: true,
             });
             quizzesByCourse[course.id] = quizResponse.data.map((quiz: any) => ({
@@ -118,6 +120,7 @@ function StudentQuiz() {
                     <button
                       className="bg-blue-500 text-white px-4 py-2 rounded-md"
                       onClick={() => {
+                       router.push(`/quiz/examination?qId=${quiz.id}`)
                         console.log(`Entering quiz ${quiz.id}`); // Placeholder for navigation logic
                         toast.success(`Entering quiz: ${quiz.title}`);
                       }}

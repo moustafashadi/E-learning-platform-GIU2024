@@ -1,4 +1,3 @@
-// filepath: /f:/E-learning-platform-GIU2024/frontapp/store/slices/quizResultSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../_utils/axiosInstance';
 
@@ -8,7 +7,7 @@ interface QuizResult {
   score: number;
 }
 
-interface QuizState {
+export interface QuizState { // Export QuizState
   results: QuizResult[];
   loading: boolean;
   error: string | null;

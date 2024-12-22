@@ -5,6 +5,8 @@ import { User } from 'src/user/models/user.schema';
 
 @Schema({ timestamps: true })
 export class Course {
+  _id: MongooseSchema.Types.ObjectId;
+
   @Prop({ required: true, unique: true })
   course_code: string;
 
@@ -26,6 +28,9 @@ export class Course {
   })
   resources: string[];
   
+  //number of quizzes
+  @Prop({ default: 0 })
+  numOfQuizzes: number;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   instructor: MongooseSchema.Types.ObjectId; 

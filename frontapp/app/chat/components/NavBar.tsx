@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { logout } from "../../store/slices/authSlice";
 import axios from "axios";
+import NotificationBell from "./NotificationsBell";
 
 const Navbar = () => {
   const router = useRouter();
@@ -16,6 +17,7 @@ const Navbar = () => {
     try {
       await axios.post("/auth/logout", {}, { withCredentials: true });
       dispatch(logout());
+      localStorage.removeItem('authState'); // Clear local storage on logout
       router.push("/login");
     } catch (error) {
       console.error("Failed to logout:", error);
@@ -36,13 +38,15 @@ const Navbar = () => {
           </Link>
         ) : (
           <>
-            <Link href="/dashboard" className="mx-2 hover:underline">
-              Dashboard
-            </Link>
-            
-            <button onClick={handleLogout} className="mx-2 hover:underline">
-              Logout
-            </button>
+            <NotificationBell />
+            <div>
+              <Link href="/dashboard" className="mx-2 hover:underline">
+                Dashboard
+              </Link>
+              <button onClick={handleLogout} className="mx-2 hover:underline">
+                Logout
+              </button>
+            </div>
           </>
         )}
       </div>

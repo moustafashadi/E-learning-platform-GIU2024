@@ -35,13 +35,15 @@ export class NotesController {
   }
 
   //TESTED - WORKING
-  @Get(':id')
-  async findNoteById(@Param('id') noteId: string, @Req() req: Request) {
+  @Get('/:courseId')
+  async findNotesByCourseId(
+    @Param('courseId') courseId: string,
+    @Req() req: Request,
+  ) {
     const userId = req.user['sub'];
-    const note = await this.notesService.findById(noteId, userId);
-    return { note };
+    const notes = await this.notesService.findNotesByCourseId(courseId, userId);
+    return { notes };
   }
-
   //TESTED - WORKING
   @Put(':id')
   async updateNote(

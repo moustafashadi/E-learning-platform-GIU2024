@@ -13,7 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
 
   const roleSpecificLinks = {
     admin: [{ label: "Manage Users", path: "/admin/users" }],
-    instructor: [{ label: "Courses", path: "/instructor/courses" }],
+    instructor: [{ label: "Courses", path: "/courses" }],
     student: [{ label: "Courses", path: "/courses" }],
   };
 

@@ -23,68 +23,74 @@ export class CourseService {
     private quizService: QuizService,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
+    @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
   ) { }
 
   static get storage() {
     return multer.diskStorage({
       destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../uploads');
-        fs.mkdirSync(uploadPath, { recursive: true });
-        cb(null, uploadPath);
+        // Define the 'uploads' folder in the project root
+        const uploadPath = path.join(__dirname, '../../../uploads'); // Ensures the uploads folder exists
+        fs.mkdirSync(uploadPath, { recursive: true });  // Create the uploads folder if it doesn't exist
+        cb(null, uploadPath);  // Set the destination folder
       },
       filename: (req, file, cb) => {
+        // Generate a unique filename using original name and timestamp for uniqueness
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const fileName = `${file.originalname}`;
         console.log('Generated filename:', fileName);
-        cb(null, fileName);
-      }
+        cb(null, fileName);  // Use the original file name, or modify as needed
+      },
     });
   }
-
-
-
+  
+  // Upload Resource Method
   async uploadResource(courseCode: string, file: Express.Multer.File): Promise<Course> {
     console.log('File received:', file);
-
+  
+    // Ensure that file is provided
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-
-    // Check if filename exists on the file object
+  
+    // Ensure the filename is set properly
     if (!file.filename) {
       throw new BadRequestException('File is missing or filename not set properly');
     }
-
+  
     console.log('File upload initiated:', file);
-
+  
     // Find the course by course code
     const course = await this.courseModel.findOne({ course_code: courseCode });
     if (!course) {
       throw new NotFoundException(`Course with code ${courseCode} not found`);
     }
-
+  
     // Save the file metadata to the course
-    const filePath = path.join('/uploads', file.filename);  // Save path relative to the server
+    const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
     course.resources.push(filePath);
-
+  
+    // Save the course after updating resources
     await course.save();
     console.log('Resource added to course:', filePath);
+    
     return course;
   }
+  
+  // Get Resource Method
   async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> {
-    // Construct the file path to the 'uploads' directory
-    const filePath = path.join(__dirname, '../../uploads', fileName);
-
-    // Check if the file exists
+    // Construct the file path to the 'uploads' directory in your server
+    const filePath = path.join(__dirname, '../../../uploads', fileName);
+  
+    // Check if the file exists in the filesystem
     if (!fs.existsSync(filePath)) {
-      // If the file does not exist, throw a NotFoundException
+      // If the file doesn't exist, throw a NotFoundException
       throw new NotFoundException(`File not found: ${fileName}`);
     }
-
+  
     // Return the file stream if the file exists
     return fs.createReadStream(filePath);
   }
-
   //get enrolled students
   async getEnrolledStudents(course_id: string): Promise<mongoose.ObjectId[]> {
     const course = await this.courseModel.findById(course_id).populate('students').exec();
@@ -94,12 +100,13 @@ export class CourseService {
     return course.students;
   }
 
-  async create(@Req() req : Request, {course_code, title, description, category, difficulty }): Promise<Course> {
+  async create(@Req() req : Request, {course_code, title, description, numberofQuizzes, category, difficulty }): Promise<Course> {
     try {
       const course = new this.courseModel({
         course_code: course_code,
         title,
         description,
+        numOfQuizzes: numberofQuizzes,
         category,
         difficulty,
         instructor: req.user['sub'],
@@ -140,15 +147,20 @@ export class CourseService {
     return course;
   }
 
-  async update(course_code: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
-    const updatedCourse = await this.courseModel
-      .findOneAndUpdate({ course_code }, updateCourseDto, { new: true })
-      .populate('instructor')
-      .exec();
-    if (!updatedCourse) {
-      throw new NotFoundException(`Course with code ${course_code} not found`);
+  async update(req: Request, courseId: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
     }
-    return updatedCourse;
+
+    // Update the course fields
+    course.title = updateCourseDto.title;
+    course.description = updateCourseDto.description;
+    course.category = updateCourseDto.category;
+    course.difficulty = updateCourseDto.difficulty;
+    course.numOfQuizzes = updateCourseDto.numOfQuizzes;
+
+    return await course.save();
   }
 
   async delete(id: string): Promise<void> {
@@ -174,5 +186,47 @@ export class CourseService {
   async searchCoursesByDifficulty(difficulty: string): Promise<Course[]> {
     return await this.courseModel.find({ difficulty }).exec();
   }
+
+  async findCoursesByInstructor(instructorId: string): Promise<Course[]> {
+    // Find the instructor by their ID and populate the 'coursesTaught' field
+    const instructor = await this.instructorModel.findById(instructorId).exec();
+  
+    if (!instructor || instructor.role !== 'instructor') {
+      throw new NotFoundException(`Instructor with ID ${instructorId} not found or invalid role`);
+    }
+  
+    // Fetch the list of courses taught by the instructor
+    const courseIds = instructor.coursesTaught;
+    
+    if (!courseIds || courseIds.length === 0) {
+      throw new NotFoundException(`No courses found for instructor with ID ${instructorId}`);
+    }
+  
+    // Now find the courses using the list of courseIds
+    const courses = await this.courseModel.find({
+      _id: { $in: courseIds },
+    }).exec();
+  
+    if (!courses || courses.length === 0) {
+      throw new NotFoundException(`No courses found for instructor with ID ${instructorId}`);
+    }
+  
+    return courses;
+  }
+  
+  //GET COURSE QUIZZES
+  async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
+    const course = await this.courseModel.findById(courseId).populate('quizzes').exec();
+    
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    const quizIds = course.quizzes; 
+    const quizzes = await this.quizModal.find({ _id: { $in: quizIds } }).exec();
+    return quizzes;
+  }
+
+  
 
 }
