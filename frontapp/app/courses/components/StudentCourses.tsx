@@ -24,6 +24,7 @@ interface Note {
   userId: string;
   isPinned: boolean;
   created_at: string;
+  last_updated: string;
 }
 
 
@@ -36,9 +37,10 @@ function StudentCourses() {
   const [courseNotes, setCourseNotes] = useState<Note[]>([]); // Correct type
   const [loadingNotes, setLoadingNotes] = useState<boolean>(false); // Track loading state
   const [newNoteContent, setNewNoteContent] = useState<string>(""); // For adding notes
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null); // Track editing note
   const [creatingNote, setCreatingNote] = useState(false); // Flag to handle note creation loading state
   const [content, setContent] = useState(""); 
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editedContent, setEditedContent] = useState<string>("");
 
 
 
@@ -198,7 +200,6 @@ function StudentCourses() {
     }
   };
 
-
 const addNote = async () => {
   if (!newNoteContent.trim()) {
     toast.error("Note content cannot be empty.");
@@ -219,6 +220,53 @@ const addNote = async () => {
     console.error(error);
   }
 };
+
+const editNote = (noteId: string, currentContent: string) => {
+  // Set the note ID and current content for editing
+  setEditingNoteId(noteId);
+  setEditedContent(currentContent);  // Pre-fill the text field with the current note content
+};
+
+const handleSaveClick = async (noteId: string) => {
+  if (editedContent.trim() === "") {
+    toast.error("Note content cannot be empty.");
+    return;
+  }
+  try {
+    // Get the current date in ISO format
+    const lastUpdated = new Date().toISOString();  // Make sure this is a valid ISO date string
+    const response = await axiosInstance.put(
+      `/notes/${noteId}`,
+      { content: editedContent, last_updated: lastUpdated },
+      { withCredentials: true }
+    );
+    // Assuming response contains the updated note with the new "last_updated" field
+    const updatedNote = response.data;
+
+    // Ensure that the date is in a valid format when updating the note state
+    const validLastUpdatedDate = updatedNote.last_updated
+      ? new Date(updatedNote.last_updated).toLocaleString() // Format it for display
+      : new Date().toLocaleString(); // Fallback to current date if not valid
+
+    // Update the note in the UI with the new content and last_updated timestamp
+    setCourseNotes((prevNotes) =>
+      prevNotes.map((note) =>
+        note._id === noteId
+          ? { ...note, content: editedContent, last_updated: validLastUpdatedDate }
+          : note
+      )
+    );
+    setEditingNoteId(null); // Reset editing state
+    toast.success("Note updated successfully.");
+  } catch (error) {
+    toast.error("Failed to update note.");
+    console.error(error);
+  }
+};
+
+
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -226,8 +274,6 @@ const addNote = async () => {
       </div>
     );
   }
-
-
 
   return (
     <div className="mt-[2rem] p-6 space-y-6 bg-gray-100">
@@ -394,22 +440,43 @@ const addNote = async () => {
       courseNotes.map((note) => (
         <li key={note._id} className="bg-gray-50 p-4 rounded-md shadow-md mb-3">
           {/* Note Content */}
-          <div className="font-semibold text-lg">{note.content}</div>
+          {editingNoteId === note._id ? (
+            <div>
+              <textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                rows={3}
+                className="w-full p-2 border rounded-md"
+              />
+              <button
+                onClick={() => handleSaveClick(note._id)}
+                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md"
+              >
+                Save
+              </button>
+            </div>
+          ) : (
+            <div className="font-semibold text-lg">{note.content}</div>
+          )}
 
           {/* Note Metadata */}
           <div className="text-sm text-gray-500 mt-2">
             <div><strong>Created:</strong> {new Date(note.created_at).toLocaleString()}</div>
+            <div><strong>Last Updated:</strong> {new Date(note.last_updated).toLocaleString()}</div>
             <div><strong>Pinned:</strong> {note.isPinned ? "Yes" : "No"}</div>
           </div>
 
           {/* Action Buttons */}
           <div className="mt-2 flex space-x-3">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              onClick={() => editNote(note._id, note.content)} // Start editing the note
+            >
               Edit
             </button>
             <button
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              onClick={() => deleteNote(note._id)}
+              onClick={() => deleteNote(note._id)} // Delete button remains the same
             >
               Delete
             </button>
