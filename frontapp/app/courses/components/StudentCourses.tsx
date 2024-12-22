@@ -120,23 +120,6 @@ function StudentCourses() {
   }, []);
 
 
-  // Fetch notes when the selected course changes
-  useEffect(() => {
-    if (selectedCourse) {
-      const fetchUserNotes = async () => {
-        try {
-          const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
-          const userId = authData.id;
-          fetchUserNotes(); // Fetch notes for the logged-in user
-        } catch (error) {
-          console.error("Failed to fetch user data for notes", error);
-        }
-      };
-      fetchUserNotes();
-    }
-  }, [selectedCourse]); // Only run when the selected course changes
-
-
 
   const enrollInCourse = async (courseId: string) => {
     try {
