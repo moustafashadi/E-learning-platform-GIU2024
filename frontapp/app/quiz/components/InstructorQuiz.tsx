@@ -1,4 +1,3 @@
-// filepath: /InstructorQuiz.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -10,11 +9,12 @@ interface Course {
   name: string;
   currentQuizzes: number;
   maxQuizzes: number;
-  doneQuizzes:number;
+  doneQuizzes: number;
 }
 
-  function InstructorQuiz () {
+function InstructorQuiz() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [showQuizModal, setShowQuizModal] = useState(false);
@@ -24,21 +24,26 @@ interface Course {
   >([]);
 
   // Fetch courses taught by the instructor
-useEffect(() => {
+  useEffect(() => {
     const fetchInstructorCourses = async () => {
       try {
         // Fetch user ID
-        const userResponse = await axiosInstance.get("/auth/me", { withCredentials: true });
+        const userResponse = await axiosInstance.get("/auth/me", {
+          withCredentials: true,
+        });
         const userId = userResponse.data.id;
         setUserId(userId);
 
         // Fetch courses taught by the instructor
-        const response = await axiosInstance.get(`/courses/teacher/${userId}`, { withCredentials: true });
+        const response = await axiosInstance.get(
+          `/courses/teacher/${userId}`,
+          { withCredentials: true }
+        );
         const formattedCourses = response.data.map((course: any) => ({
           id: course.id || course._id || "unknown-id",
           name: course.name || course.title || "Unnamed Course",
           maxQuizzes: course.numOfQuizzes || 0, // Add maxQuizzes field if available
-          doneQuizzes :course.quizzes.length
+          doneQuizzes: course.quizzes.length,
         }));
 
         setCourses(formattedCourses);
@@ -52,7 +57,6 @@ useEffect(() => {
 
     fetchInstructorCourses();
   }, []);
-
 
   // Add a new question
   const addQuestion = () => {
@@ -70,22 +74,63 @@ useEffect(() => {
     }
 
     try {
-      await axiosInstance.post(
+      // Step 1: Create the quiz
+      const createdQuizResponse = await axiosInstance.post(
         `/quiz/${selectedCourseId}`,
-        { title: quizTitle, questions },
+        { title: quizTitle },
         { withCredentials: true }
       );
 
+      const createdQuizId = createdQuizResponse.data._id; // Assuming the created quiz ID is returned
       toast.success("Quiz created successfully!");
-      setShowQuizModal(false);
+
+      // Step 2: Add questions to the quiz
+      for (const question of questions) {
+        const { question: content, options } = question;
+      
+        const correctOptionIndex = options.findIndex((option) => option.isCorrect);
+        if (correctOptionIndex === -1) {
+          toast.error("Each question must have one correct answer.");
+          return;
+        }
+      
+        // Map the correct answer to A, B, C, or D
+        const correctAnswer = String.fromCharCode(65 + correctOptionIndex); // Convert index to letter (A, B, C, D)
+      
+        // Format options with letters (A, B, C, D)
+        const formattedOptions = options.map((option, index) => ({
+          text: option.text,
+          identifier: String.fromCharCode(65 + index), // Convert index to letter
+        }));
+      
+        try {
+          // Send a request for each question
+          await axiosInstance.post(
+            `/${createdQuizId}/createQuestion`,
+            {
+              content,
+              correctAnswer, // Send the correct answer as A, B, C, or D
+              difficulty: "medium", // Set default difficulty; customize as needed
+              options: formattedOptions,
+            },
+            { withCredentials: true }
+          );
+        } catch (error) {
+          console.error("Failed to create question:", error);
+          toast.error(`Failed to add question: ${content}`);
+        }
+      }
+
+      // Clear form and close modal
+      setShowQuizModal(false); // Close the modal
       setQuestions([]);
       setQuizTitle("");
+      toast.success("All questions added successfully!");
     } catch (error) {
-      toast.error("Failed to create quiz.");
+      toast.error("Failed to create quiz or add questions.");
       console.error(error);
     }
   };
-
 
   return (
     <div className="p-6">
@@ -216,10 +261,6 @@ useEffect(() => {
       )}
     </div>
   );
-};
-
-export default InstructorQuiz;
-function setLoading(arg0: boolean) {
-  throw new Error("Function not implemented.");
 }
 
+export default InstructorQuiz;
