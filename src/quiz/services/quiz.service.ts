@@ -9,6 +9,7 @@ import { QuestionService } from './question.service';
 import { Request } from 'express';
 import { Question } from '../models/question.schema';
 import { ProgressService } from 'src/progress/services/progress.service';
+import { NotificationGateway } from 'src/communication/notifications/notification.gateway';
 
 
 @Injectable()
@@ -16,6 +17,7 @@ export class QuizService {
   constructor(
     private questionService: QuestionService,
     private progressService: ProgressService,
+    private notificationGateway: NotificationGateway,
     @InjectModel(Instructor.name) private readonly instructorModel: Model<Instructor>,
     @InjectModel(Course.name) private readonly courseModel: Model<Course>,
     @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
@@ -54,6 +56,9 @@ export class QuizService {
     await course.save();
 
     await createdQuiz.save();
+
+    await this.notificationGateway.sendQuizNotification(course, createdQuiz._id.toString());
+
     return createdQuiz;
   }
 

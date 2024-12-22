@@ -14,6 +14,7 @@ import { InstructorSchema, StudentSchema } from 'src/user/models/user.schema';
 import { QuestionController } from './controllers/question.controller';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { ProgressSchema } from 'src/progress/models/progress.schema';
+import { NotificationGateway } from 'src/communication/notifications/notification.gateway';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { ProgressSchema } from 'src/progress/models/progress.schema';
       signOptions: { expiresIn: '1d' },
      })],
   controllers: [QuizController, QuestionController],
-  providers: [QuizService, ResponseService, ResponseGateway, QuestionService, ProgressService],
+  providers: [QuizService, ResponseService, ResponseGateway, QuestionService, ProgressService, NotificationGateway],
   exports: [QuizService],
 })
 export class QuizModule {}

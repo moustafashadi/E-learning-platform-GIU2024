@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WritableDraft } from 'immer';
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 interface Notification {
   id: string;
@@ -9,7 +9,7 @@ interface Notification {
   createdAt: string;
 }
 
-interface NotificationState {
+export interface NotificationState { // Export NotificationState
   notifications: Notification[];
   unreadCount: number;
   socket: Socket | null;

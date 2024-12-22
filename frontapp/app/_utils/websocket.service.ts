@@ -1,6 +1,5 @@
-// services/websocketService.ts
 import { io, Socket } from 'socket.io-client';
-import { store } from '../store';
+import store from '../store';
 import { addNotification } from '../store/slices/notificationSlice';
 
 class WebSocketService {
@@ -19,17 +18,8 @@ class WebSocketService {
       store.dispatch(addNotification(notification));
     });
 
-    this.socket.on('quiz-created', (data) => {
-      const notification = {
-        id: Date.now().toString(),
-        type: 'quiz',
-        message: `New quiz available in course: ${data.courseName}`,
-        read: false,
-        createdAt: new Date().toISOString(),
-        courseId: data.courseId,
-        quizId: data.quizId
-      };
-      store.dispatch(addNotification(notification));
+    this.socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
     });
 
     return this.socket;
@@ -43,4 +33,4 @@ class WebSocketService {
   }
 }
 
-export const websocketService = new WebSocketService();
+export default new WebSocketService();
