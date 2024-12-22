@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axiosInstance from "@/app/_utils/axiosInstance";
 import toast from "react-hot-toast"; // Assuming you have react-hot-toast set up
 import axios from "axios";
-
+import { useRouter } from "next/navigation";
 interface Course {
   _id: string;
   course_code: string;
@@ -16,8 +16,13 @@ interface Course {
   notes: string[];
 }
 
+interface GoToForumsButtonProps {
+  courseId: string;
+  courseTitle?: string; // Optional prop for accessibility or tooltip
+}
 
 interface Note {
+  
   _id: string;
   courseId: string;
   content: string;
@@ -29,6 +34,7 @@ interface Note {
 
 
 function StudentCourses() {
+  const router = useRouter();
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +78,87 @@ function StudentCourses() {
     }
   };
 
+  const handleCreateAndRedirectToForum = async (courseId: string) => {
+    try {
+      // Ensure courseId and selectedCourse are valid
+      if (!courseId) {
+        toast.error("Course ID is required to create a forum.");
+        console.error("Course ID is missing.");
+        return;
+      }
+  
+      if (!selectedCourse) {
+        toast.error("Selected course is invalid. Please try again.");
+        console.error("Selected course is null or undefined.");
+        return;
+      }
+  
+      // Retrieve the authentication token
+      const authToken = localStorage.getItem("authToken");
+      console.log("Retrieved Token:", authToken); // Debug token retrieval
+      if (!authToken) {
+        toast.error("You must be logged in to create a forum.");
+        console.error("Authentication token is missing.");
+        router.push("/login");
+        return;
+      }
+  
+      // Create a forum for the course
+      const response = await axiosInstance.post(
+        `/api/forums/${courseId}/create`,
+        {
+          title: `${selectedCourse.title} Forum`,
+          description: `Discussion forum for the course ${selectedCourse.title}`,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+          withCredentials: true,
+        }
+      );
+  
+      // Notify the user and redirect to the forums page
+      if (response.status === 201 || response.status === 200) {
+        toast.success("Forum created successfully!");
+        router.push(`/forums/${courseId}/forums`);
+      } else {
+        toast.error("Unexpected response from the server. Please try again.");
+        console.error("Unexpected response:", response);
+      }
+    } catch (error: any) {
+      // Improved error handling with debugging
+      console.error("Error creating forum:", error);
+  
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            toast.error("Unauthorized. Please log in again.");
+            console.error("401 Unauthorized:", error.response.data);
+            break;
+          case 403:
+            toast.error("You do not have permission to create a forum for this course.");
+            console.error("403 Forbidden:", error.response.data);
+            break;
+          case 404:
+            toast.error("Course not found. Please select a valid course.");
+            console.error("404 Not Found:", error.response.data);
+            break;
+          default:
+            toast.error("An error occurred. Please try again.");
+            console.error(`Error (${error.response.status}):`, error.response.data);
+            break;
+        }
+      } else if (error.request) {
+        toast.error("Failed to connect to the server. Please check your network.");
+        console.error("Network error:", error.request);
+      } else {
+        toast.error("An error occurred. Please try again.");
+        console.error("Error:", error.message);
+      }
+    }
+  };
+  
   useEffect(() => {
     if (selectedCourse) {
       // Fetch notes when a course is selected
@@ -413,7 +500,24 @@ const handleSaveClick = async (noteId: string) => {
                   )}
                 </ul>
               </div>
+                  {/* "Go to Forums" Button */}
+                  <div className="mt-4">
+                      <button
+                        onClick={() => {
+                          if (selectedCourse) {
+                            handleCreateAndRedirectToForum(selectedCourse._id); // Ensure selectedCourse is valid
+                          } else {
+                            console.error("No course selected for creating a forum.");
+                            toast.error("Please select a course before creating a forum.");
+                          }
+                        }}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200"
+                      >
+                        Create Forum & Go to Forums
+                      </button>
+                    </div>
 
+              
               <div>
   <strong>Notes:</strong>
   <ul className="list-disc pl-5">

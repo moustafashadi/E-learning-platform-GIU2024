@@ -47,8 +47,12 @@ export class ForumServices {
     }
 
     async findAll(courseId: string): Promise<Forum[]> {
-        return await this.forumModel.find({ course: courseId }).exec();
-    }
+        const forums = await this.forumModel.find({ courses: courseId }).exec();
+        if (!forums || forums.length === 0) {
+          throw new NotFoundException(`No forums found for course ID: ${courseId}`);
+        }
+        return forums;
+      }
 
     async addThread(req: Request, forumid: string): Promise<Forum> {
         const userId = req.user['sub'];

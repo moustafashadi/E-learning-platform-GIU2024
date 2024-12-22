@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import { useParams } from 'next/navigation';
 
 // Define interfaces for the data
 interface Forum {
@@ -16,27 +17,30 @@ interface Thread {
 }
 
 const ForumsPage = () => {
+  const { courseId } = useParams();
   const router = useRouter();
-  const { courseId } = router.query;
 
-  const [forums, setForums] = useState<Forum[]>([]);  // Type the state
-  const [threads, setThreads] = useState<Thread[]>([]);  // Type the state
+  const [forums, setForums] = useState<Forum[]>([]); // List of forums
+  const [threads, setThreads] = useState<Thread[]>([]); // List of threads in the selected forum
   const [newForumTitle, setNewForumTitle] = useState('');
   const [newForumDescription, setNewForumDescription] = useState('');
   const [newThreadMessage, setNewThreadMessage] = useState('');
-  const [selectedForumId, setSelectedForumId] = useState<string | null>(null);  // Adjust for null value
+  const [selectedForumId, setSelectedForumId] = useState<string | null>(null); // ID of selected forum
 
-  // Fetch all forums for a course
+  // Fetch all forums for the course
   useEffect(() => {
     if (courseId) {
       axios
         .get(`/api/forums/${courseId}`)
         .then((response) => setForums(response.data))
-        .catch((error) => console.error('Error fetching forums:', error));
+        .catch((error) => {
+          console.error('Error fetching forums:', error);
+          setForums([]); // Ensure state is reset in case of error
+        });
     }
   }, [courseId]);
 
-  // Fetch threads for a specific forum
+  // Fetch threads for the selected forum
   useEffect(() => {
     if (selectedForumId) {
       axios
@@ -55,6 +59,11 @@ const ForumsPage = () => {
       setNewForumTitle('');
       setNewForumDescription('');
       alert('Forum created successfully');
+      // Refresh forums after creation
+      axios
+        .get(`/api/forums/${courseId}`)
+        .then((response) => setForums(response.data))
+        .catch((error) => console.error('Error fetching forums:', error));
     } catch (error) {
       console.error('Error creating forum:', error);
       alert('Failed to create forum');
@@ -112,13 +121,20 @@ const ForumsPage = () => {
       {/* List of Forums */}
       <div>
         <h2>Forums</h2>
-        <ul>
-          {forums.map((forum) => (
-            <li key={forum._id} onClick={() => setSelectedForumId(forum._id)}>
-              {forum.title}
-            </li>
-          ))}
-        </ul>
+        {forums.length > 0 ? (
+          <ul>
+            {forums.map((forum) => (
+              <li key={forum._id} onClick={() => setSelectedForumId(forum._id)}>
+                {forum.title}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div>
+            <p>No forums found for this course.</p>
+            <p>Use the form above to create a new forum.</p>
+          </div>
+        )}
       </div>
 
       {/* Threads for the selected forum */}
