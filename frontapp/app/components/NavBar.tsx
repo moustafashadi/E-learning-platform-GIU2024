@@ -16,6 +16,7 @@ const Navbar = () => {
     try {
       await axios.post("/auth/logout", {}, { withCredentials: true });
       dispatch(logout());
+      localStorage.removeItem('authState'); // Clear local storage on logout
       router.push("/login");
     } catch (error) {
       console.error("Failed to logout:", error);
@@ -39,7 +40,6 @@ const Navbar = () => {
             <Link href="/dashboard" className="mx-2 hover:underline">
               Dashboard
             </Link>
-            
             <button onClick={handleLogout} className="mx-2 hover:underline">
               Logout
             </button>

@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import toast from "react-hot-toast"; // Assuming you have react-hot-toast set up
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import { RootState } from "@/app/store";
+import ViewCourseStudent from "../view/ViewCourseStudent";
 
 interface Course {
   _id: string;

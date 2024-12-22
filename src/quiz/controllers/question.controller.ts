@@ -1,5 +1,5 @@
-import { Get, Body, Controller, Param, Post, Put, UseGuards, Delete, Req, UsePipes, ValidationPipe } from '@nestjs/common'; // Add this import statement
-import { Request } from 'express'; // Add this import statement
+import { Get, Body, Controller, Param, Post, Put, UseGuards, Delete, Req, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Request } from 'express';
 import { QuestionService } from '../services/question.service';
 import { ResponseGateway } from 'src/response/gateway/response.gateway';
 import { ResponseService } from 'src/response/services/response.service';
@@ -8,11 +8,9 @@ import { UpdateQuestionDto } from '../dto/update-question.dto';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 import { Student, StudentDocument } from 'src/user/models/user.schema';
-import { InjectModel, MongooseModule } from '@nestjs/mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
-import { Types, ObjectId } from 'mongoose';
-
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:quizId')
@@ -23,9 +21,8 @@ export class QuestionController {
     private readonly quizService: QuizService,
     private readonly responseService: ResponseService,
     @InjectModel(Student.name) private readonly studentModel: Model<StudentDocument>,
-  ) { }
+  ) {}
 
-  //TESTED-WORKING
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post('/createQuestion')
@@ -36,7 +33,6 @@ export class QuestionController {
     return this.questionService.createQuestion(quizId, content, correctAnswer, difficulty);
   }
 
-  //TESTED-WORKING
   @Get('/questions')
   async getQuestions(@Param('quizId') quizId: string) {
     return this.questionService.getQuestions(quizId);
@@ -64,20 +60,26 @@ export class QuestionController {
     return this.questionService.getQuestionById(id);
   }
 
-  @Post('/:quizId/:id/submit')
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Student)
+  @Post('/:id/submit')
   async submitAnswer(
     @Req() req: Request,
-    @Param('quizId') quizId: string,
     @Param('id') questionId: string,
     @Body() { chosenAnswer }: { chosenAnswer: string },
   ) {
+    const question = await this.questionService.getQuestionById(questionId);
+
     const userId = req.user['sub'];
     const student = await this.studentModel.findById(userId);
     if (!student.questionsSolved) {
       student.questionsSolved = [];
     }
+    const quizId = await this.quizService.getQuiz(question.quiz.toString());
+    const parsedQuizId = quizId._id.toString();
+
     student.questionsSolved.push(questionId);
-    const savedResponse = await this.responseService.evaluateResponse(userId, quizId, questionId, chosenAnswer);
+    const savedResponse = await this.responseService.evaluateResponse(userId, parsedQuizId, questionId, chosenAnswer);
 
     // After evaluation, send real-time feedback
     this.responseGateway.sendResponseToClient(userId, {
@@ -86,20 +88,20 @@ export class QuestionController {
       feedbackMessage: savedResponse.feedbackMessage,
     });
 
-    const quizDone = await this.quizService.checkIfAllQuestionsSolved(req, quizId);
+    const quizDone = await this.quizService.checkIfAllQuestionsSolved(req, parsedQuizId);
     if (quizDone) {
       // Calculate the grade
-      const responses = await this.responseService.getResponsesForQuiz(userId, quizId);
+      const responses = await this.responseService.getResponsesForQuiz(userId, parsedQuizId);
       const correctAnswers = responses.filter(response => response.isCorrect).length;
       const totalQuestions = responses.length;
       const grade = (correctAnswers / totalQuestions) * 100;
 
       // Push the grade to the quizGrades attribute in the student schema
-      student.quizGrades.set(quizId, grade);
+      student.quizGrades.set(parsedQuizId, grade);
       await student.save();
     } else {
       // Get next question
-      const nextQuestion = await this.questionService.getNextQuestion(req, quizId);
+      const nextQuestion = await this.questionService.getNextQuestion(req, parsedQuizId);
     }
 
     // Optionally return an immediate HTTP response as well

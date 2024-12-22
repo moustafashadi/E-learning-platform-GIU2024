@@ -23,6 +23,7 @@ export class CourseService {
     private quizService: QuizService,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
+    @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
   ) { }
 
   static get storage() {
@@ -99,12 +100,13 @@ export class CourseService {
     return course.students;
   }
 
-  async create(@Req() req : Request, {course_code, title, description, category, difficulty }): Promise<Course> {
+  async create(@Req() req : Request, {course_code, title, description, numberofQuizzes, category, difficulty }): Promise<Course> {
     try {
       const course = new this.courseModel({
         course_code: course_code,
         title,
         description,
+        numOfQuizzes: numberofQuizzes,
         category,
         difficulty,
         instructor: req.user['sub'],
@@ -145,15 +147,20 @@ export class CourseService {
     return course;
   }
 
-  async update(course_code: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
-    const updatedCourse = await this.courseModel
-      .findOneAndUpdate({ course_code }, updateCourseDto, { new: true })
-      .populate('instructor')
-      .exec();
-    if (!updatedCourse) {
-      throw new NotFoundException(`Course with code ${course_code} not found`);
+  async update(req: Request, courseId: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
     }
-    return updatedCourse;
+
+    // Update the course fields
+    course.title = updateCourseDto.title;
+    course.description = updateCourseDto.description;
+    course.category = updateCourseDto.category;
+    course.difficulty = updateCourseDto.difficulty;
+    course.numOfQuizzes = updateCourseDto.numOfQuizzes;
+
+    return await course.save();
   }
 
   async delete(id: string): Promise<void> {
@@ -207,7 +214,18 @@ export class CourseService {
     return courses;
   }
   
-  
+  //GET COURSE QUIZZES
+  async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
+    const course = await this.courseModel.findById(courseId).populate('quizzes').exec();
+    
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    const quizIds = course.quizzes; 
+    const quizzes = await this.quizModal.find({ _id: { $in: quizIds } }).exec();
+    return quizzes;
+  }
 
   
 

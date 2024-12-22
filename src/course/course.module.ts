@@ -9,6 +9,8 @@ import { QuizSchema } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { QuestionService } from 'src/quiz/services/question.service';
 import { QuestionSchema } from 'src/quiz/models/question.schema';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { ProgressSchema } from 'src/progress/models/progress.schema';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { QuestionSchema } from 'src/quiz/models/question.schema';
       { name: 'Student', schema: StudentSchema },
       { name: 'Quiz', schema: QuizSchema},
       { name: 'Question', schema: QuestionSchema},
+      { name: 'Progress', schema: ProgressSchema},
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
@@ -26,7 +29,7 @@ import { QuestionSchema } from 'src/quiz/models/question.schema';
      })
   ],
   controllers: [CourseController],
-  providers: [CourseService, QuizService, QuestionService],
+  providers: [CourseService, QuizService, QuestionService, ProgressService],
   exports: [CourseService],
 })
 export class CourseModule {}
