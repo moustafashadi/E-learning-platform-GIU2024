@@ -438,7 +438,7 @@ const handleSaveClick = async (noteId: string) => {
                 <strong>Instructor:</strong> {instructorName}
               </div>
               <div>
-                <strong>Resources:</strong>
+              
                 <div>
   <strong>Resources:</strong>
   <div className="space-y-2">

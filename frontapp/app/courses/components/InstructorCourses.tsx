@@ -36,6 +36,8 @@ function InstructorCourses() {
   const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [creatingCourse, setCreatingCourse] = useState<boolean>(false);
+  const [courses, setCourses] = useState<Course[]>([]); // Assuming Course is your type
+
   const [formValues, setFormValues] = useState({
     title: "",
     description: "",
@@ -179,6 +181,51 @@ function InstructorCourses() {
   };
   
 
+ // Fetch courses on component mount
+ useEffect(() => {
+  const fetchCourses = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/courses', {
+        withCredentials: true,
+      });
+      setCourses(response.data); // Set the courses from the backend
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  fetchCourses();
+}, []); // Empty dependency array ensures it runs once
+
+const handleDeleteClick = async (courseId: string) => {
+  try {
+    const response = await axios.delete(
+      `http://localhost:3000/courses/${courseId}`,
+      { withCredentials: true }
+    );
+
+    if (response.status === 200) {
+      console.log('Course deleted successfully');
+      alert('Course deleted successfully');
+
+      // Remove the deleted course from the local state
+      setCourses((prevCourses) =>
+        prevCourses.filter((course) => course._id !== courseId)
+      
+      );
+      setTeachingCourses((prevCourses) =>
+        prevCourses.filter((course) => course._id !== courseId)
+      );
+      
+    }
+  } catch (error) {
+    console.error('Failed to delete course:', error);
+    alert('Failed to delete course');
+  }
+};
+
+
+  
   return (
     <div className="mt-[2rem] p-6 space-y-6 bg-gray-100">
       {!viewingCourse && (
@@ -217,6 +264,16 @@ function InstructorCourses() {
                           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                         >
                           {viewingCourse && (viewingCourse as Course)._id === course._id ? "Hide Details" : "View Details"}
+                        </button>
+
+
+                        <button
+                          onClick={() => handleDeleteClick(course._id)}
+                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                        >
+                          Delete Course
+                        
+                        
                         </button>
                       </div>
                     </div>
