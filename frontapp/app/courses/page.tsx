@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import StudentCourses from "./components/StudentCourses"; // Import the StudentCourses component
-import ViewCourseStudent from "./components/views/ViewCourseStudent";
 import useAuth from "../hooks/useAuth"; // Assume this hook handles authentication
 import InstructorCourses from "./components/InstructorCourses";
 
@@ -63,5 +62,4 @@ function CoursePage() {
     </div>
   );
 }
-
 export default CoursePage;
