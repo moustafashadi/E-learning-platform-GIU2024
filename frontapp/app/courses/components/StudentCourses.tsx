@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import toast from "react-hot-toast";
-import { useDispatch, useSelector } from "react-redux";
-import { useRouter } from "next/navigation";
-import { RootState } from "@/app/store";
-import ViewCourseStudent from "../view/ViewCourseStudent";
+import toast from "react-hot-toast"; // Assuming you have react-hot-toast set up
+import { format } from "date-fns"; // If you want to format the dates
+
 
 interface Course {
   _id: string;
@@ -19,12 +17,54 @@ interface Course {
   notes: string[];    // List of notes (or any format you use)
 }
 
+interface Note {
+  _id: string;
+  courseId: { $oid: string }; // Object with $oid
+  content: string;
+  userId: { $oid: string }; // Object with $oid
+  isPinned: boolean;
+  created_at: string;
+  last_updated: string;
+}
+
+
 function StudentCourses() {
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [instructorName, setInstructorName] = useState<string>("Loading...");
+  const [notes, setNotes] = useState<Note[]>([]); // Notes are now typed as an array of Note objects
+  const [loadingNotes, setLoadingNotes] = useState(true); // Loading state for notes
+
+
+
+
+
+
+ // Fetch notes for the logged-in user
+ const fetchNotes = async (userId: string) => {
+  try {
+    setLoadingNotes(true);
+    const response = await axios.get(`http://localhost:3000/notes`, {
+      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${userId}`,
+      },
+    });
+   
+    setNotes(response.data.notes); // Assuming the response contains an array of notes
+  } catch (error) {
+    toast.error("Failed to fetch notes.");
+    console.error(error);
+  } finally {
+    setLoadingNotes(false);
+  }
+};
+
+
+
+
 
   const fetchCourses = async () => {
     try {
@@ -78,6 +118,25 @@ function StudentCourses() {
     fetchCourses(); // Fetch courses when the component mounts
   }, []);
 
+
+  // Fetch notes when the selected course changes
+  useEffect(() => {
+    if (selectedCourse) {
+      const fetchUserNotes = async () => {
+        try {
+          const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
+          const userId = authData.id;
+          fetchNotes(userId); // Fetch notes for the logged-in user
+        } catch (error) {
+          console.error("Failed to fetch user data for notes", error);
+        }
+      };
+      fetchUserNotes();
+    }
+  }, [selectedCourse]); // Only run when the selected course changes
+
+
+
   const enrollInCourse = async (courseId: string) => {
     try {
       const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
@@ -107,6 +166,7 @@ function StudentCourses() {
     setSelectedCourse(null); // Hide the course details
   };
 
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -271,18 +331,33 @@ function StudentCourses() {
                   )}
                 </ul>
               </div>
-              <div>
-                <strong>Notes:</strong>
-                <ul className="list-disc pl-5">
-                  {Array.isArray(selectedCourse.notes) && selectedCourse.notes.length > 0 ? (
-                    selectedCourse.notes.map((note, index) => (
-                      <li key={index}>{note}</li>
-                    ))
-                  ) : (
-                    <li>No notes available</li>
-                  )}
-                </ul>
-              </div>
+
+               {/* Notes Section */}
+
+               <div>
+  <strong>Notes:</strong>
+  <div className="space-y-2">
+    {loadingNotes ? (
+      <div>Loading notes...</div> // Loading state
+    ) : notes.length > 0 ? (
+      notes.map((note, index) => (
+        <div key={index} className="p-4 bg-gray-100 rounded shadow-md">
+          <p><strong>Content:</strong> {note.content}</p> {/* Display note content */}
+<p><strong>Course ID:</strong> {note.courseId?.toString()}</p> {/* Access the courseId as a string */}
+<p><strong>User ID:</strong> {note.userId?.toString()}</p> {/* Access the userId as a string */}
+<p><strong>Is Pinned:</strong> {note.isPinned ? "Yes" : "No"}</p> {/* Display if pinned */}
+<p><strong>Created At:</strong> {note.created_at ? new Date(note.created_at).toLocaleString() : "Invalid date"}</p> {/* Format created_at */}
+<p><strong>Last Updated:</strong> {note.last_updated ? new Date(note.last_updated).toLocaleString() : "Invalid date"}</p> {/* Format last_updated */}
+
+
+     </div>
+      ))
+    ) : (
+      <div>No notes available</div>
+    )}
+  </div>
+</div>
+
             </>
           )}
         </section>
