@@ -23,6 +23,25 @@ export class NotesService {
     }
     return note;
   }
+  async findNotesByCourseId(courseId: string, userId: string): Promise<Note[]> {
+    const parsedCourseId = new Types.ObjectId(courseId);
+    const parsedUserId = new Types.ObjectId(userId);
+  
+    try {
+      const notes = await this.noteModel.find({
+        courseId: parsedCourseId,
+        userId: parsedUserId,
+      }).exec();
+  
+ 
+  
+      return notes;
+    } catch (error) {
+      console.error('Error fetching notes by course ID:', error);
+      throw new Error('Error fetching notes by course ID.');
+    }
+  }
+  
 
   //TESTED - WORKING
   async createNoteForCourse(courseId: string, content: string, userId: string): Promise<Note> {
