@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import toast from "react-hot-toast";
-import { useDispatch, useSelector } from "react-redux";
-import { useRouter } from "next/navigation";
-import { RootState } from "@/app/store";
-import ViewCourseStudent from "../view/ViewCourseStudent";
+import axiosInstance from "@/app/_utils/axiosInstance";
+import toast from "react-hot-toast"; // Assuming you have react-hot-toast set up
 
 interface Course {
   _id: string;
@@ -13,11 +9,22 @@ interface Course {
   description: string;
   category: string;
   difficulty: string;
-  resources: string[]; // List of resources
-  instructor: string; // Instructor's ID
-  quizzes: string[];  // List of quizzes
-  notes: string[];    // List of notes (or any format you use)
+  resources: string[];
+  instructor: string;
+  quizzes: string[];
+  notes: string[];
 }
+
+
+interface Note {
+  _id: string;
+  courseId: string;
+  content: string;
+  userId: string;
+  isPinned: boolean;
+  created_at: string;
+}
+
 
 function StudentCourses() {
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
@@ -25,17 +32,22 @@ function StudentCourses() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [instructorName, setInstructorName] = useState<string>("Loading...");
+  const [courseNotes, setCourseNotes] = useState<Note[]>([]); // Correct type
+  const [loadingNotes, setLoadingNotes] = useState<boolean>(false); // Track loading state
+  const [newNoteContent, setNewNoteContent] = useState<string>(""); // For adding notes
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null); // Track editing note
+
 
   const fetchCourses = async () => {
     try {
-      const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
-      const enrolledResponse = await axios.get(
-        `http://localhost:3000/users/${authData.id}/enrolledCourses`,
+      const { data: authData } = await axiosInstance.get("/auth/me", { withCredentials: true });
+      const enrolledResponse = await axiosInstance.get(
+        `/users/${authData.id}/enrolledCourses`,
         { withCredentials: true }
       );
       setEnrolledCourses(enrolledResponse.data);
 
-      const allCoursesResponse = await axios.get("http://localhost:3000/courses", {
+      const allCoursesResponse = await axiosInstance.get(`/courses`, {
         withCredentials: true,
       });
       const enrolledCourseIds = new Set(
@@ -53,11 +65,33 @@ function StudentCourses() {
     }
   };
 
+  useEffect(() => {
+    if (selectedCourse) {
+      // Fetch notes when a course is selected
+      const fetchCourseNotes = async () => {
+        setLoadingNotes(true);
+        try {
+          const response = await axiosInstance.get(`/notes/${selectedCourse._id}`, {
+            withCredentials: true,
+          });
+          setCourseNotes(response.data.notes); // Ensure the response is in the correct format
+        } catch (error) {
+          console.error("Error fetching notes:", error);
+        } finally {
+          setLoadingNotes(false);
+        }
+      };
+
+      fetchCourseNotes();
+    }
+  }, [selectedCourse]); // Trigger when selectedCourse changes
+
+
   // Fetch instructor name when the selected course changes
   useEffect(() => {
     const fetchInstructorName = async (instructorId: string) => {
       try {
-        const response = await axios.get(`http://localhost:3000/users/${instructorId}`, {
+        const response = await axiosInstance.get(`/users/${instructorId}`, {
           withCredentials: true,
         });
         setInstructorName(response.data.username); // Set the instructor name from the API response
@@ -72,7 +106,7 @@ function StudentCourses() {
     } else {
       setInstructorName("Loading...");
     }
-  }, [selectedCourse]); // This hook runs whenever `selectedCourse` changes
+  }, [selectedCourse]); // This hook runs whenever selectedCourse changes
 
   useEffect(() => {
     fetchCourses(); // Fetch courses when the component mounts
@@ -80,9 +114,9 @@ function StudentCourses() {
 
   const enrollInCourse = async (courseId: string) => {
     try {
-      const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
-      await axios.post(
-        `http://localhost:3000/users/${authData.id}/enroll/${courseId}`,
+      const { data: authData } = await axiosInstance.get("/auth/me", { withCredentials: true });
+      await axiosInstance.post(
+        `/users/${authData.id}/enroll/${courseId}`,
         {},
         { withCredentials: true }
       );
@@ -106,7 +140,59 @@ function StudentCourses() {
   const hideCourseDetails = () => {
     setSelectedCourse(null); // Hide the course details
   };
+  useEffect(() => {
+    if (selectedCourse) {
+      const fetchCourseNotes = async () => {
+        setLoadingNotes(true);
+        try {
+          const response = await axiosInstance.get(
+            `/notes/${selectedCourse._id}`,
+            { withCredentials: true }
+          );
+          setCourseNotes(response.data.notes);
+        } catch (error) {
+          console.error("Error fetching notes:", error);
+        } finally {
+          setLoadingNotes(false);
+        }
+      };
 
+      fetchCourseNotes();
+    }
+  }, [selectedCourse]);
+
+  const deleteNote = async (noteId: string) => {
+    try {
+      await axiosInstance.delete(`/notes/${noteId}`, {
+        withCredentials: true,
+      });
+      setCourseNotes((prevNotes) => prevNotes.filter((note) => note._id !== noteId));
+      toast.success("Note deleted successfully.");
+    } catch (error) {
+      toast.error("Failed to delete note.");
+      console.error(error);
+    }
+  };
+const addNote = async () => {
+  if (!newNoteContent.trim()) {
+    toast.error("Note content cannot be empty.");
+    return;
+  }
+
+  try {
+    const response = await axiosInstance.post(
+      `/notes/${selectedCourse?._id}`,
+      { content: newNoteContent },
+      { withCredentials: true }
+    );
+    setCourseNotes((prevNotes) => [...prevNotes, response.data]);
+    setNewNoteContent("");
+    toast.success("Note added successfully.");
+  } catch (error) {
+    toast.error("Failed to add note.");
+    console.error(error);
+  }
+};
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -208,56 +294,39 @@ function StudentCourses() {
                 <strong>Instructor:</strong> {instructorName}
               </div>
               <div>
-  <strong>Resources:</strong>
-  <div className="space-y-2">
-    {Array.isArray(selectedCourse.resources) && selectedCourse.resources.length > 0 ? (
-      selectedCourse.resources.map((resource, index) => {
-        // Normalize the path to ensure it's in the correct format
-        let normalizedResource = resource.replace(/\\/g, "/");  // Convert all backslashes to forward slashes
+                <strong>Resources:</strong>
+                <div>
+                  <strong>Resources:</strong>
+                  <div className="space-y-2">
+                    {Array.isArray(selectedCourse.resources) && selectedCourse.resources.length > 0 ? (
+                      selectedCourse.resources.map((resource, index) => {
+                        // Normalize the path
+                        const normalizedResource = resource.replace(/\\/g, "/").replace("/uploads/", "");
 
-        // Check if the resource starts with '/uploads/', and remove '/uploads/' part if it does
-        if (normalizedResource.startsWith("/uploads/")) {
-          normalizedResource = normalizedResource.replace("/uploads/", "");  // Remove '/uploads/' from the path
-        }
+                        // Construct the correct view URL
+                        const viewUrl = `/courses/${selectedCourse.course_code}/resource/${encodeURIComponent(normalizedResource)}`;
 
-        // Construct the view URL
-        let viewUrl = normalizedResource;
+                        // Extract the filename
+                        const filename = normalizedResource.split("/").pop() || "default-filename";
 
-        // If the resource is not a full URL or path, create the correct URL
-        if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
-          viewUrl = `http://localhost:3000/courses/${selectedCourse.course_code}/resource/${encodeURIComponent(viewUrl)}`;
-        } else {
-          // If it's already a full URL, no need to modify it
-          if (!viewUrl.startsWith("http")) {
-            viewUrl = `http://localhost:3000/courses/${selectedCourse.course_code}/resource${encodeURIComponent(viewUrl)}`;
-          }
-        }
-
-        // Extract the filename from the last part of the path (no encoding here)
-        const filename = normalizedResource.split("/").pop() || "default-filename";
-
-        // Display the filename without encoding
-        return (
-          <a
-            key={index}
-            href={viewUrl}  // Use the constructed URL
-            target="_blank"  // Open in a new tab
-            rel="noopener noreferrer"  // Security for new tab
-            className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            View {filename}  {/* Display the filename without URL encoding */}
-          </a>
-        );
-      })
-    ) : (
-      <div>No resources available</div>
-    )}
-  </div>
-</div>
-
-
-
-
+                        return (
+                          <a
+                            key={index}
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                          >
+                            View {filename}
+                          </a>
+                        );
+                      })
+                    ) : (
+                      <div>No resources available</div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div>
                 <strong>Quizzes:</strong>
@@ -271,18 +340,45 @@ function StudentCourses() {
                   )}
                 </ul>
               </div>
+
               <div>
-                <strong>Notes:</strong>
-                <ul className="list-disc pl-5">
-                  {Array.isArray(selectedCourse.notes) && selectedCourse.notes.length > 0 ? (
-                    selectedCourse.notes.map((note, index) => (
-                      <li key={index}>{note}</li>
-                    ))
-                  ) : (
-                    <li>No notes available</li>
-                  )}
-                </ul>
-              </div>
+            <strong>Notes:</strong>
+            <ul className="list-disc pl-5">
+              {loadingNotes ? (
+                <li>Loading notes...</li>
+              ) : courseNotes.length > 0 ? (
+                courseNotes.map((note) => (
+                  <li key={note._id} className="bg-gray-50 p-4 rounded-md shadow-md mb-3">
+                    {/* Note Content */}
+                    <div className="font-semibold text-lg">{note.content}</div>
+
+                    {/* Note Metadata */}
+                    <div className="text-sm text-gray-500 mt-2">
+                      <div><strong>Created:</strong> {new Date(note.created_at).toLocaleString()}</div>
+                      <div><strong>Pinned:</strong> {note.isPinned ? "Yes" : "No"}</div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="mt-2 flex space-x-3">
+                      <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Edit
+                      </button>
+                      <button
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                        onClick={() => deleteNote(note._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <li>No notes available</li>
+              )}
+            </ul>
+          </div>
+
+
             </>
           )}
         </section>
