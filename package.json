@@ -7,14 +7,14 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "format": "prettier --write \"src/*/.ts\" \"test/*/.ts\"",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\" --port 3000",
     "start:backend": "npm run start:dev",
     "start:frontend": "cd frontend && npm run dev",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,apps,libs,test}/*/.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -50,7 +50,6 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",
-    "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "formik": "^2.4.6",
     "fs-extra": "^11.2.0",
@@ -122,7 +121,7 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "*/.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

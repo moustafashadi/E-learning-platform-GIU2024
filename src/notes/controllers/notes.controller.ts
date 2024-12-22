@@ -40,6 +40,7 @@ export class NotesController {
     @Param('courseId') courseId: string,
     @Req() req: Request,
   ) {
+    console.log('User ID:', req.user);  // Check if user info is coming through
     const userId = req.user['sub'];
     const notes = await this.notesService.findNotesByCourseId(courseId, userId);
     return { notes };
