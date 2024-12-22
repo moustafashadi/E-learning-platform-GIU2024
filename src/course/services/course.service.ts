@@ -147,25 +147,20 @@ export class CourseService {
     return course;
   }
 
-  async update(id : string, updateCourseDto: UpdateCourseDto): Promise<Course> {
-    const course = await this.courseModel.findById(id).exec();
-
-    if(updateCourseDto.instructor ! == course.instructor){
-      throw new UnauthorizedException('You are not authorized to update this course');
+  async update(req: Request, courseId: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
     }
 
-    if(updateCourseDto.numOfQuizzes < course.numOfQuizzes){
-      throw new BadRequestException('Number of quizzes cannot be decreased');
-    }
+    // Update the course fields
+    course.title = updateCourseDto.title;
+    course.description = updateCourseDto.description;
+    course.category = updateCourseDto.category;
+    course.difficulty = updateCourseDto.difficulty;
+    course.numOfQuizzes = updateCourseDto.numOfQuizzes;
 
-    const updatedCourse = await this.courseModel
-      .findOneAndUpdate({ id }, updateCourseDto, { new: true })
-      .populate('instructor')
-      .exec();
-    if (!updatedCourse) {
-      throw new NotFoundException(`Course with id ${id} not found`);
-    }
-    return updatedCourse;
+    return await course.save();
   }
 
   async delete(id: string): Promise<void> {

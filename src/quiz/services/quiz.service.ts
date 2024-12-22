@@ -23,7 +23,7 @@ export class QuizService {
   ) { }
 
   //TESTED - WORKING
-  async createQuiz(@Body() title : string, userId: string, courseId: string) {
+  async createQuiz(@Body() createQuizDto: { title: string; questions: Question[] }, userId: string, courseId: string) {
 
     const instructor = await this.instructorModel.findById(userId);
     const instructorId = instructor._id.toString();
@@ -42,9 +42,9 @@ export class QuizService {
     }
 
     const quiz = {
-      title: title,
+      title : createQuizDto.title,
       course: new Types.ObjectId(courseId),
-      questions: [],
+      questions: createQuizDto.questions.map((question) => new Types.ObjectId(question._id.toString())),
     };
     const createdQuiz = new this.quizModel(quiz);
 
