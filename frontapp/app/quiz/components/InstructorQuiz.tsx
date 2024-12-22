@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "@/app/_utils/axiosInstance";
 import toast from "react-hot-toast";
 
-// ===================== INTERFACES =====================
 interface Course {
   id: string;
   name: string;
@@ -19,7 +18,7 @@ interface Quiz {
 }
 
 interface QuestionData {
-  _id?: string; // Only present if it's an existing question
+  _id?: string;
   question: string;
   options: {
     text: string;
@@ -28,25 +27,28 @@ interface QuestionData {
 }
 
 function InstructorQuiz() {
-  // --------------- MAIN STATES ---------------
+  // ----------------- STATES -----------------
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [courses, setCourses] = useState<Course[]>([]);
 
-  // --------------- CREATE NEW QUIZ ---------------
+  // Create Quiz
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [quizTitle, setQuizTitle] = useState("");
   const [questions, setQuestions] = useState<QuestionData[]>([]);
+  const [isSubmittingNewQuiz, setIsSubmittingNewQuiz] = useState(false);
 
-  // --------------- VIEW & EDIT EXISTING QUIZ ---------------
+  // View & Edit Quiz
   const [showQuizzesListModal, setShowQuizzesListModal] = useState(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
 
-  // --------------- EDIT QUIZ MODAL ---------------
+  // Edit Quiz
   const [editQuizId, setEditQuizId] = useState<string | null>(null);
   const [showEditQuizModal, setShowEditQuizModal] = useState(false);
+  const [editQuizTitle, setEditQuizTitle] = useState<string>("");
   const [editQuestions, setEditQuestions] = useState<QuestionData[]>([]);
+  const [isSavingQuizChanges, setIsSavingQuizChanges] = useState(false);
 
   // ==========================================================
   //                FETCH COURSES ON MOUNT
@@ -55,14 +57,12 @@ function InstructorQuiz() {
     const fetchInstructorCourses = async () => {
       setLoading(true);
       try {
-        // 1) Get user ID
         const userResponse = await axiosInstance.get("/auth/me", {
           withCredentials: true,
         });
         const fetchedUserId = userResponse.data.id;
         setUserId(fetchedUserId);
 
-        // 2) Get courses for which the user is the instructor
         const response = await axiosInstance.get(
           `/courses/teacher/${fetchedUserId}`,
           { withCredentials: true }
@@ -72,8 +72,8 @@ function InstructorQuiz() {
           id: course.id || course._id || "unknown-id",
           name: course.title || course.name || "Unnamed Course",
           maxQuizzes: course.numOfQuizzes || 0,
-          doneQuizzes: course.quizzes?.length || 0,
-          currentQuizzes: course.quizzes?.length || 0, // If needed
+          doneQuizzes: (course.quizzes && course.quizzes.length) || 0,
+          currentQuizzes: (course.quizzes && course.quizzes.length) || 0,
         }));
 
         setCourses(formattedCourses);
@@ -89,9 +89,8 @@ function InstructorQuiz() {
   }, []);
 
   // ==========================================================
-  //                CREATE A NEW QUIZ
+  //                 CREATE A NEW QUIZ
   // ==========================================================
-  // Add a brand-new question row when creating a quiz
   const addQuestion = () => {
     setQuestions((prev) => [
       ...prev,
@@ -99,64 +98,69 @@ function InstructorQuiz() {
     ]);
   };
 
-  // Submit a new Quiz
+  const removeQuestion = (questionIndex: number) => {
+    setQuestions((prev) => prev.filter((_, idx) => idx !== questionIndex));
+  };
+
   const handleSubmitQuiz = async () => {
-    if (!selectedCourseId || !quizTitle || questions.length === 0) {
-      toast.error("Please fill in all fields.");
+    if (!selectedCourseId || !quizTitle.trim()) {
+      toast.error("Please provide a quiz title.");
+      return;
+    }
+    if (questions.length === 0) {
+      toast.error("Please add at least one question.");
       return;
     }
 
+    // Check each question has exactly one correct answer
+    for (const q of questions) {
+      const correctCount = q.options.filter((o) => o.isCorrect).length;
+      if (correctCount !== 1) {
+        alert("You have to select answers for all the questions.");
+        return;
+      }
+    }
+
+    setIsSubmittingNewQuiz(true);
+
     try {
-      // Step 1: Create the quiz
-      const createdQuizResponse = await axiosInstance.post(
+      // 1) create quiz
+      const createQuizRes = await axiosInstance.post(
         `/quiz/${selectedCourseId}`,
         { title: quizTitle },
         { withCredentials: true }
       );
+      const createdQuizId = createQuizRes.data._id;
 
-      const createdQuizId = createdQuizResponse.data._id;
-      toast.success("Quiz created successfully!");
-
-      // Step 2: Add questions to the newly created quiz
+      // 2) create each question
       for (const questionObj of questions) {
-        const { question: content, options } = questionObj;
+        const correctIndex = questionObj.options.findIndex((o) => o.isCorrect);
+        const correctAnswer = String.fromCharCode(65 + correctIndex);
 
-        const correctOptionIndex = options.findIndex((o) => o.isCorrect);
-        if (correctOptionIndex === -1) {
-          toast.error("Each question must have one correct answer.");
-          return;
-        }
-
-        const correctAnswer = String.fromCharCode(65 + correctOptionIndex); // 'A' + index
-        const formattedOptions = options.map((opt, idx) => ({
+        const formattedOptions = questionObj.options.map((opt, idx) => ({
           text: opt.text,
-          identifier: String.fromCharCode(65 + idx), // 'A', 'B', 'C', 'D', ...
+          identifier: String.fromCharCode(65 + idx),
         }));
 
-        try {
-          await axiosInstance.post(
-            `/${createdQuizId}/createQuestion`,
-            {
-              content,
-              correctAnswer,
-              difficulty: "medium",
-              options: formattedOptions,
-            },
-            { withCredentials: true }
-          );
-        } catch (error) {
-          console.error("Failed to create question:", error);
-          toast.error(`Failed to add question: ${content}`);
-        }
+        await axiosInstance.post(
+          `/${createdQuizId}/createQuestion`,
+          {
+            content: questionObj.question,
+            correctAnswer,
+            difficulty: "medium",
+            options: formattedOptions,
+          },
+          { withCredentials: true }
+        );
       }
 
-      // Clear form / close modal
-      setShowQuizModal(false);
+      toast.success("Quiz created successfully!");
+      // Close & reset
       setQuizTitle("");
       setQuestions([]);
-      toast.success("All questions added successfully!");
+      setShowQuizModal(false);
 
-      // Optionally update local course list to increment doneQuizzes
+      // Update local doneQuizzes
       setCourses((prev) =>
         prev.map((c) =>
           c.id === selectedCourseId
@@ -165,21 +169,21 @@ function InstructorQuiz() {
         )
       );
     } catch (error) {
-      toast.error("Failed to create quiz or add questions.");
       console.error("Error creating quiz:", error);
+      toast.error("Failed to create quiz.");
+    } finally {
+      setIsSubmittingNewQuiz(false);
     }
   };
 
   // ==========================================================
-  //         VIEW ALL QUIZZES FOR A COURSE => EDIT
+  //              VIEW ALL QUIZZES (LIST)
   // ==========================================================
   const handleViewQuizzes = async (courseId: string) => {
-    // Show the modal that lists all quizzes for this course
     setSelectedCourseId(courseId);
     setShowQuizzesListModal(true);
 
     try {
-      // GET /courses/:courseId/quizzes
       const response = await axiosInstance.get(
         `/courses/${courseId}/quizzes`,
         { withCredentials: true }
@@ -191,42 +195,79 @@ function InstructorQuiz() {
     }
   };
 
+  // Delete entire quiz
+  const handleDeleteQuiz = async (quizId: string) => {
+    if (!confirm("Are you sure you want to delete this quiz?")) return;
+
+    try {
+      await axiosInstance.delete(`/quiz/${quizId}`, { withCredentials: true });
+      toast.success("Quiz deleted!");
+
+      // Remove from local quizzes array
+      setQuizzes((prev) => prev.filter((q) => q._id !== quizId));
+
+      // Optionally update doneQuizzes in the course
+      setCourses((prevCourses) =>
+        prevCourses.map((course) => {
+          if (course.id === selectedCourseId) {
+            return { ...course, doneQuizzes: course.doneQuizzes - 1 };
+          }
+          return course;
+        })
+      );
+    } catch (error) {
+      toast.error("Failed to delete quiz.");
+      console.error(error);
+    }
+  };
+
   // ==========================================================
-  //              EDIT AN EXISTING QUIZ
+  //               EDIT AN EXISTING QUIZ
   // ==========================================================
   const handleOpenEditQuiz = async (quizId: string) => {
     setEditQuizId(quizId);
     setShowEditQuizModal(true);
+    setEditQuizTitle("Edit Quiz");
 
     try {
-      // GET /:quizId/questions -> get all questions for this quiz
+      // GET /:quizId/questions
       const res = await axiosInstance.get(`/${quizId}/questions`, {
         withCredentials: true,
       });
 
-      // Convert backend shape to your local shape: { question, options[] }
-      const loadedQuestions: QuestionData[] = res.data.map((q: any) => {
-        const correctIndex = q.options.findIndex(
-          (opt: any) => opt.identifier === q.correctAnswer
-        );
+      if (!Array.isArray(res.data)) {
+        toast.error("No questions or bad response shape.");
+        setEditQuestions([]);
+        return;
+      }
+
+      const loaded = res.data.map((q: any) => {
+        const serverOptions = Array.isArray(q.options) ? q.options : [];
+        let correctIndex = -1;
+        if (q.correctAnswer && serverOptions.length > 0) {
+          correctIndex = serverOptions.findIndex(
+            (opt: any) => opt.identifier === q.correctAnswer
+          );
+        }
+
         return {
           _id: q._id,
-          question: q.content,
-          options: q.options.map((opt: any, idx: number) => ({
-            text: opt.text,
+          question: q.content || "",
+          options: serverOptions.map((opt: any, idx: number) => ({
+            text: opt.text || "",
             isCorrect: idx === correctIndex,
           })),
         };
       });
 
-      setEditQuestions(loadedQuestions);
+      setEditQuestions(loaded);
     } catch (error) {
-      toast.error("Failed to fetch quiz questions.");
+      toast.error("Failed to load quiz questions.");
       console.error(error);
+      setEditQuestions([]);
     }
   };
 
-  // Add a blank question row in Edit mode
   const addQuestionForEdit = () => {
     setEditQuestions((prev) => [
       ...prev,
@@ -234,31 +275,59 @@ function InstructorQuiz() {
     ]);
   };
 
-  // Save changes in the Edit Quiz modal
+  const removeEditQuestion = (index: number) => {
+    setEditQuestions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteQuestionDB = async (questionId: string, index: number) => {
+    if (!editQuizId) return;
+
+    if (!confirm("Are you sure you want to remove this question?")) return;
+
+    try {
+      await axiosInstance.delete(`/${editQuizId}/${questionId}`, {
+        withCredentials: true,
+      });
+      toast.success("Question deleted!");
+      setEditQuestions((prev) => prev.filter((_, i) => i !== index));
+    } catch (error) {
+      toast.error("Delete question failed!");
+      console.error(error);
+    }
+  };
+
   const handleSaveQuizChanges = async () => {
-    if (!editQuizId || editQuestions.length === 0) {
-      toast.error("No quiz or questions to update!");
+    if (!editQuizId) return;
+    if (editQuestions.length === 0) {
+      toast.error("No questions to update!");
       return;
     }
 
+    // Check each question has exactly 1 correct answer
+    for (const q of editQuestions) {
+      const correctCount = q.options.filter((o) => o.isCorrect).length;
+      if (correctCount !== 1) {
+        alert("You have to select answers for all the questions in edit mode.");
+        return;
+      }
+    }
+
+    setIsSavingQuizChanges(true);
+
     try {
-      // Loop through each question in editQuestions
       for (const q of editQuestions) {
-        const correctOptIndex = q.options.findIndex((opt) => opt.isCorrect);
-        if (correctOptIndex === -1) {
-          toast.error("Each question must have one correct answer.");
-          return;
-        }
-        const correctAnswer = String.fromCharCode(65 + correctOptIndex);
+        const correctIndex = q.options.findIndex((opt) => opt.isCorrect);
+        const correctAnswer = String.fromCharCode(65 + correctIndex);
+
         const formattedOptions = q.options.map((opt, idx) => ({
           text: opt.text,
           identifier: String.fromCharCode(65 + idx),
         }));
 
-        // If the question already has an _id => update (PUT /:id)
         if (q._id) {
+          // Update existing
           await axiosInstance.put(
-            `/${q._id}`,
+            `/${editQuizId}/${q._id}`,
             {
               content: q.question,
               correctAnswer,
@@ -267,7 +336,7 @@ function InstructorQuiz() {
             { withCredentials: true }
           );
         } else {
-          // Otherwise => create a new question (POST /:quizId/createQuestion)
+          // Create new
           await axiosInstance.post(
             `/${editQuizId}/createQuestion`,
             {
@@ -284,28 +353,18 @@ function InstructorQuiz() {
       toast.success("Quiz updated successfully!");
       setShowEditQuizModal(false);
       setEditQuizId(null);
+      setEditQuizTitle("");
       setEditQuestions([]);
     } catch (error) {
       toast.error("Failed to update quiz questions.");
       console.error(error);
-    }
-  };
-
-  // Delete a single question
-  const handleDeleteQuestion = async (questionId: string) => {
-    try {
-      await axiosInstance.delete(`/${questionId}`, { withCredentials: true });
-      // Remove from local state
-      setEditQuestions((prev) => prev.filter((q) => q._id !== questionId));
-      toast.success("Question deleted successfully!");
-    } catch (error) {
-      toast.error("Failed to delete question.");
-      console.error(error);
+    } finally {
+      setIsSavingQuizChanges(false);
     }
   };
 
   // ==========================================================
-  //                   RENDER UI
+  //                     RENDER
   // ==========================================================
   return (
     <div className="p-6">
@@ -323,7 +382,7 @@ function InstructorQuiz() {
               Quizzes: {course.doneQuizzes}/{course.maxQuizzes}
             </p>
 
-            {/* Add Quiz Button (disabled if at capacity) */}
+            {/* Add Quiz */}
             <button
               className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
               onClick={() => {
@@ -335,7 +394,7 @@ function InstructorQuiz() {
               Add Quiz
             </button>
 
-            {/* View Quizzes Button (for editing) */}
+            {/* View Quizzes */}
             <button
               className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
               onClick={() => handleViewQuizzes(course.id)}
@@ -346,26 +405,25 @@ function InstructorQuiz() {
         ))}
       </div>
 
-      {/* =========================================================
-          CREATE NEW QUIZ MODAL
-      ========================================================= */}
+      {/* =============== CREATE QUIZ MODAL =============== */}
       {showQuizModal && (
-        <div className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-75 flex items-center justify-center z-40">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-2/3">
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-40">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-2/3 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Create Quiz</h2>
 
-            <label className="block mb-2">
+            <label className="block mb-4">
               Quiz Title:
               <input
                 type="text"
                 value={quizTitle}
                 onChange={(e) => setQuizTitle(e.target.value)}
-                className="w-full border border-gray-300 p-2 rounded"
+                className="w-full border border-gray-300 p-2 rounded mt-1"
               />
             </label>
 
             {questions.map((q, qIndex) => (
-              <div key={qIndex} className="mb-4">
+              <div key={qIndex} className="mb-6 border-b pb-4">
+                {/* QUESTION TEXT */}
                 <label className="block mb-2">
                   Question:
                   <input
@@ -376,13 +434,17 @@ function InstructorQuiz() {
                       updated[qIndex].question = e.target.value;
                       setQuestions(updated);
                     }}
-                    className="w-full border border-gray-300 p-2 rounded"
+                    className="w-full border border-gray-300 p-2 rounded mt-1"
                   />
                 </label>
 
-                <div className="ml-4">
-                  {q.options.map((option, oIndex) => (
-                    <div key={oIndex} className="flex items-center mb-2">
+                {q.options.map((option, oIndex) => {
+                  const optionLetter = String.fromCharCode(65 + oIndex); // A, B, C, D, ...
+                  return (
+                    <div key={oIndex} className="flex items-center mb-2 ml-4">
+                      <span className="mr-2 font-medium">
+                        Option {optionLetter}:
+                      </span>
                       <input
                         type="text"
                         value={option.text}
@@ -393,35 +455,48 @@ function InstructorQuiz() {
                         }}
                         className="flex-1 border border-gray-300 p-2 rounded"
                       />
-                      <label className="ml-2">
+                      <label className="ml-2 flex items-center">
                         <input
                           type="checkbox"
                           checked={option.isCorrect}
-                          onChange={(e) => {
+                          onChange={() => {
                             const updated = [...questions];
-                            updated[qIndex].options[oIndex].isCorrect =
-                              e.target.checked;
+                            updated[qIndex].options.forEach((opt, idx) => {
+                              opt.isCorrect = idx === oIndex;
+                            });
                             setQuestions(updated);
                           }}
                         />
-                        Correct
+                        <span className="ml-1">Correct</span>
                       </label>
                     </div>
-                  ))}
-                  <button
-                    className="text-sm text-blue-600"
-                    onClick={() => {
-                      const updated = [...questions];
-                      updated[qIndex].options.push({
-                        text: "",
-                        isCorrect: false,
-                      });
-                      setQuestions(updated);
-                    }}
-                  >
-                    Add Option
-                  </button>
-                </div>
+                  );
+                })}
+
+                {/* Add Option */}
+                <button
+                  className="text-sm text-blue-600 ml-4"
+                  onClick={() => {
+                    if (q.options.length >= 4) return;
+                    const updated = [...questions];
+                    updated[qIndex].options.push({
+                      text: "",
+                      isCorrect: false,
+                    });
+                    setQuestions(updated);
+                  }}
+                  disabled={q.options.length >= 4}
+                >
+                  Add Option
+                </button>
+
+                {/* Remove Question */}
+                <button
+                  className="text-sm text-red-600 ml-4"
+                  onClick={() => removeQuestion(qIndex)}
+                >
+                  Remove Question
+                </button>
               </div>
             ))}
 
@@ -445,7 +520,8 @@ function InstructorQuiz() {
               </button>
               <button
                 onClick={handleSubmitQuiz}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={isSubmittingNewQuiz}
               >
                 Submit Quiz
               </button>
@@ -454,12 +530,10 @@ function InstructorQuiz() {
         </div>
       )}
 
-      {/* =========================================================
-          VIEW QUIZZES (LIST) MODAL
-      ========================================================= */}
+      {/* ============ VIEW QUIZZES (LIST) MODAL ============ */}
       {showQuizzesListModal && (
-        <div className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-75 flex items-center justify-center z-40">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-2/3 relative">
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-40">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-2/3 relative max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Quizzes in this Course</h2>
 
             {quizzes.length > 0 ? (
@@ -469,12 +543,24 @@ function InstructorQuiz() {
                   className="flex justify-between items-center border-b py-2"
                 >
                   <span>{quiz.title}</span>
-                  <button
-                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                    onClick={() => handleOpenEditQuiz(quiz._id)}
-                  >
-                    Edit
-                  </button>
+
+                  <div className="flex space-x-2">
+                    {/* Edit quiz */}
+                    <button
+                      className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                      onClick={() => handleOpenEditQuiz(quiz._id)}
+                    >
+                      Edit
+                    </button>
+
+                    {/* Delete quiz */}
+                    <button
+                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                      onClick={() => handleDeleteQuiz(quiz._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -495,16 +581,15 @@ function InstructorQuiz() {
         </div>
       )}
 
-      {/* =========================================================
-          EDIT QUIZ MODAL
-      ========================================================= */}
+      {/* ============ EDIT QUIZ MODAL ============ */}
       {showEditQuizModal && editQuizId && (
-        <div className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-75 flex items-center justify-center z-40">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-2/3 relative">
-            <h2 className="text-xl font-bold mb-4">Edit Quiz</h2>
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-40">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-2/3 relative max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">{editQuizTitle}</h2>
 
             {editQuestions.map((q, qIndex) => (
-              <div key={qIndex} className="mb-4">
+              <div key={qIndex} className="mb-6 border-b pb-4">
+                {/* QUESTION TEXT */}
                 <label className="block mb-2">
                   Question:
                   <input
@@ -515,61 +600,77 @@ function InstructorQuiz() {
                       updated[qIndex].question = e.target.value;
                       setEditQuestions(updated);
                     }}
-                    className="w-full border border-gray-300 p-2 rounded"
+                    className="w-full border border-gray-300 p-2 rounded mt-1"
                   />
                 </label>
 
-                <div className="ml-4">
-                  {q.options.map((option, oIndex) => (
-                    <div key={oIndex} className="flex items-center mb-2">
+                {q.options.map((option, oIndex) => {
+                  const optionLetter = String.fromCharCode(65 + oIndex);
+                  return (
+                    <div key={oIndex} className="flex items-center mb-2 ml-4">
+                      <span className="mr-2 font-medium">
+                        Option {optionLetter}:
+                      </span>
                       <input
                         type="text"
                         value={option.text}
                         onChange={(e) => {
                           const updated = [...editQuestions];
-                          updated[qIndex].options[oIndex].text = e.target.value;
+                          updated[qIndex].options[oIndex].text =
+                            e.target.value;
                           setEditQuestions(updated);
                         }}
                         className="flex-1 border border-gray-300 p-2 rounded"
                       />
-                      <label className="ml-2">
+                      <label className="ml-2 flex items-center">
                         <input
                           type="checkbox"
                           checked={option.isCorrect}
-                          onChange={(e) => {
+                          onChange={() => {
                             const updated = [...editQuestions];
-                            updated[qIndex].options[oIndex].isCorrect =
-                              e.target.checked;
+                            updated[qIndex].options.forEach((opt, idx) => {
+                              opt.isCorrect = idx === oIndex;
+                            });
                             setEditQuestions(updated);
                           }}
                         />
-                        Correct
+                        <span className="ml-1">Correct</span>
                       </label>
                     </div>
-                  ))}
+                  );
+                })}
 
+                {/* Add Option */}
+                <button
+                  className="text-sm text-blue-600 ml-4"
+                  onClick={() => {
+                    if (q.options.length >= 4) return;
+                    const updated = [...editQuestions];
+                    updated[qIndex].options.push({
+                      text: "",
+                      isCorrect: false,
+                    });
+                    setEditQuestions(updated);
+                  }}
+                  disabled={q.options.length >= 4}
+                >
+                  Add Option
+                </button>
+
+                {/* Remove Question */}
+                {q._id ? (
                   <button
-                    className="text-sm text-blue-600"
-                    onClick={() => {
-                      const updated = [...editQuestions];
-                      updated[qIndex].options.push({
-                        text: "",
-                        isCorrect: false,
-                      });
-                      setEditQuestions(updated);
-                    }}
+                    className="text-sm text-red-600 ml-4"
+                    onClick={() => handleDeleteQuestionDB(q._id!, qIndex)}
                   >
-                    Add Option
+                    Remove Question
                   </button>
-                </div>
-
-                {/* Delete question button (only if an _id exists) */}
-                {q._id && (
+                ) : (
                   <button
-                    className="mt-2 text-sm text-red-600 underline"
-                    onClick={() => handleDeleteQuestion(q._id!)}
+                    className="text-sm text-red-600 ml-4"
+                    onClick={() => removeEditQuestion(qIndex)}
                   >
-                    Delete Question
+                    Remove Question
                   </button>
                 )}
               </div>
@@ -587,6 +688,7 @@ function InstructorQuiz() {
                 onClick={() => {
                   setShowEditQuizModal(false);
                   setEditQuizId(null);
+                  setEditQuizTitle("");
                   setEditQuestions([]);
                 }}
                 className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 mr-2"
@@ -595,7 +697,8 @@ function InstructorQuiz() {
               </button>
               <button
                 onClick={handleSaveQuizChanges}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={isSavingQuizChanges}
               >
                 Save Changes
               </button>
@@ -605,6 +708,7 @@ function InstructorQuiz() {
               onClick={() => {
                 setShowEditQuizModal(false);
                 setEditQuizId(null);
+                setEditQuizTitle("");
                 setEditQuestions([]);
               }}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
