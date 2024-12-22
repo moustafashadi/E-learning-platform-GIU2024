@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -20,6 +22,14 @@ interface Course {
   updatedAt: string;
 }
 
+interface UpdateCourseDto {
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  numberofQuizzes: number;
+}
+
 function InstructorCourses() {
   const [teachingCourses, setTeachingCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,12 +41,26 @@ function InstructorCourses() {
     description: "",
     category: "",
     difficulty: "",
+    quizzes: ""
   });
   const [showAllCourses, setShowAllCourses] = useState(false);
 
   const dispatch = useDispatch();
   const router = useRouter();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+  // Close all forms function
+  const closeAllForms = () => {
+    setEditingCourse(null);
+    setCreatingCourse(false);
+    setFormValues({
+      title: "",
+      description: "",
+      category: "",
+      difficulty: "",
+      quizzes: ""
+    });
+  };
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -59,27 +83,31 @@ function InstructorCourses() {
 
   const handleViewCourseDetails = (course: Course) => {
     if (viewingCourse && viewingCourse._id === course._id) {
-      setViewingCourse(null); // Hide course details if already viewing
+      setViewingCourse(null);
     } else {
-      setViewingCourse(course); // Show the course details
+      setViewingCourse(course);
+      closeAllForms(); // Close any open forms when viewing course details
     }
   };
 
   const handleEditClick = (course: Course) => {
+    closeAllForms(); // Close any other open forms first
     setEditingCourse(course);
     setFormValues({
       title: course.title,
       description: course.description,
       category: course.category,
       difficulty: course.difficulty,
+      quizzes: course.quizzes.length.toString()
     });
   };
 
   const handleCreateClick = () => {
+    closeAllForms(); // Close any other open forms first
     setCreatingCourse(true);
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormValues((prevValues) => ({
       ...prevValues,
@@ -92,27 +120,31 @@ function InstructorCourses() {
 
     try {
       const updatedCourse = {
-        ...editingCourse,
         title: formValues.title,
         description: formValues.description,
         category: formValues.category,
         difficulty: formValues.difficulty,
+        instructor: user?.id,
+        numOfQuizzes: parseInt(formValues.quizzes) || 0
       };
 
-      await axios.put(`http://localhost:3000/courses/${editingCourse._id}`, updatedCourse, {
-        withCredentials: true,
-      });
-
-      toast.success("Course updated successfully!");
-
-      setTeachingCourses((prevCourses) =>
-        prevCourses.map((course) =>
-          course._id === editingCourse._id ? updatedCourse : course
-        )
+      const response = await axios.patch(
+        `http://localhost:3000/courses/${editingCourse._id}`,
+        updatedCourse,
+        { withCredentials: true }
       );
-      setEditingCourse(null);
-    } catch (error) {
-      toast.error("Failed to update the course.");
+
+      if (response.data) {
+        setTeachingCourses((prevCourses) =>
+          prevCourses.map((course) =>
+            course._id === editingCourse._id ? { ...course, ...response.data } : course
+          )
+        );
+        toast.success("Course updated successfully!");
+        closeAllForms();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update the course.");
       console.error(error);
     }
   };
@@ -124,40 +156,27 @@ function InstructorCourses() {
         description: formValues.description,
         category: formValues.category,
         difficulty: formValues.difficulty,
-        instructor: user?.id, // Ensure the instructor is tied to the user
+        instructor: user?.id,
         course_code: `C-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-        numberofQuizzes: 0,
+        numberofQuizzes: parseInt(formValues.quizzes) || 0
       };
 
-      const response = await axios.post("http://localhost:3000/courses", newCourse, {
-        withCredentials: true,
-      });
+      const response = await axios.post(
+        "http://localhost:3000/courses",
+        newCourse,
+        { withCredentials: true }
+      );
 
-      toast.success("Course created successfully!");
-
-      setTeachingCourses((prevCourses) => [...prevCourses, response.data]);
-
-      setFormValues({
-        title: "",
-        description: "",
-        category: "",
-        difficulty: "",
-      });
-
-      setCreatingCourse(false);
-    } catch (error) {
-      toast.error("Failed to create the course.");
+      if (response.data) {
+        setTeachingCourses((prevCourses) => [...prevCourses, response.data]);
+        toast.success("Course created successfully!");
+        closeAllForms();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create the course.");
       console.error(error);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <p className="text-lg font-semibold">Loading your courses...</p>
-      </div>
-    );
-  }
   
 
   return (
@@ -197,7 +216,7 @@ function InstructorCourses() {
                           onClick={() => handleViewCourseDetails(course)}
                           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                         >
-                          {viewingCourse?._id === course._id ? "Hide Details" : "View Details"}
+                          {viewingCourse && (viewingCourse as Course)._id === course._id ? "Hide Details" : "View Details"}
                         </button>
                       </div>
                     </div>
