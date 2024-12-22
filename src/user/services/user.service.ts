@@ -316,10 +316,11 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
 
   //get notifications
   async getNotifications(userId: string) {
-    const user = await this.userModel.findById(userId).exec();
+    const user = await this.findOne(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    console.log(user.notifications);
     return user.notifications;
   }
 }

@@ -9,7 +9,7 @@ interface Notification {
   createdAt: string;
 }
 
-export interface NotificationState { // Export NotificationState
+export interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
   socket: Socket | null;
