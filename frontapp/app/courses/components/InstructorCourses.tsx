@@ -37,6 +37,9 @@ function InstructorCourses() {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [creatingCourse, setCreatingCourse] = useState<boolean>(false);
   const [courses, setCourses] = useState<Course[]>([]); // Assuming Course is your type
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
 
   const [formValues, setFormValues] = useState({
     title: "",
@@ -64,6 +67,45 @@ function InstructorCourses() {
     });
   };
 
+  //forums
+  const handleRedirectToForums = (courseId: string) => {
+    router.push(`/forums/${courseId}/`);
+  };
+  const handleCreateAndRedirectToForum = async (courseId: string, courseTitle: string) => {
+    try {
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        toast.error("You must be logged in to create a forum.");
+        router.push("/login");
+        return;
+      }
+  
+      const response = await axios.post(
+        `/forums/${courseId}/create`,
+        {
+          title: `${courseTitle} Forum`,
+          description: `Discussion forum for the course ${courseTitle}`,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+          withCredentials: true,
+        }
+      );
+  
+      if (response.status === 201 || response.status === 200) {
+        toast.success("Forum created successfully!");
+        router.push(`/forums/${courseId}/`); // Ensure the route matches the forums page
+      } else {
+        toast.error("Unexpected server response.");
+      }
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to create the forum. Please try again."
+      );
+    }
+  };
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -82,6 +124,50 @@ function InstructorCourses() {
 
     fetchCourses();
   }, []);
+  
+ // Fetch courses on component mount
+ useEffect(() => {
+  const fetchCourses = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/courses', {
+        withCredentials: true,
+      });
+      setCourses(response.data); // Set the courses from the backend
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  fetchCourses();
+}, []); // Empty dependency array ensures it runs once
+
+const handleDeleteClick = async (courseId: string) => {
+  try {
+    const response = await axios.delete(
+      `http://localhost:3000/courses/${courseId}`,
+      { withCredentials: true }
+    );
+
+    if (response.status === 200) {
+      console.log('Course deleted successfully');
+      alert('Course deleted successfully');
+
+      // Remove the deleted course from the local state
+      setCourses((prevCourses) =>
+        prevCourses.filter((course) => course._id !== courseId)
+      
+      );
+      setTeachingCourses((prevCourses) =>
+        prevCourses.filter((course) => course._id !== courseId)
+      );
+      
+    }
+  } catch (error) {
+    console.error('Failed to delete course:', error);
+    alert('Failed to delete course');
+  }
+};
+
 
   const handleViewCourseDetails = (course: Course) => {
     if (viewingCourse && viewingCourse._id === course._id) {
@@ -179,54 +265,51 @@ function InstructorCourses() {
       console.error(error);
     }
   };
-  
 
- // Fetch courses on component mount
- useEffect(() => {
-  const fetchCourses = async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/courses', {
-        withCredentials: true,
-      });
-      setCourses(response.data); // Set the courses from the backend
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-    }
+   // Function to handle file selection
+  interface FileChangeEvent extends React.ChangeEvent<HTMLInputElement> {
+    target: HTMLInputElement & { files: FileList };
+  }
+
+  const handleFileChange = (event: FileChangeEvent) => {
+    setSelectedFile(event.target.files[0]);
   };
 
-  fetchCourses();
-}, []); // Empty dependency array ensures it runs once
-
-const handleDeleteClick = async (courseId: string) => {
-  try {
-    const response = await axios.delete(
-      `http://localhost:3000/courses/${courseId}`,
-      { withCredentials: true }
-    );
-
-    if (response.status === 200) {
-      console.log('Course deleted successfully');
-      alert('Course deleted successfully');
-
-      // Remove the deleted course from the local state
-      setCourses((prevCourses) =>
-        prevCourses.filter((course) => course._id !== courseId)
-      
-      );
-      setTeachingCourses((prevCourses) =>
-        prevCourses.filter((course) => course._id !== courseId)
-      );
-      
+  // Function to handle resource upload
+  const handleUploadResource = async () => {
+    if (!selectedFile) {
+      console.log('No file selected');
+      return;
     }
-  } catch (error) {
-    console.error('Failed to delete course:', error);
-    alert('Failed to delete course');
-  }
-};
 
+    if (!viewingCourse) {
+      console.error('No course selected for uploading resource');
+      return;
+    }
 
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await axios.post(
+        `http://localhost:3000/courses/${viewingCourse.course_code}/upload-resource`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      console.log('File uploaded successfully:', response.data);
+      // Optionally, refresh the course data to show the new resource
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
   
   return (
+
+    
     <div className="mt-[2rem] p-6 space-y-6 bg-gray-100">
       {!viewingCourse && (
         <>
@@ -252,7 +335,10 @@ const handleDeleteClick = async (courseId: string) => {
                         <p className="text-gray-500">Category: {course.category}</p>
                         <p className="text-gray-500">Difficulty: {course.difficulty}</p>
                       </div>
+
+                      
                       <div className="flex space-x-2">
+                        
                         <button
                           onClick={() => handleEditClick(course)}
                           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -275,6 +361,19 @@ const handleDeleteClick = async (courseId: string) => {
                         
                         
                         </button>
+
+                        <button
+                        onClick={() => handleRedirectToForums(course._id)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                      >
+                        Go to Forums
+                      </button>
+                      <button
+                        onClick={() => handleCreateAndRedirectToForum(course._id, course.title)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                      >
+                        Create & Go to Forums
+                      </button>
                       </div>
                     </div>
                   </li>
@@ -310,28 +409,63 @@ const handleDeleteClick = async (courseId: string) => {
           <div>
             <strong>Difficulty:</strong> {viewingCourse.difficulty}
           </div>
-          <div>
-            <strong>Instructor:</strong> {viewingCourse.instructor}
+
+       
+<div>
+  <strong>Resources:</strong>
+  <div className="space-y-2">
+    {viewingCourse && Array.isArray(viewingCourse.resources) && viewingCourse.resources.length > 0 ? (
+      viewingCourse.resources.map((resource, index) => {
+        // Normalize the path to ensure it's in the correct format
+        let normalizedResource = resource.replace(/\\/g, "/");  // Convert all backslashes to forward slashes
+
+        // Check if the resource starts with '/uploads/', and remove '/uploads/' part if it does
+        if (normalizedResource.startsWith("/uploads/")) {
+          normalizedResource = normalizedResource.replace("/uploads/", "");  // Remove '/uploads/' from the path
+        }
+
+        // Construct the view URL
+        let viewUrl = normalizedResource;
+
+        // If the resource is not a full URL or path, create the correct URL
+        if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
+          viewUrl = `http://localhost:3000/courses/${viewingCourse.course_code}/resource/${encodeURIComponent(viewUrl)}`;
+        } else {
+          // If it's already a full URL, no need to modify it
+          if (!viewUrl.startsWith("http")) {
+            viewUrl = `http://localhost:3000/courses/${viewingCourse.course_code}/resource${encodeURIComponent(viewUrl)}`;
+          }
+        }
+
+        // Extract the filename from the last part of the path (no encoding here)
+        const filename = normalizedResource.split("/").pop() || "default-filename";
+
+       
+
+        return (
+          <div key={index} className="flex items-center space-x-2">
+            <a
+              href={viewUrl}  // Use the constructed URL
+              target="_blank"  // Open in a new tab
+              rel="noopener noreferrer"  // Security for new tab
+              className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              View {filename}  {/* Display the filename without URL encoding */}
+            </a>
+           
           </div>
-          <div>
-            <strong>Resources:</strong>
-            <div className="space-y-2">
-              {viewingCourse.resources.length > 0 ? (
-                viewingCourse.resources.map((resource, index) => (
-                  <a
-                    key={index}
-                    href={`http://localhost:3000/courses/${viewingCourse.course_code}/resource/${encodeURIComponent(resource)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-600"
-                    >
-                    View {resource}
-                  </a>
-                ))
-              ) : (
-                <div>No resources available</div>
+        );
+      })
+    ) : (
+      <div>No resources available</div>
               )}
             </div>
+            <button
+    onClick={handleUploadResource}
+    className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+  >
+    Upload New Resource
+  </button>
           </div>
           <div>
             <strong>Quizzes:</strong>

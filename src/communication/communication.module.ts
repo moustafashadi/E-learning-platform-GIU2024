@@ -14,7 +14,7 @@ import { MessageSchema } from './messages/message.schema';
 import { MessageController } from './messages/message.controller';
 import { MessageService } from './messages/message.service';
 import { ForumController } from './forum/forum.controller';
-import { ForumServices } from './forum/forum.service';
+import { ForumService } from './forum/forum.service';
 import { CourseService } from 'src/course/services/course.service';
 import { CourseSchema } from 'src/course/models/course.schema';
 import { InstructorSchema, StudentSchema, UserSchema } from 'src/user/models/user.schema';
@@ -53,7 +53,7 @@ import { ProgressSchema } from 'src/progress/models/progress.schema';
         timeout: 5000,
     }),],
     controllers: [ChatController, NotificationController, MessageController, ForumController],
-    providers: [ChatService, NotificationService, ChatGateway, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
+    providers: [ChatService, NotificationService, ChatGateway, MessageService, ForumService, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService , ForumController],
 })
 
 export class CommunicationModule { }

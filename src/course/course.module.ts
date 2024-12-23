@@ -11,7 +11,9 @@ import { QuestionService } from 'src/quiz/services/question.service';
 import { QuestionSchema } from 'src/quiz/models/question.schema';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { ProgressSchema } from 'src/progress/models/progress.schema';
-
+import { ForumSchema } from 'src/communication/forum/forum.schema';
+import { ThreadSchema } from 'src/communication/forum/Thread.schema';
+import ForumService from 'src/communication/forum/forum.service';
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -22,6 +24,9 @@ import { ProgressSchema } from 'src/progress/models/progress.schema';
       { name: 'Quiz', schema: QuizSchema},
       { name: 'Question', schema: QuestionSchema},
       { name: 'Progress', schema: ProgressSchema},
+      { name: 'Forum', schema: ForumSchema},
+      { name: 'Thread', schema: ThreadSchema},
+      
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
@@ -29,7 +34,7 @@ import { ProgressSchema } from 'src/progress/models/progress.schema';
      })
   ],
   controllers: [CourseController],
-  providers: [CourseService, QuizService, QuestionService, ProgressService],
-  exports: [CourseService],
+  providers: [CourseService, QuizService, QuestionService, ProgressService, ForumService ],
+  exports: [CourseService, QuizService, QuestionService, ProgressService, ForumService],
 })
 export class CourseModule {}

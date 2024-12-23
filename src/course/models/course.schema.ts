@@ -1,6 +1,8 @@
+import { Optional } from '@nestjs/common';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Schema as MongooseSchema } from 'mongoose';
 import { Document } from 'mongoose';
+import { Forum } from 'src/communication/forum/forum.schema';
 import { User } from 'src/user/models/user.schema';
 
 @Schema({ timestamps: true })
@@ -19,6 +21,10 @@ export class Course {
 
   @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced'] })
   difficulty: string;
+
+  @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Forum'}], default: [] })
+  forums: MongooseSchema.Types.ObjectId[];
+
 
   @Prop({
     type: [String],

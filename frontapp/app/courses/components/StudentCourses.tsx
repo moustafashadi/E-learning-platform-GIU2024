@@ -80,30 +80,16 @@ function StudentCourses() {
 
   const handleCreateAndRedirectToForum = async (courseId: string) => {
     try {
-      // Ensure courseId and selectedCourse are valid
       if (!courseId) {
-        toast.error("Course ID is required to create a forum.");
-        console.error("Course ID is missing.");
+        toast.error("Course ID is required.");
         return;
       }
   
       if (!selectedCourse) {
-        toast.error("Selected course is invalid. Please try again.");
-        console.error("Selected course is null or undefined.");
+        toast.error("Selected course is invalid.");
         return;
       }
   
-      // Retrieve the authentication token
-      const authToken = localStorage.getItem("authToken");
-      console.log("Retrieved Token:", authToken); // Debug token retrieval
-      if (!authToken) {
-        toast.error("You must be logged in to create a forum.");
-        console.error("Authentication token is missing.");
-        router.push("/login");
-        return;
-      }
-  
-      // Create a forum for the course
       const response = await axiosInstance.post(
         `/api/forums/${courseId}/create`,
         {
@@ -112,53 +98,38 @@ function StudentCourses() {
         },
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
           withCredentials: true,
         }
       );
   
-      // Notify the user and redirect to the forums page
       if (response.status === 201 || response.status === 200) {
         toast.success("Forum created successfully!");
         router.push(`/forums/${courseId}/forums`);
       } else {
-        toast.error("Unexpected response from the server. Please try again.");
-        console.error("Unexpected response:", response);
+        toast.error("Unexpected server response.");
+        console.error("Response:", response);
       }
-    } catch (error: any) {
-      // Improved error handling with debugging
-      console.error("Error creating forum:", error);
-  
-      if (error.response) {
-        switch (error.response.status) {
-          case 401:
-            toast.error("Unauthorized. Please log in again.");
-            console.error("401 Unauthorized:", error.response.data);
-            break;
-          case 403:
-            toast.error("You do not have permission to create a forum for this course.");
-            console.error("403 Forbidden:", error.response.data);
-            break;
-          case 404:
-            toast.error("Course not found. Please select a valid course.");
-            console.error("404 Not Found:", error.response.data);
-            break;
-          default:
-            toast.error("An error occurred. Please try again.");
-            console.error(`Error (${error.response.status}):`, error.response.data);
-            break;
-        }
-      } else if (error.request) {
-        toast.error("Failed to connect to the server. Please check your network.");
-        console.error("Network error:", error.request);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error response:", error.response?.data);
+        toast.error(
+          `Error: ${error.response?.status} - ${error.response?.data?.message || "Unknown error"}`
+        );
+      } else if (error instanceof Error) {
+        console.error("General error message:", error.message);
+        toast.error(error.message);
       } else {
-        toast.error("An error occurred. Please try again.");
-        console.error("Error:", error.message);
+        console.error("Unexpected error:", error);
+        toast.error("An unexpected error occurred.");
       }
     }
   };
   
+  
+  
+
   useEffect(() => {
     if (selectedCourse) {
       // Fetch notes when a course is selected
@@ -438,7 +409,7 @@ const handleSaveClick = async (noteId: string) => {
                 <strong>Instructor:</strong> {instructorName}
               </div>
               <div>
-              
+                <strong>Resources:</strong>
                 <div>
   <strong>Resources:</strong>
   <div className="space-y-2">
@@ -502,20 +473,20 @@ const handleSaveClick = async (noteId: string) => {
               </div>
                   {/* "Go to Forums" Button */}
                   <div className="mt-4">
-                      <button
-                        onClick={() => {
-                          if (selectedCourse) {
-                            handleCreateAndRedirectToForum(selectedCourse._id); // Ensure selectedCourse is valid
-                          } else {
-                            console.error("No course selected for creating a forum.");
-                            toast.error("Please select a course before creating a forum.");
-                          }
-                        }}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200"
-                      >
-                        Create Forum & Go to Forums
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => {
+                        if (selectedCourse) {
+                          handleCreateAndRedirectToForum(selectedCourse._id); // Ensure selectedCourse is valid
+                        } else {
+                          console.error("No course selected for creating a forum.");
+                          toast.error("Please select a course before creating a forum.");
+                        }
+                      }}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200"
+                    >
+                      Create Forum & Go to Forums
+                    </button>
+                  </div>
 
               
               <div>

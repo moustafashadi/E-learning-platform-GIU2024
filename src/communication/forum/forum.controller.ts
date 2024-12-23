@@ -1,50 +1,106 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
-import { AuthenticationGuard } from "src/auth/guards/authentication.guard";
-import { ForumServices } from "./forum.service";
-import { Request } from "express";
-import { Req, } from "@nestjs/common";
+import {
+   Controller,
+   Get,
+   Post,
+   Param,
+   Body,
+   Put,
+   Delete,
+   UseGuards,
+   BadRequestException,
+   NotFoundException,
+ } from '@nestjs/common';
+ 
+ import { ForumService } from './forum.service'; 
+ import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+ import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
+ import { Roles, Role } from 'src/auth/decorators/roles.decorator';
+ 
+ @UseGuards(AuthenticationGuard)
+ @Controller('forum')
+ export class ForumController {
+   constructor(private readonly forumService: ForumService) {}
 
-@UseGuards(AuthenticationGuard)
-@Controller('/forums')
-export class ForumController {
-   constructor(
-      private readonly forumService: ForumServices
-   ) { }
-
-   @Post(":courseId/create")
-   createForum(@Param('CourseId') courseId: string, @Req() req: Request) {
-      this.forumService.createForum(courseId, req);
+   @Get('course/:courseId')
+   async getForumsForCourse(@Param('courseId') courseId: string) {
+     return this.forumService.getForumsForCourse(courseId);
    }
 
-   @Get("/:courseId/")
-   findAll(@Param('courseId') courseId: string) {
-      return this.forumService.findAll(courseId);
+   @UseGuards(AuthorizationGuard)
+   @Roles(Role.Student, Role.Instructor)
+   @Post(':forumId/addThread')
+   async addThreadToForum(
+     @Param('forumId') forumId: string,
+     @Body() { content, createdBy }: { content: string; createdBy: string },
+   ) {
+     if (!content || !createdBy) {
+       throw new BadRequestException('Missing content or createdBy');
+     }
+     return this.forumService.addThreadToForum(forumId, content, createdBy);
    }
 
-   @Get(":id")
-   findOne(@Param('id') id: string) {
-      return this.forumService.findOne(id);
+   @UseGuards(AuthorizationGuard)
+   @Roles(Role.Student, Role.Instructor)
+   @Post('thread/:threadId/addSubThread')
+   async addThreadToThread(
+     @Param('threadId') threadId: string,
+     @Body() { content, createdBy }: { content: string; createdBy: string },
+   ) {
+     if (!content || !createdBy) {
+       throw new BadRequestException('Missing content or createdBy');
+     }
+     return this.forumService.addThreadToThread(threadId, content, createdBy);
    }
-   @Post(":id/thread")
-   createThread(@Req() req: Request, @Param('id') forumid: string) {
-      return this.forumService.addThread(req, forumid);
+ 
+
+   @UseGuards(AuthorizationGuard)
+   @Roles(Role.Instructor)
+   @Put(':forumId')
+   async updateForum(
+     @Param('forumId') forumId: string,
+     @Body() { title, content }: { title?: string; content?: string },
+   ) {
+     if (!title && !content) {
+       throw new BadRequestException('Must provide title or content to update');
+     }
+     return this.forumService.updateForum(forumId, title, content);
+   }
+ 
+
+   @UseGuards(AuthorizationGuard)
+   @Roles(Role.Student, Role.Instructor)
+   @Put('thread/:threadId')
+   async updateThread(
+     @Param('threadId') threadId: string,
+     @Body() { content }: { content?: string },
+   ) {
+     if (!content) {
+       throw new BadRequestException('Must provide content to update thread');
+     }
+     return this.forumService.updateThread(threadId, content);
    }
 
-   @Get("thread/:id")
-   findThread(@Param('id') id: string) {
-      return this.forumService.findOneThread(id);
+   @Get(':forumId')
+   async getForum(@Param('forumId') forumId: string) {
+     return this.forumService.getForumById(forumId);
    }
 
-   //findAllThreads
-   @Get(":forumId/threads/")
-   findAllThreads(@Param('forumId') forumId: string) {
-      return this.forumService.findAllThreads(forumId);
+   @Get('thread/:threadId')
+   async getThread(@Param('threadId') threadId: string) {
+     return this.forumService.getThreadById(threadId);
    }
 
-   @Post("reply/:id")
-   createReply(@Req() req: Request, @Param('id') threadId: string, @Body() reply) {
-      return this.forumService.reply(req, threadId, reply);
+   @UseGuards(AuthorizationGuard)
+   @Roles(Role.Instructor)
+   @Delete(':forumId')
+
+
+   @UseGuards(AuthorizationGuard)
+   @Roles(Role.Student, Role.Instructor)
+   @Delete('thread/:threadId')
+   async deleteThread(@Param('threadId') threadId: string) {
+     await this.forumService.deleteThread(threadId);
+     return { message: 'Thread deleted' };
    }
-
-
-}
+ }
+ 
