@@ -24,6 +24,7 @@ export class CourseService {
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
     @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
+    @InjectModel(Student.name) private studentModel: Model<Student>,
   ) { }
 
   static get storage() {
@@ -155,6 +156,19 @@ export class CourseService {
   async delete(id: string): Promise<void> {
     try {
       const course = await this.courseModel.findById(id).exec();
+      //remove course from instructor's courses taught
+      const instructor = await this.instructorModel.findById(course.instructor);
+      instructor.coursesTaught = instructor.coursesTaught.filter(courseId => courseId.toString() !== id);
+      await instructor.save();
+
+      //remove course from students' enrolled courses
+      const students = await this.getEnrolledStudents(id);
+      students.forEach(async (studentId) => {
+        const student = await this.studentModel.findById(studentId);
+        student.enrolledCourses = student.enrolledCourses.filter(courseId => courseId.toString() !== id);
+        await student.save();
+      });
+      
       //delete all quizzes in this course
       const quizzes = course.quizzes;
       await this.quizService.deleteQuizzes(quizzes);

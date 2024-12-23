@@ -16,6 +16,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { Course, CourseDocument } from '../../course/models/course.schema';
 import { updateStudentDto } from '../dto/update-student.dto';
+import { Progress } from 'src/progress/models/progress.schema';
 
 @Injectable()
 export class UserService {
@@ -25,6 +26,7 @@ export class UserService {
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
+    @InjectModel(Progress.name) private progressModel: Model<Progress>,
     private jwtService: JwtService,
   ) { }
 
@@ -289,6 +291,7 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
     console.log(userId, courseId);
     const student = await this.studentModel.findById(userId);
     const course = await this.courseModel.findById(courseId);
+    const progress = await this.progressModel.create({ userId: student._id, courseId: course._id, 0 : Number});
 
     //push the student id to the course students array
     course.students.push(student._id as any);
