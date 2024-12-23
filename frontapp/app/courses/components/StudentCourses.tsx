@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "@/app/_utils/axiosInstance";
 import toast from "react-hot-toast"; // Assuming you have react-hot-toast set up
+import axios from "axios";
 
 interface Course {
   _id: string;
@@ -23,6 +24,7 @@ interface Note {
   userId: string;
   isPinned: boolean;
   created_at: string;
+  last_updated: string;
 }
 
 
@@ -35,7 +37,12 @@ function StudentCourses() {
   const [courseNotes, setCourseNotes] = useState<Note[]>([]); // Correct type
   const [loadingNotes, setLoadingNotes] = useState<boolean>(false); // Track loading state
   const [newNoteContent, setNewNoteContent] = useState<string>(""); // For adding notes
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null); // Track editing note
+  const [creatingNote, setCreatingNote] = useState(false); // Flag to handle note creation loading state
+  const [content, setContent] = useState(""); 
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editedContent, setEditedContent] = useState<string>("");
+
+
 
 
   const fetchCourses = async () => {
@@ -112,6 +119,8 @@ function StudentCourses() {
     fetchCourses(); // Fetch courses when the component mounts
   }, []);
 
+
+
   const enrollInCourse = async (courseId: string) => {
     try {
       const { data: authData } = await axiosInstance.get("/auth/me", { withCredentials: true });
@@ -173,6 +182,7 @@ function StudentCourses() {
       console.error(error);
     }
   };
+
 const addNote = async () => {
   if (!newNoteContent.trim()) {
     toast.error("Note content cannot be empty.");
@@ -193,6 +203,53 @@ const addNote = async () => {
     console.error(error);
   }
 };
+
+const editNote = (noteId: string, currentContent: string) => {
+  // Set the note ID and current content for editing
+  setEditingNoteId(noteId);
+  setEditedContent(currentContent);  // Pre-fill the text field with the current note content
+};
+
+const handleSaveClick = async (noteId: string) => {
+  if (editedContent.trim() === "") {
+    toast.error("Note content cannot be empty.");
+    return;
+  }
+  try {
+    // Get the current date in ISO format
+    const lastUpdated = new Date().toISOString();  // Make sure this is a valid ISO date string
+    const response = await axiosInstance.put(
+      `/notes/${noteId}`,
+      { content: editedContent, last_updated: lastUpdated },
+      { withCredentials: true }
+    );
+    // Assuming response contains the updated note with the new "last_updated" field
+    const updatedNote = response.data;
+
+    // Ensure that the date is in a valid format when updating the note state
+    const validLastUpdatedDate = updatedNote.last_updated
+      ? new Date(updatedNote.last_updated).toLocaleString() // Format it for display
+      : new Date().toLocaleString(); // Fallback to current date if not valid
+
+    // Update the note in the UI with the new content and last_updated timestamp
+    setCourseNotes((prevNotes) =>
+      prevNotes.map((note) =>
+        note._id === noteId
+          ? { ...note, content: editedContent, last_updated: validLastUpdatedDate }
+          : note
+      )
+    );
+    setEditingNoteId(null); // Reset editing state
+    toast.success("Note updated successfully.");
+  } catch (error) {
+    toast.error("Failed to update note.");
+    console.error(error);
+  }
+};
+
+
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -294,38 +351,54 @@ const addNote = async () => {
                 <strong>Instructor:</strong> {instructorName}
               </div>
               <div>
-                <strong>Resources:</strong>
+              
                 <div>
-                  <strong>Resources:</strong>
-                  <div className="space-y-2">
-                    {Array.isArray(selectedCourse.resources) && selectedCourse.resources.length > 0 ? (
-                      selectedCourse.resources.map((resource, index) => {
-                        // Normalize the path
-                        const normalizedResource = resource.replace(/\\/g, "/").replace("/uploads/", "");
+  <strong>Resources:</strong>
+  <div className="space-y-2">
+    {Array.isArray(selectedCourse.resources) && selectedCourse.resources.length > 0 ? (
+      selectedCourse.resources.map((resource, index) => {
+        // Normalize the path to ensure it's in the correct format
+        let normalizedResource = resource.replace(/\\/g, "/");  // Convert all backslashes to forward slashes
 
-                        // Construct the correct view URL
-                        const viewUrl = `/courses/${selectedCourse.course_code}/resource/${encodeURIComponent(normalizedResource)}`;
+        // Check if the resource starts with '/uploads/', and remove '/uploads/' part if it does
+        if (normalizedResource.startsWith("/uploads/")) {
+          normalizedResource = normalizedResource.replace("/uploads/", "");  // Remove '/uploads/' from the path
+        }
 
-                        // Extract the filename
-                        const filename = normalizedResource.split("/").pop() || "default-filename";
+        // Construct the view URL
+        let viewUrl = normalizedResource;
 
-                        return (
-                          <a
-                            key={index}
-                            href={viewUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                          >
-                            View {filename}
-                          </a>
-                        );
-                      })
-                    ) : (
-                      <div>No resources available</div>
-                    )}
-                  </div>
-                </div>
+        // If the resource is not a full URL or path, create the correct URL
+        if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
+          viewUrl = `http://localhost:3000/courses/${selectedCourse.course_code}/resource/${encodeURIComponent(viewUrl)}`;
+        } else {
+          // If it's already a full URL, no need to modify it
+          if (!viewUrl.startsWith("http")) {
+            viewUrl = `http://localhost:3000/courses/${selectedCourse.course_code}/resource${encodeURIComponent(viewUrl)}`;
+          }
+        }
+
+        // Extract the filename from the last part of the path (no encoding here)
+        const filename = normalizedResource.split("/").pop() || "default-filename";
+
+        // Display the filename without encoding
+        return (
+          <a
+            key={index}
+            href={viewUrl}  // Use the constructed URL
+            target="_blank"  // Open in a new tab
+            rel="noopener noreferrer"  // Security for new tab
+            className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            View {filename}  {/* Display the filename without URL encoding */}
+          </a>
+        );
+      })
+    ) : (
+      <div>No resources available</div>
+    )}
+  </div>
+</div>
               </div>
 
               <div>
@@ -342,41 +415,91 @@ const addNote = async () => {
               </div>
 
               <div>
-            <strong>Notes:</strong>
-            <ul className="list-disc pl-5">
-              {loadingNotes ? (
-                <li>Loading notes...</li>
-              ) : courseNotes.length > 0 ? (
-                courseNotes.map((note) => (
-                  <li key={note._id} className="bg-gray-50 p-4 rounded-md shadow-md mb-3">
-                    {/* Note Content */}
-                    <div className="font-semibold text-lg">{note.content}</div>
+  <strong>Notes:</strong>
+  <ul className="list-disc pl-5">
+    {loadingNotes ? (
+      <li>Loading notes...</li>
+    ) : courseNotes.length > 0 ? (
+      courseNotes.map((note) => (
+        <li key={note._id} className="bg-gray-50 p-4 rounded-md shadow-md mb-3">
+          {/* Note Content */}
+          {editingNoteId === note._id ? (
+            <div>
+              <textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                rows={3}
+                className="w-full p-2 border rounded-md"
+              />
+              <button
+                onClick={() => handleSaveClick(note._id)}
+                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md"
+              >
+                Save
+              </button>
+            </div>
+          ) : (
+            <div className="font-semibold text-lg">{note.content}</div>
+          )}
 
-                    {/* Note Metadata */}
-                    <div className="text-sm text-gray-500 mt-2">
-                      <div><strong>Created:</strong> {new Date(note.created_at).toLocaleString()}</div>
-                      <div><strong>Pinned:</strong> {note.isPinned ? "Yes" : "No"}</div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="mt-2 flex space-x-3">
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                        Edit
-                      </button>
-                      <button
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                        onClick={() => deleteNote(note._id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <li>No notes available</li>
-              )}
-            </ul>
+          {/* Note Metadata */}
+          <div className="text-sm text-gray-500 mt-2">
+            <div><strong>Created:</strong> {new Date(note.created_at).toLocaleString()}</div>
+            <div><strong>Last Updated:</strong> {new Date(note.last_updated).toLocaleString()}</div>
+            <div><strong>Pinned:</strong> {note.isPinned ? "Yes" : "No"}</div>
           </div>
+
+          {/* Action Buttons */}
+          <div className="mt-2 flex space-x-3">
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              onClick={() => editNote(note._id, note.content)} // Start editing the note
+            >
+              Edit
+            </button>
+            <button
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              onClick={() => deleteNote(note._id)} // Delete button remains the same
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      ))
+    ) : (
+      <li>No notes available</li>
+    )}
+  </ul>
+
+  {/* Create Note Button */}
+  <div className="mt-4 flex items-center space-x-4">
+  {/* Input field for note content */}
+  <textarea
+    className="w-full p-2 border rounded-md"
+    placeholder="Enter note content"
+    value={newNoteContent}
+    onChange={(e) => setNewNoteContent(e.target.value)} // Bind to state
+    rows={3} // Adjust the number of rows based on how large you want the input area
+  />
+  
+  {/* Create Note Button */}
+  <button
+    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+    onClick={() => {
+      if (selectedCourse) {
+        addNote(); // Call the function to add the note
+      } else {
+        console.error('Selected course is null');
+      }
+    }}
+    disabled={creatingNote || !newNoteContent.trim()} // Disable if creating or content is empty
+  >
+    {creatingNote ? 'Creating note...' : 'Create Note'}
+  </button>
+</div>
+
+</div>
+
 
 
             </>
