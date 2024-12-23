@@ -299,6 +299,7 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
     if (student.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
       throw new ConflictException('Student already enrolled in this course');
     }
+    
 
     student.enrolledCourses.push(course._id as any);
     await student.save();

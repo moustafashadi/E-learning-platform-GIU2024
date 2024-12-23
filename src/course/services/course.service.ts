@@ -126,18 +126,7 @@ export class CourseService {
     return await this.courseModel.find().populate('instructor').exec();
   }
 
-  async findOne(course_code: string): Promise<Course> {
-    const course = await this.courseModel.findOne({
-      _id: new Types.ObjectId(course_code), // Convert string to ObjectId
-    }).populate('instructor').exec();
-
-    if (!course) {
-      throw new NotFoundException(`Course with code ${course_code} not found`);
-    }
-
-    return course;
-  }
-  async findOneByCourseId(course_id: string): Promise<Course> {
+  async findOne(course_id: string): Promise<Course> {
     const course = await this.courseModel.findById(course_id).populate('instructor').exec();
 
     if (!course) {

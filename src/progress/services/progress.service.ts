@@ -16,7 +16,9 @@ export class ProgressService {
 
   //update progress
   async updateProgress(userId: string, courseId: string) {
+    console.log("sid "+userId);
     const user = await this.studentModal.findById(userId);
+    console.log("bid "+courseId);
     const course = await this.courseModel.findById(courseId);
     if (!user || !course) {
       throw new Error('User or course not found');

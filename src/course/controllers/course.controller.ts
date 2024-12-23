@@ -57,15 +57,13 @@ export class CourseController {
     return await this.courseService.findAll();
   }
 
-  @Get('/:course_code')
-  async findOne(@Param('course_code') course_code: string) {
-    return await this.courseService.findOne(course_code);
-  }
 
 
-  @Get('/:course_id')
-  async findOneByCourseId(@Param('course_id') course_id: string) {
-    return await this.courseService.findOneByCourseId(course_id);
+
+  @Get('/:id')
+  async findOne(@Param('id') id: string) {
+    // This method looks up the course by the MongoDB _id
+    return await this.courseService.findOne(id);
   }
 
   @Patch('/:id')
@@ -130,8 +128,8 @@ export class CourseController {
   }
 
   //GET COURSE QUIZZES
-  @Get('/:courseId/quizzes')
-  async getCourseQuizzes(@Param('courseId') courseId: string) {
+  @Get('/:id/quizzes')
+  async getCourseQuizzes(@Param('id') courseId: string) {
     return await this.courseService.getCourseQuizzes(courseId);
   }
 
