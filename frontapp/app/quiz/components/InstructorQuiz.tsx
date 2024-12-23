@@ -39,7 +39,7 @@ function InstructorQuiz() {
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [isSubmittingNewQuiz, setIsSubmittingNewQuiz] = useState(false);
 
-  // View & Edit Quiz
+  // View & Edit
   const [showQuizzesListModal, setShowQuizzesListModal] = useState(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
 
@@ -57,12 +57,14 @@ function InstructorQuiz() {
     const fetchInstructorCourses = async () => {
       setLoading(true);
       try {
+        // 1) get user
         const userResponse = await axiosInstance.get("/auth/me", {
           withCredentials: true,
         });
         const fetchedUserId = userResponse.data.id;
         setUserId(fetchedUserId);
 
+        // 2) get courses taught
         const response = await axiosInstance.get(
           `/courses/teacher/${fetchedUserId}`,
           { withCredentials: true }
@@ -112,11 +114,11 @@ function InstructorQuiz() {
       return;
     }
 
-    // Check each question has exactly one correct answer
+    // Must have exactly 1 correct answer per question
     for (const q of questions) {
       const correctCount = q.options.filter((o) => o.isCorrect).length;
       if (correctCount !== 1) {
-        alert("You have to select answers for all the questions.");
+        alert("Each question must have exactly one correct answer.");
         return;
       }
     }
@@ -124,7 +126,7 @@ function InstructorQuiz() {
     setIsSubmittingNewQuiz(true);
 
     try {
-      // 1) create quiz
+      // 1) Create the quiz
       const createQuizRes = await axiosInstance.post(
         `/quiz/${selectedCourseId}`,
         { title: quizTitle },
@@ -132,18 +134,20 @@ function InstructorQuiz() {
       );
       const createdQuizId = createQuizRes.data._id;
 
-      // 2) create each question
+      // 2) Create each question
       for (const questionObj of questions) {
+        // find the single correct answer
         const correctIndex = questionObj.options.findIndex((o) => o.isCorrect);
-        const correctAnswer = String.fromCharCode(65 + correctIndex);
-
+        const correctAnswer = String.fromCharCode(65 + correctIndex); // 'A','B','C','D'
+        // convert local options to { text, identifier }
         const formattedOptions = questionObj.options.map((opt, idx) => ({
           text: opt.text,
           identifier: String.fromCharCode(65 + idx),
         }));
 
+        // This is the critical route fix => /quiz/${createdQuizId}/createQuestion
         await axiosInstance.post(
-          `/${createdQuizId}/createQuestion`,
+          `/quiz/${createdQuizId}/createQuestion`,
           {
             content: questionObj.question,
             correctAnswer,
@@ -155,12 +159,12 @@ function InstructorQuiz() {
       }
 
       toast.success("Quiz created successfully!");
-      // Close & reset
+      // reset
       setQuizTitle("");
       setQuestions([]);
       setShowQuizModal(false);
 
-      // Update local doneQuizzes
+      // optionally increment doneQuizzes
       setCourses((prev) =>
         prev.map((c) =>
           c.id === selectedCourseId
@@ -177,7 +181,7 @@ function InstructorQuiz() {
   };
 
   // ==========================================================
-  //              VIEW ALL QUIZZES (LIST)
+  //              VIEW QUIZZES (LIST)
   // ==========================================================
   const handleViewQuizzes = async (courseId: string) => {
     setSelectedCourseId(courseId);
@@ -195,7 +199,6 @@ function InstructorQuiz() {
     }
   };
 
-  // Delete entire quiz
   const handleDeleteQuiz = async (quizId: string) => {
     if (!confirm("Are you sure you want to delete this quiz?")) return;
 
@@ -203,10 +206,10 @@ function InstructorQuiz() {
       await axiosInstance.delete(`/quiz/${quizId}`, { withCredentials: true });
       toast.success("Quiz deleted!");
 
-      // Remove from local quizzes array
+      // remove from local
       setQuizzes((prev) => prev.filter((q) => q._id !== quizId));
 
-      // Optionally update doneQuizzes in the course
+      // optionally update doneQuizzes
       setCourses((prevCourses) =>
         prevCourses.map((course) => {
           if (course.id === selectedCourseId) {
@@ -230,8 +233,8 @@ function InstructorQuiz() {
     setEditQuizTitle("Edit Quiz");
 
     try {
-      // GET /:quizId/questions
-      const res = await axiosInstance.get(`/${quizId}/questions`, {
+      // GET /quiz/:quizId/questions
+      const res = await axiosInstance.get(`/quiz/${quizId}/questions`, {
         withCredentials: true,
       });
 
@@ -281,11 +284,11 @@ function InstructorQuiz() {
 
   const handleDeleteQuestionDB = async (questionId: string, index: number) => {
     if (!editQuizId) return;
-
     if (!confirm("Are you sure you want to remove this question?")) return;
 
     try {
-      await axiosInstance.delete(`/${editQuizId}/${questionId}`, {
+      // DELETE /quiz/:quizId/:id
+      await axiosInstance.delete(`/quiz/${editQuizId}/${questionId}`, {
         withCredentials: true,
       });
       toast.success("Question deleted!");
@@ -303,11 +306,11 @@ function InstructorQuiz() {
       return;
     }
 
-    // Check each question has exactly 1 correct answer
+    // Must have exactly 1 correct answer
     for (const q of editQuestions) {
       const correctCount = q.options.filter((o) => o.isCorrect).length;
       if (correctCount !== 1) {
-        alert("You have to select answers for all the questions in edit mode.");
+        alert("Each question must have exactly one correct answer in edit mode.");
         return;
       }
     }
@@ -325,9 +328,9 @@ function InstructorQuiz() {
         }));
 
         if (q._id) {
-          // Update existing
+          // PUT /quiz/:quizId/:id
           await axiosInstance.put(
-            `/${editQuizId}/${q._id}`,
+            `/quiz/${editQuizId}/${q._id}`,
             {
               content: q.question,
               correctAnswer,
@@ -336,9 +339,9 @@ function InstructorQuiz() {
             { withCredentials: true }
           );
         } else {
-          // Create new
+          // POST /quiz/:quizId/createQuestion
           await axiosInstance.post(
-            `/${editQuizId}/createQuestion`,
+            `/quiz/${editQuizId}/createQuestion`,
             {
               content: q.question,
               correctAnswer,
@@ -439,7 +442,7 @@ function InstructorQuiz() {
                 </label>
 
                 {q.options.map((option, oIndex) => {
-                  const optionLetter = String.fromCharCode(65 + oIndex); // A, B, C, D, ...
+                  const optionLetter = String.fromCharCode(65 + oIndex);
                   return (
                     <div key={oIndex} className="flex items-center mb-2 ml-4">
                       <span className="mr-2 font-medium">
@@ -543,7 +546,6 @@ function InstructorQuiz() {
                   className="flex justify-between items-center border-b py-2"
                 >
                   <span>{quiz.title}</span>
-
                   <div className="flex space-x-2">
                     {/* Edit quiz */}
                     <button
@@ -587,94 +589,95 @@ function InstructorQuiz() {
           <div className="bg-white p-6 rounded-lg shadow-lg w-2/3 relative max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">{editQuizTitle}</h2>
 
-            {editQuestions.map((q, qIndex) => (
-              <div key={qIndex} className="mb-6 border-b pb-4">
-                {/* QUESTION TEXT */}
-                <label className="block mb-2">
-                  Question:
-                  <input
-                    type="text"
-                    value={q.question}
-                    onChange={(e) => {
-                      const updated = [...editQuestions];
-                      updated[qIndex].question = e.target.value;
-                      setEditQuestions(updated);
-                    }}
-                    className="w-full border border-gray-300 p-2 rounded mt-1"
-                  />
-                </label>
-
-                {q.options.map((option, oIndex) => {
-                  const optionLetter = String.fromCharCode(65 + oIndex);
-                  return (
-                    <div key={oIndex} className="flex items-center mb-2 ml-4">
-                      <span className="mr-2 font-medium">
-                        Option {optionLetter}:
-                      </span>
+            {editQuestions.map((q, qIndex) => {
+              const optionElements = q.options.map((option, oIndex) => {
+                const optionLetter = String.fromCharCode(65 + oIndex);
+                return (
+                  <div key={oIndex} className="flex items-center mb-2 ml-4">
+                    <span className="mr-2 font-medium">
+                      Option {optionLetter}:
+                    </span>
+                    <input
+                      type="text"
+                      value={option.text}
+                      onChange={(e) => {
+                        const updated = [...editQuestions];
+                        updated[qIndex].options[oIndex].text = e.target.value;
+                        setEditQuestions(updated);
+                      }}
+                      className="flex-1 border border-gray-300 p-2 rounded"
+                    />
+                    <label className="ml-2 flex items-center">
                       <input
-                        type="text"
-                        value={option.text}
-                        onChange={(e) => {
+                        type="checkbox"
+                        checked={option.isCorrect}
+                        onChange={() => {
                           const updated = [...editQuestions];
-                          updated[qIndex].options[oIndex].text =
-                            e.target.value;
+                          updated[qIndex].options.forEach((opt, idx) => {
+                            opt.isCorrect = idx === oIndex;
+                          });
                           setEditQuestions(updated);
                         }}
-                        className="flex-1 border border-gray-300 p-2 rounded"
                       />
-                      <label className="ml-2 flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={option.isCorrect}
-                          onChange={() => {
-                            const updated = [...editQuestions];
-                            updated[qIndex].options.forEach((opt, idx) => {
-                              opt.isCorrect = idx === oIndex;
-                            });
-                            setEditQuestions(updated);
-                          }}
-                        />
-                        <span className="ml-1">Correct</span>
-                      </label>
-                    </div>
-                  );
-                })}
+                      <span className="ml-1">Correct</span>
+                    </label>
+                  </div>
+                );
+              });
 
-                {/* Add Option */}
-                <button
-                  className="text-sm text-blue-600 ml-4"
-                  onClick={() => {
-                    if (q.options.length >= 4) return;
-                    const updated = [...editQuestions];
-                    updated[qIndex].options.push({
-                      text: "",
-                      isCorrect: false,
-                    });
-                    setEditQuestions(updated);
-                  }}
-                  disabled={q.options.length >= 4}
-                >
-                  Add Option
-                </button>
+              return (
+                <div key={qIndex} className="mb-6 border-b pb-4">
+                  <label className="block mb-2">
+                    Question:
+                    <input
+                      type="text"
+                      value={q.question}
+                      onChange={(e) => {
+                        const updated = [...editQuestions];
+                        updated[qIndex].question = e.target.value;
+                        setEditQuestions(updated);
+                      }}
+                      className="w-full border border-gray-300 p-2 rounded mt-1"
+                    />
+                  </label>
+                  {optionElements}
 
-                {/* Remove Question */}
-                {q._id ? (
+                  {/* Add Option */}
                   <button
-                    className="text-sm text-red-600 ml-4"
-                    onClick={() => handleDeleteQuestionDB(q._id!, qIndex)}
+                    className="text-sm text-blue-600 ml-4"
+                    onClick={() => {
+                      if (q.options.length >= 4) return;
+                      const updated = [...editQuestions];
+                      updated[qIndex].options.push({
+                        text: "",
+                        isCorrect: false,
+                      });
+                      setEditQuestions(updated);
+                    }}
+                    disabled={q.options.length >= 4}
                   >
-                    Remove Question
+                    Add Option
                   </button>
-                ) : (
-                  <button
-                    className="text-sm text-red-600 ml-4"
-                    onClick={() => removeEditQuestion(qIndex)}
-                  >
-                    Remove Question
-                  </button>
-                )}
-              </div>
-            ))}
+
+                  {/* Remove Question */}
+                  {q._id ? (
+                    <button
+                      className="text-sm text-red-600 ml-4"
+                      onClick={() => handleDeleteQuestionDB(q._id!, qIndex)}
+                    >
+                      Remove Question
+                    </button>
+                  ) : (
+                    <button
+                      className="text-sm text-red-600 ml-4"
+                      onClick={() => removeEditQuestion(qIndex)}
+                    >
+                      Remove Question
+                    </button>
+                  )}
+                </div>
+              );
+            })}
 
             <button
               onClick={addQuestionForEdit}

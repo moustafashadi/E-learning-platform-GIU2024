@@ -12,6 +12,7 @@ export class Question {
   @Prop({ required: true })
   content: string;
 
+  // The single correct choice among A, B, C, D
   @Prop({ enum: ["A", "B", "C", "D"], required: true })
   correctAnswer: string;
 
@@ -20,6 +21,21 @@ export class Question {
 
   @Prop({ required: true })
   index: number;
+
+  /**
+   * Store multiple-choice options as an array,
+   * e.g. [ { text: "...", identifier: "A" }, ... ]
+   */
+  @Prop({
+    type: [
+      {
+        text: { type: String, required: true },
+        identifier: { type: String, required: true },
+      },
+    ],
+    default: [],
+  })
+  options: { text: string; identifier: string }[];
 }
 
 export type QuestionDocument = Question & Document;

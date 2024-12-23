@@ -105,7 +105,7 @@ export class QuizService {
 
   //check if all questions in the array of questions are solved, if so then return true
   async checkIfAllQuestionsSolved(req: Request, quizId: string): Promise<boolean> {
-
+    console.log(8);
     const studentId = req.user['sub'];
     console.log('quizId', quizId);
     const student = await this.studentModel.findById(studentId);
@@ -116,6 +116,9 @@ export class QuizService {
       student.questionsSolved = [];
     }
     const quiz = await this.quizModel.findById(quizId);
+    const course = await this.courseModel.findById(quiz.course);
+    const courseId = course._id.toString();
+
     if (!quiz) {
       throw new NotFoundException('Quiz not found');
     }
@@ -133,7 +136,9 @@ export class QuizService {
         return false;
       }
     }
-    await this.progressService.updateProgress(studentId, quizId);
+
+  
+    await this.progressService.updateProgress(studentId, courseId);
     return true;
   }
 
