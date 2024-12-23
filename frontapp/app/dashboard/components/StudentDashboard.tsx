@@ -69,7 +69,7 @@ function StudentDashboard() {
           const coursesData = await Promise.all(
             courseIds.map(async (courseId: string) => {
               try {
-                const response = await axiosInstance.get(`http://localhost:3000${courseId}`, {
+                const response = await axiosInstance.get(`http://localhost:3000/courses/${courseId}`, {
                   withCredentials: true,
                 });
                 console.log(`Course Data for ${courseId}:`, response.data);
