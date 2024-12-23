@@ -45,52 +45,66 @@ export class CourseService {
     });
   }
   
+ 
   // Upload Resource Method
-  async uploadResource(courseCode: string, file: Express.Multer.File): Promise<Course> {
+  async uploadResource(courseId: string, file: Express.Multer.File): Promise<Course> {
     console.log('File received:', file);
-  
+
     // Ensure that file is provided
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-  
+
     // Ensure the filename is set properly
     if (!file.filename) {
       throw new BadRequestException('File is missing or filename not set properly');
     }
-  
+
     console.log('File upload initiated:', file);
-  
-    // Find the course by course code
-    const course = await this.courseModel.findOne({ course_code: courseCode });
+
+    // Find the course by course ID
+    const course = await this.courseModel.findById(courseId);
     if (!course) {
-      throw new NotFoundException(`Course with code ${courseCode} not found`);
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
     }
-  
+
     // Save the file metadata to the course
     const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
     course.resources.push(filePath);
-  
+
     // Save the course after updating resources
     await course.save();
     console.log('Resource added to course:', filePath);
     
     return course;
   }
+
   
   // Get Resource Method
-  async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> {
+  async getResource(courseId: string, fileName: string): Promise<fs.ReadStream> {
+    // Find the course by course ID
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    // Check if the file exists in the course resources
+    const filePath = `/uploads/${fileName}`;
+    if (!course.resources.includes(filePath)) {
+      throw new NotFoundException(`File not found in course resources: ${fileName}`);
+    }
+
     // Construct the file path to the 'uploads' directory in your server
-    const filePath = path.join(__dirname, '../../../uploads', fileName);
-  
+    const fullPath = path.join(__dirname, '../../../uploads', fileName);
+
     // Check if the file exists in the filesystem
-    if (!fs.existsSync(filePath)) {
+    if (!fs.existsSync(fullPath)) {
       // If the file doesn't exist, throw a NotFoundException
       throw new NotFoundException(`File not found: ${fileName}`);
     }
-  
+
     // Return the file stream if the file exists
-    return fs.createReadStream(filePath);
+    return fs.createReadStream(fullPath);
   }
   //get enrolled students
   async getEnrolledStudents(course_id: string): Promise<mongoose.ObjectId[]> {

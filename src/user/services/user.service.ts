@@ -286,29 +286,33 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
       throw new NotFoundException('Instructor not found');
     }
   }
-
   async enrollCourse(userId: string, courseId: string) {
     console.log(userId, courseId);
     const student = await this.studentModel.findById(userId);
     const course = await this.courseModel.findById(courseId);
     const progress = await this.progressModel.create({ userId: student._id, courseId: course._id, 0 : Number});
-
-    //push the student id to the course students array
-    course.students.push(student._id as any);
+  
     if (!student || !course) {
       throw new NotFoundException('Student or course not found');
     }
-
+  
+    // Check if the student is already enrolled
     if (student.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
       throw new ConflictException('Student already enrolled in this course');
     }
     
-
+  
+    // Add student to course's students array
+    course.students.push(student._id as any);
+    await course.save(); // Ensure changes to the course are saved
+  
+    // Add course to student's enrolled courses
     student.enrolledCourses.push(course._id as any);
-    await student.save();
-
+    await student.save(); // Ensure changes to the student are saved
+  
     return student.populate('enrolledCourses');
   }
+  
 
   async hasRole(userId: string, role: string): Promise<boolean> {
     const user = await this.userModel.findById(userId);

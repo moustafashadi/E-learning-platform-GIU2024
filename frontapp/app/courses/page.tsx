@@ -64,5 +64,4 @@ function CoursePage() {
     </div>
   );
 }
-
 export default CoursePage;
