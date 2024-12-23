@@ -7,6 +7,8 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { GetChatsDto } from './dto/get-chat.dto';
 import { SearchChatsDto } from './dto/search-chats.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
+import { io, Socket } from 'socket.io-client';
+
 
 @Injectable()
 export class ChatService {
@@ -74,3 +76,41 @@ export class ChatService {
     }
   }
 }
+
+class WebSocketService {
+  public socket: Socket | null = null;
+
+  connect(userId: string) {
+    this.socket = io('http://localhost:3000/ws', {
+      query: { userId },
+      withCredentials: true, // Ensure credentials are included
+    });
+
+    this.socket.on('connect', () => {
+      console.log('Connected to WebSocket server');
+    });
+
+
+
+    this.socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+      setTimeout(() => this.connect(userId), 1000);
+    });
+
+    this.socket.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      setTimeout(() => this.connect(userId), 1000);
+    });
+
+    return this.socket;
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+}
+
+export default new WebSocketService();
