@@ -238,8 +238,7 @@ const handleDeleteClick = async (courseId: string) => {
     setSelectedFile(file);
     handleUploadResource(file);
    
-  };
-  const handleUploadResource = async (file: File) => {
+  };const handleUploadResource = async (file: File) => {
     console.log('Upload resource button clicked');
     if (!file) {
       console.log('No file selected');
@@ -251,13 +250,13 @@ const handleDeleteClick = async (courseId: string) => {
     }
     const formData = new FormData();
     formData.append('file', file);
-
+  
     try {
-      console.log('Uploading resource to course:', viewingCourse.course_code);
+      console.log('Uploading resource to course:', viewingCourse._id);
       const response = await axios.post(
-        `http://localhost:3000/courses/${viewingCourse.course_code}/upload-resource`,
-        formData,  { withCredentials: true }
-       
+        `http://localhost:3000/courses/${viewingCourse._id}/upload-resource`,
+        formData,
+        { withCredentials: true }
       );
       console.log('File uploaded successfully:', response.data);
       fetchCourseData(viewingCourse._id);
@@ -265,6 +264,7 @@ const handleDeleteClick = async (courseId: string) => {
       console.error('Error uploading file:', error);
     }
   };
+  
   const fetchCourseData = async (course_id: string) => {
     try {
       const response = await axios.get(`http://localhost:3000/courses/${course_id}`, { withCredentials: true });
@@ -386,11 +386,11 @@ const handleDeleteClick = async (courseId: string) => {
 
             // If the resource is not a full URL or path, create the correct URL
             if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
-              viewUrl = `http://localhost:3000/courses/${viewingCourse.course_code}/resource/${encodeURIComponent(viewUrl)}`;
+              viewUrl = `http://localhost:3000/courses/${viewingCourse._id}/resource/${encodeURIComponent(viewUrl)}`;
             } else {
               // If it's already a full URL, no need to modify it
               if (!viewUrl.startsWith("http")) {
-                viewUrl = `http://localhost:3000/courses/${viewingCourse.course_code}/resource${encodeURIComponent(viewUrl)}`;
+                viewUrl = `http://localhost:3000/courses/${viewingCourse._id}/resource${encodeURIComponent(viewUrl)}`;
               }
             }
 
