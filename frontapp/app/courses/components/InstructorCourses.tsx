@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,6 +29,9 @@ interface UpdateCourseDto {
   difficulty: string;
   numberofQuizzes: number;
 }
+interface FileChangeEvent extends React.ChangeEvent<HTMLInputElement> {
+  target: HTMLInputElement & { files: FileList };
+}
 
 function InstructorCourses() {
   const [teachingCourses, setTeachingCourses] = useState<Course[]>([]);
@@ -39,6 +42,7 @@ function InstructorCourses() {
   const [courses, setCourses] = useState<Course[]>([]); // Assuming Course is your type
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
 
   const [formValues, setFormValues] = useState({
@@ -226,32 +230,28 @@ const handleDeleteClick = async (courseId: string) => {
       console.error(error);
     }
   };
-
-   // Function to handle file selection
-  interface FileChangeEvent extends React.ChangeEvent<HTMLInputElement> {
-    target: HTMLInputElement & { files: FileList };
-  }
-
+  
   const handleFileChange = (event: FileChangeEvent) => {
+    console.log('File input changed');
     setSelectedFile(event.target.files[0]);
   };
 
   // Function to handle resource upload
   const handleUploadResource = async () => {
+    console.log('Upload resource button clicked');
     if (!selectedFile) {
       console.log('No file selected');
       return;
     }
-
     if (!viewingCourse) {
       console.error('No course selected for uploading resource');
       return;
     }
-
     const formData = new FormData();
     formData.append('file', selectedFile);
 
     try {
+      console.log('Uploading resource to course:', viewingCourse.course_code);
       const response = await axios.post(
         `http://localhost:3000/courses/${viewingCourse.course_code}/upload-resource`,
         formData,
@@ -267,7 +267,13 @@ const handleDeleteClick = async (courseId: string) => {
       console.error('Error uploading file:', error);
     }
   };
-  
+
+  const handleButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <div className="mt-[2rem] p-6 space-y-6 bg-gray-100">
       {!viewingCourse && (
@@ -356,63 +362,65 @@ const handleDeleteClick = async (courseId: string) => {
             <strong>Difficulty:</strong> {viewingCourse.difficulty}
           </div>
 
-       
-<div>
-  <strong>Resources:</strong>
-  <div className="space-y-2">
-    {viewingCourse && Array.isArray(viewingCourse.resources) && viewingCourse.resources.length > 0 ? (
-      viewingCourse.resources.map((resource, index) => {
-        // Normalize the path to ensure it's in the correct format
-        let normalizedResource = resource.replace(/\\/g, "/");  // Convert all backslashes to forward slashes
+          <div>
+      <strong>Resources:</strong>
+      <div className="space-y-2">
+        {viewingCourse && Array.isArray(viewingCourse.resources) && viewingCourse.resources.length > 0 ? (
+          viewingCourse.resources.map((resource, index) => {
+            // Normalize the path to ensure it's in the correct format
+            let normalizedResource = resource.replace(/\\/g, "/");  // Convert all backslashes to forward slashes
 
-        // Check if the resource starts with '/uploads/', and remove '/uploads/' part if it does
-        if (normalizedResource.startsWith("/uploads/")) {
-          normalizedResource = normalizedResource.replace("/uploads/", "");  // Remove '/uploads/' from the path
-        }
+            // Check if the resource starts with '/uploads/', and remove '/uploads/' part if it does
+            if (normalizedResource.startsWith("/uploads/")) {
+              normalizedResource = normalizedResource.replace("/uploads/", "");  // Remove '/uploads/' from the path
+            }
 
-        // Construct the view URL
-        let viewUrl = normalizedResource;
+            // Construct the view URL
+            let viewUrl = normalizedResource;
 
-        // If the resource is not a full URL or path, create the correct URL
-        if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
-          viewUrl = `http://localhost:3000/courses/${viewingCourse.course_code}/resource/${encodeURIComponent(viewUrl)}`;
-        } else {
-          // If it's already a full URL, no need to modify it
-          if (!viewUrl.startsWith("http")) {
-            viewUrl = `http://localhost:3000/courses/${viewingCourse.course_code}/resource${encodeURIComponent(viewUrl)}`;
-          }
-        }
+            // If the resource is not a full URL or path, create the correct URL
+            if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
+              viewUrl = `http://localhost:3000/courses/${viewingCourse.course_code}/resource/${encodeURIComponent(viewUrl)}`;
+            } else {
+              // If it's already a full URL, no need to modify it
+              if (!viewUrl.startsWith("http")) {
+                viewUrl = `http://localhost:3000/courses/${viewingCourse.course_code}/resource${encodeURIComponent(viewUrl)}`;
+              }
+            }
 
-        // Extract the filename from the last part of the path (no encoding here)
-        const filename = normalizedResource.split("/").pop() || "default-filename";
+            // Extract the filename from the last part of the path (no encoding here)
+            const filename = normalizedResource.split("/").pop() || "default-filename";
 
-       
-
-        return (
-          <div key={index} className="flex items-center space-x-2">
-            <a
-              href={viewUrl}  // Use the constructed URL
-              target="_blank"  // Open in a new tab
-              rel="noopener noreferrer"  // Security for new tab
-              className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              View {filename}  {/* Display the filename without URL encoding */}
-            </a>
-           
-          </div>
-        );
-      })
-    ) : (
-      <div>No resources available</div>
-              )}
-            </div>
-            <button
-    onClick={handleUploadResource}
-    className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-  >
-    Upload New Resource
-  </button>
-          </div>
+            return (
+              <div key={index} className="flex items-center space-x-2">
+                <a
+                  href={viewUrl}  // Use the constructed URL
+                  target="_blank"  // Open in a new tab
+                  rel="noopener noreferrer"  // Security for new tab
+                  className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  View {filename}  {/* Display the filename without URL encoding */}
+                </a>
+              </div>
+            );
+          })
+        ) : (
+          <div>No resources available</div>
+        )}
+      </div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+      <button
+        onClick={handleButtonClick}
+        className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+      >
+        Upload New Resource
+      </button>
+    </div>
           <div>
             <strong>Quizzes:</strong>
             <ul className="list-disc pl-5">
