@@ -107,7 +107,7 @@ const ForumPage = () => {
       setNewForumContent("");
       setNewForumTag("Question");
       // re-fetch forums
-      const updated = await axiosInstance.get(`/courses/${courseId}/forums`, {
+      const updated = await axiosInstance.get(`/forum/course/${courseId}`, {
         withCredentials: true,
       });
       setForums(updated.data);
@@ -144,8 +144,7 @@ const ForumPage = () => {
     if (!editingForumId) return;
     try {
       // e.g. PUT /forum/:forumId
-      await axiosInstance.put(
-        `/forum/${editingForumId}`,
+      await axiosInstance.put(`/forum/${editingForumId}`,
         {
           title: editTitle,
           content: editContent,
@@ -158,7 +157,7 @@ const ForumPage = () => {
       setEditTitle("");
       setEditContent("");
       // re-fetch
-      const resp = await axiosInstance.get(`/courses/${courseId}/forums`);
+      const resp = await axiosInstance.get(`/forum/course/${courseId}`);
       setForums(resp.data);
     } catch (error) {
       toast.error("Error updating forum.");

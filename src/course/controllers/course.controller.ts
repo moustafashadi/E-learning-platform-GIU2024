@@ -192,13 +192,14 @@ export class CourseController {
   }
 
   // API to delete a forum from a course
-  @Delete(':courseId/forum')
-  async deleteForum(@Param('courseId') courseId: string) {
+  @Delete(':courseId/forum/:forumId')
+  async deleteForum(@Param('courseId') courseId: string, @Param('forumId') forumId: string) {
     try {
-      await this.courseService.deleteForum(courseId);
+      await this.courseService.deleteForum(courseId, forumId);
       return { message: 'Forum deleted successfully' };
     } catch (error) {
       throw new NotFoundException(error.message);
     }
   }
+  
 }

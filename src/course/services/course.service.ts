@@ -86,20 +86,12 @@ export class CourseService {
   }
 
   // Method to delete a forum from a course
-  async deleteForum(courseId: string): Promise<void> {
-    // Find the course by its ID
+  async deleteForum(courseId: string, forumId: string): Promise<void> {
     const course = await this.courseModel.findById(courseId).exec();
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found`);
     }
   
-    // Check if the course has associated forums
-    if (!course.forums || course.forums.length === 0) {
-      throw new BadRequestException('No forums exist for this course');
-    }
-  
-    // Find the forum by its ID (assuming only one forum is being deleted)
-    const forumId = course.forums[0]; // Adjust based on how forums are handled
     const forum = await this.forumModel.findById(forumId).exec();
     if (!forum) {
       throw new NotFoundException(`Forum with ID ${forumId} not found`);
@@ -110,9 +102,6 @@ export class CourseService {
       await this.deleteThreadRecursively(tId.toString());
     }
   
-    // Remove the forum from users' arrays
-
-  
     // Delete the forum
     await this.forumModel.findByIdAndDelete(forumId).exec();
   
@@ -120,6 +109,7 @@ export class CourseService {
     course.forums = course.forums.filter((id) => id.toString() !== forumId.toString());
     await course.save();
   }
+  
   
   // Helper Method: Remove Forum from Users
 

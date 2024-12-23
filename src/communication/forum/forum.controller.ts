@@ -94,7 +94,6 @@ import {
    @Roles(Role.Instructor)
    @Delete(':forumId')
 
-
    @UseGuards(AuthorizationGuard)
    @Roles(Role.Student, Role.Instructor)
    @Delete('thread/:threadId')
