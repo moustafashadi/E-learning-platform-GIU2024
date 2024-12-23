@@ -45,7 +45,7 @@ export class ProgressService {
   async getProgress(userId: string, courseId: string): Promise<Progress> {
     const progress = await this.progressModel.findOne({ userId, courseId }).exec();
     if (!progress) {
-      throw new Error('Progress record not found'); // Throwing a generic error
+      throw new Error('Progress record not found');
     }
     return progress;
   }
