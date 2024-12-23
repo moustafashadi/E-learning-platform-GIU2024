@@ -4,7 +4,7 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway({
   cors: {
     origin: 'http://localhost:4000', // Your frontend URL
-    credentials: true
+    credentials: true, // Allow credentials
   },
   namespace: '/ws'
 })

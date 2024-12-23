@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import WebSocketService from "../../_utils/websocket.service";
 
 const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUserId }) => {
   if (!selectedUserId) {
@@ -10,43 +10,24 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
 
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
-  const [socket, setSocket] = useState<any>(null);
 
   useEffect(() => {
-    const socket = io('http://localhost:3000/ws', {
-      withCredentials: true,
-      auth: {
-        token: localStorage.getItem('token')
-      }
-    });
-
-    socket.on('connect', () => {
-      console.log('Connected to chat server');
-      if (selectedUserId) {
-        socket.emit('join', selectedUserId);
-      }
-    });
+    const socket = WebSocketService.connect(selectedUserId);
 
     socket.on('message', (message) => {
       setMessages(prev => [...prev, message]);
     });
 
-    socket.on('error', (error) => {
-      console.error('Socket error:', error);
-    });
-
-    setSocket(socket);
-
     return () => {
-      socket.disconnect();
+      WebSocketService.disconnect();
     };
   }, [selectedUserId]);
 
   const handleSendMessage = () => {
-    if (input.trim() && socket) {
-      socket.emit('message', {
+    if (input.trim()) {
+      WebSocketService.socket?.emit('message', {
         content: input,
-        recipientId: selectedUserId
+        senderId: selectedUserId,
       });
       setInput('');
     }
@@ -57,14 +38,7 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
       <h2>Chat with User ID: {selectedUserId}</h2>
       <div className="flex-1 overflow-y-auto p-4 bg-gray-100">
         {messages.map((message, index) => (
-          <div 
-            key={index}
-            className={`mb-2 p-2 rounded ${
-              message.senderId === selectedUserId 
-                ? 'bg-blue-500 text-white self-end' 
-                : 'bg-gray-300 text-black self-start'
-            }`}
-          >
+          <div key={index} className={`mb-2 p-2 rounded ${message.senderId === selectedUserId ? 'bg-blue-500 text-white self-end' : 'bg-gray-300 text-black self-start'}`}>
             {message.content}
           </div>
         ))}
