@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { RootState } from "@/app/store";
+import { fetchCourses } from "@/app/store/slices/courseSlice";
 
 interface Course {
   _id: string;
@@ -232,14 +233,15 @@ const handleDeleteClick = async (courseId: string) => {
   };
   
   const handleFileChange = (event: FileChangeEvent) => {
-    console.log('File input changed');
-    setSelectedFile(event.target.files[0]);
+    const file = event.target.files[0];
+    console.log(file)
+    setSelectedFile(file);
+    handleUploadResource(file);
+   
   };
-
-  // Function to handle resource upload
-  const handleUploadResource = async () => {
+  const handleUploadResource = async (file: File) => {
     console.log('Upload resource button clicked');
-    if (!selectedFile) {
+    if (!file) {
       console.log('No file selected');
       return;
     }
@@ -248,23 +250,27 @@ const handleDeleteClick = async (courseId: string) => {
       return;
     }
     const formData = new FormData();
-    formData.append('file', selectedFile);
+    formData.append('file', file);
 
     try {
       console.log('Uploading resource to course:', viewingCourse.course_code);
       const response = await axios.post(
         `http://localhost:3000/courses/${viewingCourse.course_code}/upload-resource`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        formData,  { withCredentials: true }
+       
       );
       console.log('File uploaded successfully:', response.data);
-      // Optionally, refresh the course data to show the new resource
+      fetchCourseData(viewingCourse._id);
     } catch (error) {
       console.error('Error uploading file:', error);
+    }
+  };
+  const fetchCourseData = async (course_id: string) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/courses/${course_id}`, { withCredentials: true });
+      setViewingCourse(response.data);
+    } catch (error) {
+      console.error('Error fetching course data:', error);
     }
   };
 
