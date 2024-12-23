@@ -1,61 +1,37 @@
-import {
-  WebSocketGateway,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  SubscribeMessage,
-} from '@nestjs/websockets';
-import { Socket } from 'socket.io';
-import { AuthService } from '../../auth/auth.service';
-import { MessageService } from '../messages/message.service';
-import { CreateMessageDto } from '../messages/dto/create-message.dto';
+import { WebSocketGateway, SubscribeMessage, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway({ cors: { origin: '*' } })
+@WebSocketGateway({
+  cors: {
+    origin: 'http://localhost:4000', // Your frontend URL
+    credentials: true
+  },
+  namespace: '/ws'
+})
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(
-    private readonly messageService: MessageService,
-    private readonly authService: AuthService,
-  ) {}
+  @WebSocketServer()
+  server: Server;
 
   handleConnection(client: Socket) {
-    const token = client.handshake.auth.token;
-    const payload = this.authService.verifyToken(token);
-
-    if (!payload) {
-      client.disconnect(true);
-    } else {
-      console.log(`Client ${client.id} connected. Auth token: ${token}`);
-    }
-  }
-
-  @SubscribeMessage('join')
-  handleJoin(client: Socket, chatId: string) {
-    console.log(`Client ${client.id} joined chat: ${chatId}`);
-    client.join(chatId.toString());
-    return chatId;
-  }
-
-  @SubscribeMessage('leave')
-  handleLeave(client: Socket, chatId: string) {
-    console.log(`Client ${client.id} left chat: ${chatId}`);
-    client.leave(chatId.toString());
-    return chatId;
-  }
-
-  @SubscribeMessage('message')
-  async handleMessage(client: Socket, createMessageDto: CreateMessageDto) {
-    console.log(`Client ${client.id} sent message: ${createMessageDto.message}`);
-    const message = await this.messageService.createMessage(createMessageDto);
-    client.emit('message', message);
-    client.to(createMessageDto.chat.toString()).emit('message', message);
-  }
-
-  @SubscribeMessage('isTyping')
-  async handleTypingNotification(client: Socket, chatId: string) {
-    console.log(`Client ${client.id} typing message to chat: ${chatId}`);
-    client.to(chatId).emit('isTyping', `${client.id} typing message...`);
+    console.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client ${client.id} disconnected`);
+    console.log(`Client disconnected: ${client.id}`);
+  }
+
+  @SubscribeMessage('message')
+  handleMessage(client: Socket, payload: any): void {
+    this.server.emit('message', payload);
+  }
+
+  @SubscribeMessage('join')
+  handleJoin(client: Socket, room: string): void {
+    client.join(room);
+  }
+
+  @SubscribeMessage('leave')
+  handleLeave(client: Socket, room: string): void {
+    client.leave(room);
   }
 }

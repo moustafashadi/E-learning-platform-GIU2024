@@ -10,7 +10,7 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
 
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [socket, setSocket] = useState<any>(null);
 
   useEffect(() => {
     const socket = io('http://localhost:3000/ws', {
@@ -27,27 +27,28 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
       }
     });
 
+    socket.on('message', (message) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    socket.on('error', (error) => {
+      console.error('Socket error:', error);
+    });
+
     setSocket(socket);
 
-    socket.onmessage = (event) => {
-      const newMessage = JSON.parse(event.data);
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    };
-
-    socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
     return () => {
-      socket.close();
+      socket.disconnect();
     };
   }, [selectedUserId]);
 
-  const handleSendMessage = async () => {
-    if (input.trim() && selectedUserId) {
-      const message = { content: input, recipientId: selectedUserId };
-      socket?.send(JSON.stringify(message));
-      setInput("");
+  const handleSendMessage = () => {
+    if (input.trim() && socket) {
+      socket.emit('message', {
+        content: input,
+        recipientId: selectedUserId
+      });
+      setInput('');
     }
   };
 
@@ -56,7 +57,14 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
       <h2>Chat with User ID: {selectedUserId}</h2>
       <div className="flex-1 overflow-y-auto p-4 bg-gray-100">
         {messages.map((message, index) => (
-          <div key={index} className={`mb-2 p-2 rounded ${message.senderId === selectedUserId ? 'bg-blue-500 text-white self-end' : 'bg-gray-300 text-black self-start'}`}>
+          <div 
+            key={index}
+            className={`mb-2 p-2 rounded ${
+              message.senderId === selectedUserId 
+                ? 'bg-blue-500 text-white self-end' 
+                : 'bg-gray-300 text-black self-start'
+            }`}
+          >
             {message.content}
           </div>
         ))}

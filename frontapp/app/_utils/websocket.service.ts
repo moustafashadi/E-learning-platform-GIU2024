@@ -3,11 +3,12 @@ import store from '../store';
 import { addNotification } from '../store/slices/notificationSlice';
 
 class WebSocketService {
-  private socket: Socket | null = null;
+  public socket: Socket | null = null;
 
   connect(userId: string) {
-    this.socket = io('http://localhost:3000', {
-      query: { userId }
+    this.socket = io('http://localhost:3000/ws', {
+      query: { userId },
+      withCredentials: true
     });
 
     this.socket.on('connect', () => {
@@ -20,6 +21,14 @@ class WebSocketService {
 
     this.socket.on('disconnect', () => {
       console.log('WebSocket disconnected');
+      // Attempt to reconnect
+      setTimeout(() => this.connect(userId), 1000);
+    });
+
+    this.socket.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      // Attempt to reconnect
+      setTimeout(() => this.connect(userId), 1000);
     });
 
     return this.socket;
