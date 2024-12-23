@@ -8,7 +8,6 @@ import { ChatService } from './chat/chat.service';
 import { UserModule } from 'src/user/user.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ChatGateway } from './chat/chat.gateway';
-import { NotificationController } from './notifications/notification.controller';
 import { NotificationService } from './notifications/notification.service';
 import { MessageSchema } from './messages/message.schema';
 import { MessageController } from './messages/message.controller';
@@ -26,6 +25,9 @@ import { QuizService } from 'src/quiz/services/quiz.service';
 import { QuizSchema } from 'src/quiz/models/quiz.schema';
 import { Question } from 'src/quiz/models/question.schema';
 import { QuestionService } from 'src/quiz/services/question.service';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { ProgressSchema } from 'src/progress/models/progress.schema';
+import { NotificationGateway } from './notifications/notification.gateway';
 
 @Module({
 
@@ -41,6 +43,8 @@ import { QuestionService } from 'src/quiz/services/question.service';
     MongooseModule.forFeature([{ name: 'Student', schema: StudentSchema }]),
     MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
     MongooseModule.forFeature([{ name: 'Question', schema: Question }]),
+    MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
+
         UserModule, JwtModule.register({
             secret: process.env.JWT_SECRET,
             signOptions: { expiresIn: '1d' },
@@ -48,8 +52,9 @@ import { QuestionService } from 'src/quiz/services/question.service';
     HttpModule.register({
         timeout: 5000,
     }),],
-    controllers: [ChatController, NotificationController, MessageController, ForumController],
-    providers: [ChatService, NotificationService, ChatGateway, MessageService, ForumServices, CourseService, JwtService, AuthService, QuizService, QuestionService],
+    controllers: [ChatController, MessageController, ForumController],
+    providers: [NotificationGateway, ChatService, NotificationService, ChatGateway, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
+    exports: [ChatService, MessageService, ForumServices, NotificationService, NotificationGateway]
 })
 
 export class CommunicationModule { }

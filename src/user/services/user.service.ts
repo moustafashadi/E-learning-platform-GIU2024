@@ -290,6 +290,8 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
     const student = await this.studentModel.findById(userId);
     const course = await this.courseModel.findById(courseId);
 
+    //push the student id to the course students array
+    course.students.push(student._id as any);
     if (!student || !course) {
       throw new NotFoundException('Student or course not found');
     }
@@ -303,6 +305,7 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
 
     return student.populate('enrolledCourses');
   }
+
   async hasRole(userId: string, role: string): Promise<boolean> {
     const user = await this.userModel.findById(userId);
     if (user.role == 'admin') {

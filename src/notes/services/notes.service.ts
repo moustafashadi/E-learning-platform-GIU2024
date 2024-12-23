@@ -23,6 +23,25 @@ export class NotesService {
     }
     return note;
   }
+  async findNotesByCourseId(courseId: string, userId: string): Promise<Note[]> {
+    const parsedCourseId = new Types.ObjectId(courseId);
+    const parsedUserId = new Types.ObjectId(userId);
+  
+    try {
+      const notes = await this.noteModel.find({
+        courseId: parsedCourseId,
+        userId: parsedUserId,
+      }).exec();
+  
+ 
+  
+      return notes;
+    } catch (error) {
+      console.error('Error fetching notes by course ID:', error);
+      throw new Error('Error fetching notes by course ID.');
+    }
+  }
+  
 
   //TESTED - WORKING
   async createNoteForCourse(courseId: string, content: string, userId: string): Promise<Note> {
@@ -53,20 +72,36 @@ export class NotesService {
     }
   }
 
-  async findAll(userId: string): Promise<Note[]> {
-    //parse userId to ObjectId
-    const parsedUserId = new Types.ObjectId(userId);
-    try {
-      const notes = await this.noteModel.find({ userId: parsedUserId }).exec();
+async findAll(userId: string): Promise<any[]> {
+  // Parse userId to ObjectId
+  const parsedUserId = new Types.ObjectId(userId);
 
-      if (!notes) {
-        throw new NotFoundException('No notes found');
-      }
-      return notes;
-    } catch (error) {
-      throw new Error('Error fetching notes');
+  try {
+    // Find notes and populate the courseId field to fetch course title
+    const notes = await this.noteModel
+      .find({ userId: parsedUserId })
+      .populate('courseId', 'title') // Populate courseId to fetch only the 'title' field from Course
+      .exec();
+
+    if (!notes || notes.length === 0) {
+      throw new NotFoundException('No notes found');
     }
+
+    // Map notes to include the course title in the response
+    const notesWithCourseTitle = notes.map(note => ({
+      _id: note._id,
+      content: note.content,
+      last_updated: note.last_updated,
+      courseTitle: (note.courseId as any)?.title || 'Unknown Course', // Access title via courseId
+    }));
+
+    return notesWithCourseTitle;
+  } catch (error) {
+    console.error('Error fetching notes:', error);
+    throw new Error('Error fetching notes');
   }
+}
+
 
   async findOne(id: string): Promise<Note> {
     const note = await this.noteModel.findById(id).exec();
@@ -79,19 +114,27 @@ export class NotesService {
   async update(noteId: string, userId: string, updateNoteDto: UpdateNoteDto): Promise<Note | null> {
     const parsedNoteId = new Types.ObjectId(noteId);
     const parsedUserId = new Types.ObjectId(userId);
+  
+    // Find the note by ID and user ID
     const note = await this.noteModel.findOne({ _id: parsedNoteId, userId: parsedUserId }).exec();
     if (!note) {
       throw new NotFoundException(`Note with ID ${noteId} not found or not owned by the user`);
     }
-
+  
+    // Update the note with the new content
     const updatedNote = await this.noteModel.findByIdAndUpdate(
-      noteId,
-      { ...updateNoteDto },
-      { new: true },
+      parsedNoteId,
+      { ...updateNoteDto, last_updated: new Date() }, // Update content and timestamp
+      { new: true } // Return the updated document
     ).exec();
-
+  
+    if (!updatedNote) {
+      throw new NotFoundException(`Failed to update note with ID ${noteId}`);
+    }
+  
     return updatedNote;
   }
+  
 
   async delete(noteId: string, userId: string): Promise<Note> {
     //parse noteId and userId to ObjectId

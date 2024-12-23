@@ -38,11 +38,19 @@ export class CourseController {
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
-   @Body() { course_code, title, description, category, difficulty }: { course_code: string, title: string, description: string, category: string, difficulty: string }) {
+    @Body() 
+    { title, description, category, difficulty, course_code, numberofQuizzes }: 
+    { title: string, description: string, category: string, difficulty: string, course_code: string, numberofQuizzes: number }) {
     console.log("createCourseDto");
-
-    return await this.courseService.create(req, { course_code, title, description, category, difficulty });
+  
+    // Add additional validation if needed
+    if (!course_code || !title || !description || !category || !difficulty) {
+      throw new BadRequestException("Missing required fields");
+    }
+  
+    return await this.courseService.create(req, { course_code, title, description, numberofQuizzes, category, difficulty });
   }
+  
 
   @Get()
   async findAll() {
@@ -54,18 +62,23 @@ export class CourseController {
     return await this.courseService.findOne(course_code);
   }
 
+
   @Get('/:course_id')
   async findOneByCourseId(@Param('course_id') course_id: string) {
     return await this.courseService.findOneByCourseId(course_id);
   }
-  @Patch('/:course_code')
-  async update(
-    @Param('course_code') course_code: string,
-    @Body() updateCourseDto: UpdateCourseDto,
-  ) {
-    return await this.courseService.update(course_code, updateCourseDto);
-  }
 
+  @Patch('/:id')
+  async update(
+    @Req() req: Request,
+    @Param('id') courseId: string,
+    @Body() { title, description, category, difficulty, numOfQuizzes }: 
+    { title: string, description: string, category: string, difficulty: string, numOfQuizzes: number }
+  ) {
+    console.log('gets called')
+    console.log(courseId);
+    return await this.courseService.update(req, courseId, { title, description, category, difficulty, numOfQuizzes });
+  }
 
   @Delete('/:id')
   async delete(@Param('id') id: string) {
@@ -116,6 +129,18 @@ export class CourseController {
     }
   }
 
+  //GET COURSE QUIZZES
+  @Get('/:courseId/quizzes')
+  async getCourseQuizzes(@Param('courseId') courseId: string) {
+    return await this.courseService.getCourseQuizzes(courseId);
+  }
+
+  @Get('/teacher/:instructorId')
+  async findCoursesByInstructor(
+    @Param('instructorId') instructorId: string,
+  ) {
+    return await this.courseService.findCoursesByInstructor(instructorId);
+  }
 
 }
 

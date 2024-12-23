@@ -9,6 +9,15 @@ import { QuizSchema } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { QuestionService } from 'src/quiz/services/question.service';
 import { QuestionSchema } from 'src/quiz/models/question.schema';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { ProgressSchema } from 'src/progress/models/progress.schema';
+import WebSocketService from '../../frontapp/app/_utils/websocket.service';
+import { NotificationService } from 'src/communication/notifications/notification.service';
+import { NotificationGateway } from 'src/communication/notifications/notification.gateway';
+import { CommunicationModule } from 'src/communication/communication.module';
+import { NotificationSchema } from 'src/communication/notifications/notification.schema';
+import { UserService } from 'src/user/services/user.service';
+import { AdminSchema } from 'src/user/models/user.schema';
 
 @Module({
   imports: [
@@ -17,16 +26,28 @@ import { QuestionSchema } from 'src/quiz/models/question.schema';
       { name: 'User', schema: UserSchema },
       { name: 'Instructor', schema: InstructorSchema },
       { name: 'Student', schema: StudentSchema },
-      { name: 'Quiz', schema: QuizSchema},
-      { name: 'Question', schema: QuestionSchema},
+      { name: 'Quiz', schema: QuizSchema },
+      { name: 'Question', schema: QuestionSchema },
+      { name: 'Progress', schema: ProgressSchema },
+      { name: 'Notification', schema: NotificationSchema },
+      { name: 'Admin', schema: AdminSchema },
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
-     })
+    }),
+    CommunicationModule,
   ],
   controllers: [CourseController],
-  providers: [CourseService, QuizService, QuestionService],
+  providers: [
+    CourseService,
+    QuizService,
+    QuestionService,
+    ProgressService,
+    NotificationService,
+    NotificationGateway,
+    NotificationService,
+    UserService],
   exports: [CourseService],
 })
-export class CourseModule {}
+export class CourseModule { }
