@@ -29,7 +29,7 @@ function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
 
       fetchNotifications();
     }
-  }, [isOpen, user?.id, dispatch]);
+  }, [isOpen, user.sub, dispatch]);
 
   console.log('notifications:', notifications);
 
