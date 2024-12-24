@@ -22,7 +22,7 @@ export class Question {
   type: string;
 
   //weight of question
-  @Prop({ required: true, default: 1 })
+  @Prop({ required: true, enum: [1, 1.4, 1.8] })
   weight: number;
 
   /**

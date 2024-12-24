@@ -27,6 +27,7 @@ import { QuestionService } from 'src/quiz/services/question.service';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { ProgressSchema } from 'src/progress/models/progress.schema';
 import { NotificationGateway } from './notifications/notification.gateway';
+import { NotificationController } from './notifications/notification.controller';
 
 @Module({
 
@@ -51,8 +52,8 @@ import { NotificationGateway } from './notifications/notification.gateway';
     HttpModule.register({
         timeout: 5000,
     }),],
-    controllers: [ChatController, MessageController, ForumController],
-    providers: [NotificationGateway, ChatService, NotificationService, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
+    controllers: [ChatController, MessageController, ForumController, NotificationController],
+    providers: [NotificationGateway, ChatService, NotificationService, ChatGateway, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
     exports: [ChatService, MessageService, ForumServices, NotificationService, NotificationGateway]
 })
 

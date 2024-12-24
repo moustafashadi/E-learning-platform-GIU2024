@@ -139,7 +139,7 @@ export class CourseService {
       await instructor.save();
       return await course.save();
     } catch (error) {
-      throw new BadRequestException('Invalid course data');
+      throw new BadRequestException('Invalid course data', error.message);
     }
   }
 

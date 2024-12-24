@@ -1,23 +1,18 @@
-"use client";
+// /app/store/index.ts
+'use client';
+
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer, { AuthState } from './slices/authSlice';
-import courseReducer, { CourseState } from './slices/courseSlice';
-import notificationReducer, { NotificationState } from './slices/notificationSlice';
-import quizReducer, { QuizState } from './slices/quizResultSlice';
+import authReducer from './slices/authSlice';
+// Import other reducers as needed
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
-    courses: courseReducer,
-    notifications: notificationReducer,
-    quizzes: quizReducer,
+    // Add other reducers here
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: ['notifications/setSocket'],
-        ignoredPaths: ['notifications.socket'],
-      },
+      serializableCheck: false, // Adjust as needed
     }),
 });
 

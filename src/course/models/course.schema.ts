@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Schema as MongooseSchema } from 'mongoose';
 import { Document } from 'mongoose';
-import { User } from 'src/user/models/user.schema';
 
 @Schema({ timestamps: true })
 export class Course {

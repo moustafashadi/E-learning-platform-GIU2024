@@ -1,30 +1,17 @@
-// /app/course/[courseSlug]/page.tsx
+// /app/course/[courseId]/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import axiosInstance from '@/utils/axiosInstance';
+import axiosInstance from '@/app/_utils/axiosInstance';
 import toast from 'react-hot-toast';
-import ModuleCard from '@/components/Course/ModuleCard';
-import BackButton from '@/components/Common/BackButton';
-import LoadingSpinner from '@/components/Common/LoadingSpinner';
-
-interface Module {
-  id: string;
-  slug: string;
-  title: string;
-  pmScore: number;
-  difficulty: string;
-}
-
-interface ModuleCategory {
-  difficulty: string;
-  averagePM: number;
-  modules: Module[];
-}
+import ModuleCard from '@/app/components/Course/ModuleCard';
+import BackButton from '@/app/components/common/BackButton';
+import LoadingSpinner from '@/app/components/common/LoadingSpinner';
+import { Module, ModuleCategory, BackendCourse } from '@/app/types';
 
 const CoursePage = () => {
-  const { courseSlug } = useParams();
+  const { courseId } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [moduleCategories, setModuleCategories] = useState<ModuleCategory[]>([]);
@@ -32,44 +19,47 @@ const CoursePage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!courseSlug) return;
+    if (!courseId) {
+      setError('Course ID is undefined.');
+      setLoading(false);
+      toast.error('Course ID is undefined.');
+      return;
+    }
 
     const fetchCourseModules = async () => {
       setLoading(true);
       try {
         // Fetch course details
-        const courseResp = await axiosInstance.get(`/courses/slug/${courseSlug}`, {
+        const courseResp = await axiosInstance.get(`/courses/${courseId}`, {
           withCredentials: true,
         });
-        const course = courseResp.data;
-        setCourseName(course.name || 'Unnamed Course');
+        const course: BackendCourse = courseResp.data;
+        setCourseName(course.title || 'Unnamed Course');
 
         // Fetch modules
-        const modulesResp = await axiosInstance.get(`/courses/slug/${courseSlug}/modules`, {
+        const modulesResp = await axiosInstance.get(`/courses/${courseId}/modules`, {
           withCredentials: true,
         });
         const modulesData: Module[] = await Promise.all(
           modulesResp.data.map(async (module: any) => {
             // Fetch PM score for each module
             try {
-              const pmResp = await axiosInstance.get(`/progress/module/${module.slug}`, {
+              const pmResp = await axiosInstance.get(`/progress/module/${module._id}`, {
                 withCredentials: true,
               });
               return {
-                id: module.id,
-                slug: module.slug,
+                _id: module._id,
                 title: module.title,
-                pmScore: pmResp.data.progress || 0,
                 difficulty: module.difficulty,
+                pmScore: pmResp.data.progress || 0,
               };
             } catch (pmError) {
-              console.error(`Failed to fetch PM for module ${module.id}:`, pmError);
+              console.error(`Failed to fetch PM for module ${module._id}:`, pmError);
               return {
-                id: module.id,
-                slug: module.slug,
+                _id: module._id,
                 title: module.title,
-                pmScore: 0,
                 difficulty: module.difficulty,
+                pmScore: 0,
               };
             }
           })
@@ -108,7 +98,7 @@ const CoursePage = () => {
     };
 
     fetchCourseModules();
-  }, [courseSlug]);
+  }, [courseId]);
 
   if (loading) {
     return (
@@ -142,7 +132,7 @@ const CoursePage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {category.modules.map((module) => (
-              <ModuleCard key={module.id} module={module} />
+              <ModuleCard key={module._id} module={module} />
             ))}
           </div>
         </section>
@@ -151,7 +141,7 @@ const CoursePage = () => {
       {/* Forum Button */}
       <div className="mt-10">
         <button
-          onClick={() => router.push(`/forum/${courseSlug}`)}
+          onClick={() => router.push(`/forum/${courseId}`)}
           className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
         >
           Go to Forum
