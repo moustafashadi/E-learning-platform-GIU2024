@@ -3,12 +3,16 @@ import { ModuleService } from '../services/module.service';
 import { CreateModuleDto } from '../dto/create-module.dto';
 import { UpdateModuleDto } from '../dto/update-module.dto';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
+import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 
 @UseGuards(AuthenticationGuard)
 @Controller('/:courseId/module')
 export class ModuleController {
   constructor(private readonly moduleService: ModuleService) {}
 
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
   @Post()
   async create(@Param('courseId') courseId: string, @Body() createModuleDto: CreateModuleDto) {
     return await this.moduleService.create(createModuleDto);

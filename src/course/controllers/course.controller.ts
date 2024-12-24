@@ -37,26 +37,31 @@ export class CourseController {
   constructor(private readonly courseService: CourseService) { }
 
   //TESTED -WORKING
+  //create a course
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
     @Body() createCourseDto: CreateCourseDto) {
-
     return await this.courseService.create(req, createCourseDto);
   }
 
+  //TESTED -WORKING
+  //get all courses
   @Get()
   async findAll() {
     return await this.courseService.findAll();
   }
 
+  //TESTED -WORKING
+  //get a course by id
   @Get('/:id')
   async findOne(@Param('id') id: string) {
     return await this.courseService.findOne(id);
   }
 
   //TESTED -WORKING
+  //update a course
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Patch('/:id')
@@ -69,32 +74,50 @@ export class CourseController {
     return await this.courseService.update(req, courseId, updateCourseDto);
   }
 
+
+  //TESTED -WORKING
+  //delete a course
   @Delete('/:id')
   async delete(@Param('id') id: string) {
     return await this.courseService.delete(id);
   }
 
-  //GET ENROLLED STUDENTS
-  @Get('/:id/students')
-  async getEnrolledStudents(@Param('id') id: string) {
-    return await this.courseService.getEnrolledStudents(id);
-  }
 
-  // Search Courses by Keyword
+  //TESTED -WORKING
+  //search by keyword
   @Get('search/keyword')
   async searchByKeyword(@Query('keyword') keyword: string) {
     return await this.courseService.searchCoursesByKeyword(keyword);
   }
 
+
+  //Tested - Working
+  //search by category
   @Get('search/category')
   async searchByCategory(@Query('category') category: string) {
     return await this.courseService.searchCoursesByCategory(category);
   }
 
-  @Get('search/difficulty')
-  async searchByDifficulty(@Query('difficulty') difficulty: string) {
-    return await this.courseService.searchCoursesByDifficulty(difficulty);
+
+  
+  //TESTED -WORKING
+  //get all courses for an instructor
+  @Get('/teacher/:instructorId')
+  async findCoursesByInstructor(
+    @Param('instructorId') instructorId: string,
+  ) {
+    return await this.courseService.findCoursesByInstructor(instructorId);
   }
+
+
+
+  //TESTED -WORKING
+  //get all enrolled students for a course
+  @Get('/:id/students')
+  async getEnrolledStudents(@Param('id') id: string) {
+    return await this.courseService.getEnrolledStudents(id);
+  }
+
 
 
   // @Post(':courseId/upload-resource')
@@ -105,8 +128,6 @@ export class CourseController {
   // ) {
   //   return this.courseService.uploadResource(courseId, file);
   // }
-
-
 
 
 
@@ -126,19 +147,6 @@ export class CourseController {
   //     throw new NotFoundException(`Resource not found for course: ${courseId}, file: ${fileName}`);
   //   }
   // }
-
-
-
-
-
-
-  @Get('/teacher/:instructorId')
-  async findCoursesByInstructor(
-    @Param('instructorId') instructorId: string,
-  ) {
-    return await this.courseService.findCoursesByInstructor(instructorId);
-  }
-
 
 
 
