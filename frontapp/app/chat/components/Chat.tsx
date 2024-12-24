@@ -7,8 +7,9 @@ interface Message {
   senderId: {
     _id: string;
     username: string;
-  };
+  } | string; // Allow for both object and string types
   timestamp: string;
+  chatId?: string;
 }
 
 interface Chat {
@@ -47,11 +48,27 @@ const ChatComponent = ({ selectedUserId, activeChat }) => {
         ? response.data.find((chat: Chat) => chat._id === chatId)
         : response.data;
         
-      if (updatedChat) {
-        setCurrentChat(updatedChat);
+     if (updatedChat) {
+        // Normalize the messages to ensure consistent structure
+        const normalizedMessages = updatedChat.messages.map((msg: any) => ({
+          ...msg,
+          senderId: typeof msg.senderId === 'string' || typeof msg.senderId === 'object' && !msg.senderId.username
+            ? {
+                _id: typeof msg.senderId === 'string' ? msg.senderId : msg.senderId.$oid || msg.senderId._id,
+                username: 'User' // Default username if not provided
+              }
+            : msg.senderId
+        }));
+
+        const normalizedChat = {
+          ...updatedChat,
+          messages: normalizedMessages
+        };
+
+        setCurrentChat(normalizedChat);
         setChats(prevChats =>
           prevChats.map(chat =>
-            chat._id === chatId ? { ...chat, messages: updatedChat.messages } : chat
+            chat._id === chatId ? { ...chat, messages: normalizedMessages } : chat
           )
         );
       }
@@ -59,6 +76,7 @@ const ChatComponent = ({ selectedUserId, activeChat }) => {
       console.error('Failed to fetch chat messages:', err);
     }
   };
+
 
   useEffect(() => {
     const fetchChats = async () => {
