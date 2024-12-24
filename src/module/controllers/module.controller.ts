@@ -80,10 +80,7 @@ export class ModuleController {
 
 
 
-
-
-
-
+ //TEST-WORKING
   @Post(':moduleId/upload-resource')
   @UseInterceptors(FileInterceptor('file', { storage: ModuleService.storage }))
   async uploadResource(
@@ -94,6 +91,7 @@ export class ModuleController {
   }
 
 
+  
 
   @Get('resource/:moduleId/:fileName')
   async getResource(
