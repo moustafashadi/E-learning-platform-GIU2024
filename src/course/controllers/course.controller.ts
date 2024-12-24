@@ -32,7 +32,7 @@ import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
-  //TESTED -WORKING
+  //TESTED-WORKING
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post()
