@@ -9,7 +9,8 @@ import InstructorDashboard from "./components/InstructorDashboard";
 import StudentDashboard from "./components/StudentDashboard";
 import Sidebar from "./components/Sidebar";
 import useAuth from "../hooks/useAuth";
-import ChatButton from "./components/ChatButton";
+import ChatButton from './components/ChatButton';
+
 
 function DashboardPage() {
   const router = useRouter();
@@ -65,11 +66,13 @@ function DashboardPage() {
 
   return (
     <div className="flex">
-      {role && <Sidebar role={role} />}
-      <main className="flex-1 p-6 bg-gray-100">{renderDashboard()}</main>
-      <ChatButton />
+        {role && <Sidebar role={role} />}
+        <main className="flex-1 p-6 bg-gray-100">
+            {renderDashboard()}
+            <ChatButton />
+        </main>
     </div>
-  );
+);
 }
 
 export default DashboardPage;
