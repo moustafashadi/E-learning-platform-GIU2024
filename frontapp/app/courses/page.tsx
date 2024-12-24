@@ -8,7 +8,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import StudentCourses from "./components/StudentCourses"; // Import the StudentCourses component
 
-import useAuth from "../hooks/useAuth"; // Assume this hook handles authentication
 import InstructorCourses from "./components/InstructorCourses";
 import Notes from "./view/notes";
 

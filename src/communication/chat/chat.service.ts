@@ -1,116 +1,56 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Chat } from './chat.schema';
 import { Model } from 'mongoose';
+import { ChatDocument } from './chat.model';
+import { MessageDocument } from './message.model';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { GetChatsDto } from './dto/get-chat.dto';
-import { SearchChatsDto } from './dto/search-chats.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
-import { io, Socket } from 'socket.io-client';
-
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(Chat.name) private chatModel: Model<Chat>,
+    @InjectModel('Chat') private chatModel: Model<ChatDocument>,
+    @InjectModel('Message') private messageModel: Model<MessageDocument>,
   ) {}
 
-  getChats(getChatsDto: GetChatsDto ) {
-    return this.chatModel.find({
-      skip: getChatsDto.skip,
-      take: getChatsDto.take,
-      order: { createdAt: 'DESC' },
-    });
+  async createChat(createChatDto: CreateChatDto) {
+    const chat = new this.chatModel(createChatDto);
+    return await chat.save();
   }
 
-  getChat(id: number) {
-    return this.chatModel.findOne({ id });
-  }
-
-  async searchChats(searchChatsDto: SearchChatsDto) {
-    const query = this.chatModel.find();
-    if (searchChatsDto.skip) {
-      query.skip(searchChatsDto.skip);
-    }
-    if (searchChatsDto.take) {
-      query.limit(searchChatsDto.take);
-    }
-    if (searchChatsDto.title) {
-      query.where('title', new RegExp(searchChatsDto.title, 'i'));
-    }
-    if (searchChatsDto.ownerId) {
-      query.where('owner.id', searchChatsDto.ownerId);
-    }
-    const items = await query.exec();
-    const count = await this.chatModel.countDocuments(query.getFilter());
-    return { items, count };
-  }
-
-  async createChat(createChatDto: CreateChatDto, userId: string) {
-    const chat = new this.chatModel({
-      title: createChatDto.title,
-      description: createChatDto.description,
-      owner: { id: userId },
-    });
-    await chat.save();
-  }
-
-  async updateChat(id: string, updateChatDto: UpdateChatDto, userId: string) {
-    const result = await this.chatModel.updateOne(
-      { id, owner: { id: userId } },
-      updateChatDto,
+  async addMessage(createMessageDto: CreateMessageDto) {
+    const message = new this.messageModel(createMessageDto);
+    const savedMessage = await message.save();
+    
+    await this.chatModel.findByIdAndUpdate(
+      createMessageDto.chatId,
+      { $push: { messages: savedMessage._id } }
     );
-    if (!result.acknowledged) {
-      throw new NotFoundException(`chat with id ${id} not found`);
-    }
+    
+    return savedMessage;
   }
 
-  async deleteChat(id: string, userId: string) {
-    const result = await this.chatModel.deleteOne({
-      id,
-      owner: { id: userId },
-    });
-    if (!result.acknowledged) {
-      throw new NotFoundException(`chat with id ${id} not found`);
-    }
-  }
-}
-
-class WebSocketService {
-  public socket: Socket | null = null;
-
-  connect(userId: string) {
-    this.socket = io('http://localhost:3000/ws', {
-      query: { userId },
-      withCredentials: true, // Ensure credentials are included
-    });
-
-    this.socket.on('connect', () => {
-      console.log('Connected to WebSocket server');
-    });
-
-
-
-    this.socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
-      setTimeout(() => this.connect(userId), 1000);
-    });
-
-    this.socket.on('error', (error) => {
-      console.error('WebSocket error:', error);
-      setTimeout(() => this.connect(userId), 1000);
-    });
-
-    return this.socket;
+  async getChat(chatId: string) {
+    return await this.chatModel
+      .findById(chatId)
+      .populate('users', 'username email profilePicUrl')
+      .populate({
+        path: 'messages',
+        options: { sort: { timestamp: -1 } }
+      });
   }
 
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
+  async getUserChats(userId: string) {
+    return await this.chatModel
+      .find({ users: userId })
+      .populate('users', 'username email profilePicUrl');
+  }
+
+  async addMembers(chatId: string, userIds: string[]) {
+    return await this.chatModel.findByIdAndUpdate(
+      chatId,
+      { $addToSet: { users: { $each: userIds } } },
+      { new: true }
+    );
   }
 }
-
-export default new WebSocketService();

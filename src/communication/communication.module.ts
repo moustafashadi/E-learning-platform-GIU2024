@@ -1,17 +1,16 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ChatSchema } from './chat/chat.schema'
+import { ChatSchema } from './chat/chat.model'
 import { ForumSchema } from './forum/forum.schema'
 import { NotificationSchema } from './notifications/notification.schema'
-import { ChatController } from './chat/chat.controller';
+import { ChatController } from './chat/controllers/chat.controller';
 import { ChatService } from './chat/chat.service';
 import { UserModule } from 'src/user/user.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { ChatGateway } from './chat/chat.gateway';
 import { NotificationService } from './notifications/notification.service';
-import { MessageSchema } from './messages/message.schema';
-import { MessageController } from './messages/message.controller';
-import { MessageService } from './messages/message.service';
+import { MessageSchema } from './chat/message.model';
+import { MessageController } from './chat/message.controller';
+import { MessageService } from './chat/message.service';
 import { ForumController } from './forum/forum.controller';
 import { ForumServices } from './forum/forum.service';
 import { CourseService } from 'src/course/services/course.service';
@@ -53,7 +52,7 @@ import { NotificationGateway } from './notifications/notification.gateway';
         timeout: 5000,
     }),],
     controllers: [ChatController, MessageController, ForumController],
-    providers: [NotificationGateway, ChatService, NotificationService, ChatGateway, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
+    providers: [NotificationGateway, ChatService, NotificationService, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
     exports: [ChatService, MessageService, ForumServices, NotificationService, NotificationGateway]
 })
 

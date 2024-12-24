@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Message } from './message.schema';
+import { Message } from './message.model';
 import { Model } from 'mongoose';
 
 
