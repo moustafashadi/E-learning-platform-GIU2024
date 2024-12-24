@@ -70,12 +70,11 @@ export class CourseController {
   async update(
     @Req() req: Request,
     @Param('id') courseId: string,
-    @Body() { title, description, category, difficulty, numOfQuizzes }: 
-    { title: string, description: string, category: string, difficulty: string, numOfQuizzes: number }
+    @Body() updateCourseDto:UpdateCourseDto
   ) {
     console.log('gets called')
     console.log(courseId);
-    return await this.courseService.update(req, courseId, { title, description, category, difficulty, numOfQuizzes });
+    return await this.courseService.update(req, courseId, updateCourseDto);
   }
 
   @Delete('/:id')
@@ -100,37 +99,40 @@ export class CourseController {
   }
 
 
-  @Post(':courseId/upload-resource')
-  @UseInterceptors(FileInterceptor('file', { storage: CourseService.storage }))
-  async uploadResource(
-    @Param('courseId') courseId: string,
-    @UploadedFile() file: Express.Multer.File
-  ) {
-    return this.courseService.uploadResource(courseId, file);
-  }
+  // @Post(':courseId/upload-resource')
+  // @UseInterceptors(FileInterceptor('file', { storage: CourseService.storage }))
+  // async uploadResource(
+  //   @Param('courseId') courseId: string,
+  //   @UploadedFile() file: Express.Multer.File
+  // ) {
+  //   return this.courseService.uploadResource(courseId, file);
+  // }
 
 
-  @Get(':courseId/resource/:fileName')
-  async getResource(
-    @Param('courseId') courseId: string,
-    @Param('fileName') fileName: string,
-    @Res() res: Response,
-  ) {
-    try {
-      const fileStream = await this.courseService.getResource(courseId, fileName);
 
-      // Pipe the file stream to the response
-      fileStream.pipe(res);
-    } catch (error) {
-      throw new NotFoundException(`Resource not found for course: ${courseId}, file: ${fileName}`);
-    }
-  }
 
-  //GET COURSE QUIZZES
-  @Get('/:id/quizzes')
-  async getCourseQuizzes(@Param('id') courseId: string) {
-    return await this.courseService.getCourseQuizzes(courseId);
-  }
+
+
+  // @Get(':courseId/resource/:fileName')
+  // async getResource(
+  //   @Param('courseId') courseId: string,
+  //   @Param('fileName') fileName: string,
+  //   @Res() res: Response,
+  // ) {
+  //   try {
+  //     const fileStream = await this.courseService.getResource(courseId, fileName);
+
+  //     // Pipe the file stream to the response
+  //     fileStream.pipe(res);
+  //   } catch (error) {
+  //     throw new NotFoundException(`Resource not found for course: ${courseId}, file: ${fileName}`);
+  //   }
+  // }
+
+
+
+
+
 
   @Get('/teacher/:instructorId')
   async findCoursesByInstructor(
@@ -142,7 +144,7 @@ export class CourseController {
    // Search Courses by Keyword
    @Get('search/keyword')
    async searchByKeyword(@Query('keyword') keyword: string) {
-     return await this.courseService.searchCoursesByKeyword(keyword);
+     //return await this.courseService.searchCoursesByKeyword(keyword);
    }
  
 

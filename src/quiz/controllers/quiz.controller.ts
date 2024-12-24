@@ -29,7 +29,7 @@ export class QuizController {
     if (!title) {
       throw new Error('Quiz title is required');
     }
-    return await this.quizService.createQuiz(title, req.user.sub, courseId);
+    //return await this.quizService.createQuiz(title, req.user.sub, courseId);
   }
 
 
@@ -45,21 +45,11 @@ export class QuizController {
     @Param('studentId') studentId: string,
   ) {
     console.log('courseId', courseId);
-    const quizResults = await this.quizService.getStudentQuizResults(
-      courseId,
-      studentId,
-    );
-    return quizResults;
-  }
-
-  @UseGuards(AuthorizationGuard)
-  @Roles(Role.Instructor)
-  @Delete('/:quizId')
-  async deleteQuiz(
-    @Param('quizId') quizId: string,
-  ) {
-    console.log('API called')
-    return this.quizService.deleteQuiz(quizId);
+    // const quizResults = await this.quizService.getStudentQuizResults(
+    // courseId,
+    // studentId,
+    // );
+    // return quizResults;
   }
 
 }

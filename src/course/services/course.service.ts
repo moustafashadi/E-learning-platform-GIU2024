@@ -14,6 +14,7 @@ import * as path from 'path';
 import { Quiz } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { Request } from 'express';
+import { Server } from 'http';
 
 
 @Injectable()
@@ -47,65 +48,66 @@ export class CourseService {
   
  
   // Upload Resource Method
-  async uploadResource(courseId: string, file: Express.Multer.File): Promise<Course> {
-    console.log('File received:', file);
+  // async uploadResource(courseId: string, file: Express.Multer.File): Promise<Course> {
+  //   console.log('File received:', file);
 
-    // Ensure that file is provided
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
+  //   // Ensure that file is provided
+  //   if (!file) {
+  //     throw new BadRequestException('No file uploaded');
+  //   }
 
-    // Ensure the filename is set properly
-    if (!file.filename) {
-      throw new BadRequestException('File is missing or filename not set properly');
-    }
+  //   // Ensure the filename is set properly
+  //   if (!file.filename) {
+  //     throw new BadRequestException('File is missing or filename not set properly');
+  //   }
 
-    console.log('File upload initiated:', file);
+  //   console.log('File upload initiated:', file);
 
-    // Find the course by course ID
-    const course = await this.courseModel.findById(courseId);
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
-    }
+  //   // Find the course by course ID
+  //   const course = await this.courseModel.findById(courseId);
+  //   if (!course) {
+  //     throw new NotFoundException(`Course with ID ${courseId} not found`);
+  //   }
 
-    // Save the file metadata to the course
-   // const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
-    course.resources.push(file.filename);
+  //   // Save the file metadata to the course
+  //  // const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
+  //   course.resources.push(file.filename);
 
-    // Save the course after updating resources
-    await course.save();
-    console.log('Resource added to course:', file.filename);
+  //   // Save the course after updating resources
+  //   await course.save();
+  //   console.log('Resource added to course:', file.filename);
     
-    return course;
-  }
+  //   return course;
+  // }
 
   
   // Get Resource Method
-  async getResource(courseId: string, fileName: string): Promise<fs.ReadStream> {
-    // Find the course by course ID
-    const course = await this.courseModel.findById(courseId);
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
-    }
+  // async getResource(courseId: string, fileName: string): Promise<fs.ReadStream> {
+  //   // Find the course by course ID
+  //   const course = await this.courseModel.findById(courseId);
+  //   if (!course) {
+  //     throw new NotFoundException(`Course with ID ${courseId} not found`);
+  //   }
 
-    // Check if the file exists in the course resources
-    const filePath = fileName;
-    if (!course.resources.includes(filePath)) {
-      throw new NotFoundException(`File not found in course resources: ${fileName}`);
-    }
+  //   // Check if the file exists in the course resources
+  //   const filePath = fileName;
+  //   if (!course.resources.includes(filePath)) {
+  //     throw new NotFoundException(`File not found in course resources: ${fileName}`);
+  //   }
 
-    // Construct the file path to the 'uploads' directory in your server
-    const fullPath = path.join(__dirname, '../../../uploads', fileName);
+  //   // Construct the file path to the 'uploads' directory in your server
+  //   const fullPath = path.join(__dirname, '../../../uploads', fileName);
 
-    // Check if the file exists in the filesystem
-    if (!fs.existsSync(fullPath)) {
-      // If the file doesn't exist, throw a NotFoundException
-      throw new NotFoundException(`File not found: ${fileName}`);
-    }
+  //   // Check if the file exists in the filesystem
+  //   if (!fs.existsSync(fullPath)) {
+  //     // If the file doesn't exist, throw a NotFoundException
+  //     throw new NotFoundException(`File not found: ${fileName}`);
+  //   }
 
-    // Return the file stream if the file exists
-    return fs.createReadStream(fullPath);
-  }
+  //   // Return the file stream if the file exists
+  //   return fs.createReadStream(fullPath);
+  // }
+
   //get enrolled students
   async getEnrolledStudents(course_id: string): Promise<mongoose.ObjectId[]> {
     const course = await this.courseModel.findById(course_id).populate('students').exec();
@@ -161,38 +163,19 @@ export class CourseService {
     course.title = updateCourseDto.title;
     course.description = updateCourseDto.description;
     course.category = updateCourseDto.category;
-    course.difficulty = updateCourseDto.difficulty;
-    course.numOfQuizzes = updateCourseDto.numOfQuizzes;
-
+    course.keywords = updateCourseDto.keywords;
     return await course.save();
   }
 
   async delete(id: string): Promise<void> {
     try {
-      const course = await this.courseModel.findById(id).exec();
-      //remove course from instructor's courses taught
-      const instructor = await this.instructorModel.findById(course.instructor);
-      instructor.coursesTaught = instructor.coursesTaught.filter(courseId => courseId.toString() !== id);
-      await instructor.save();
-
-      //remove course from students' enrolled courses
-      const students = await this.getEnrolledStudents(id);
-      students.forEach(async (studentId) => {
-        const student = await this.studentModel.findById(studentId);
-        student.enrolledCourses = student.enrolledCourses.filter(courseId => courseId.toString() !== id);
-        await student.save();
-      });
-      
-      //delete all quizzes in this course
-      const quizzes = course.quizzes;
-      await this.quizService.deleteQuizzes(quizzes);
-      const result = await this.courseModel.findByIdAndDelete(id).exec();
-      console.log(result);
-      if (!result) {
-        throw new NotFoundException(`Course with code ${id} not found`);
+      const course = await this.courseModel.findById(id);
+      if (!course) {
+        throw new NotFoundException(`Course with ID ${id} not found`);
       }
+      course.availability = 'Private';
     } catch (error) {
-      throw new InternalServerErrorException('Error deleting course');
+      throw new InternalServerErrorException('Error deleting course', error);
     }
   }
 
@@ -231,23 +214,23 @@ export class CourseService {
     return courses;
   }
   
-  //GET COURSE QUIZZES
-  async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
-    const course = await this.courseModel.findById(courseId).populate('quizzes').exec();
+  // //GET COURSE QUIZZES
+  // async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
+  //   const course = await this.courseModel.findById(courseId).populate('quizzes').exec();
     
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
-    }
+  //   if (!course) {
+  //     throw new NotFoundException(`Course with ID ${courseId} not found`);
+  //   }
 
-    const quizIds = course.quizzes; 
-    const quizzes = await this.quizModal.find({ _id: { $in: quizIds } }).exec();
-    return quizzes;
-  }
+  //   const quizIds = course.quizzes; 
+  //   const quizzes = await this.quizModal.find({ _id: { $in: quizIds } }).exec();
+  //   return quizzes;
+  // }
 
 
-  async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
-    return this.courseModel.find({ keywords: keyword }).exec();
-  }
+  // async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
+  //   return this.courseModel.find({ keywords: keyword }).exec();
+  // }
   
 
 }

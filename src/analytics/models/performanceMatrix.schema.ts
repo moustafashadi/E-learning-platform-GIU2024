@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class PerformanceMatrix extends Document {
@@ -12,4 +13,6 @@ export class PerformanceMatrix extends Document {
   performanceScore: number; // Performance matrix score
 }
 
+
+export type PerformanceMatrixDocument = PerformanceMatrix & Document;
 export const PerformanceMatrixSchema = SchemaFactory.createForClass(PerformanceMatrix);

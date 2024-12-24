@@ -1,19 +1,10 @@
-import { IsString, IsEnum, IsNotEmpty, IsMongoId, IsNumber } from 'class-validator';
-import { Schema } from 'mongoose';
+import { IsString, IsNotEmpty, IsEnum, IsMongoId, IsArray, IsOptional, IsNumber } from 'class-validator';
+import { Schema as MongooseSchema } from 'mongoose';
 
 export class CreateCourseDto {
   @IsString()
   @IsNotEmpty()
-  course_code: string;
-
-  @IsString()
-  @IsNotEmpty()
   title: string;
-
-  //NUMBER OF QUIZZES
-  @IsNotEmpty()
-  @IsNumber()
-  numOfQuizzes: number;
 
   @IsString()
   @IsNotEmpty()
@@ -23,11 +14,34 @@ export class CreateCourseDto {
   @IsNotEmpty()
   category: string;
 
-  @IsEnum(['Beginner', 'Intermediate', 'Advanced'])
-  @IsNotEmpty()
-  difficulty: string;
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  keywords?: string[];
 
+  @IsMongoId()
+  instructor: MongooseSchema.Types.ObjectId;
+
+  @IsOptional()
+  @IsArray()
   @IsMongoId({ each: true })
-  instructor: Schema.Types.ObjectId;
+  students?: MongooseSchema.Types.ObjectId[];
 
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  modules?: MongooseSchema.Types.ObjectId[];
+
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  forums?: MongooseSchema.Types.ObjectId[];
+
+  @IsEnum(['Public', 'Private'])
+  @IsNotEmpty()
+  availability: string;
+
+  @IsOptional()
+  @IsNumber()
+  rating?: number;
 }
