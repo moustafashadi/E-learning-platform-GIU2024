@@ -1,4 +1,3 @@
-// /app/components/Course/StudentCourses.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -12,21 +11,17 @@ import CourseCard from '@/app/components/Course/CourseCard';
 import { BackendCourse, FrontendCourse } from '@/app/types';
 import useAuth from '@/app/hooks/useAuth';
 
+
 const StudentCourses = () => {
   const router = useRouter();
 
   // Use the custom authentication hook
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const userId = user?._id || null;
-
   const [enrolledCourses, setEnrolledCourses] = useState<FrontendCourse[]>([]);
   const [availableCourses, setAvailableCourses] = useState<FrontendCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null); // To handle enrollment loading state
-
-
-  
-  
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -65,15 +60,15 @@ const StudentCourses = () => {
         const mappedEnrolledCourses: FrontendCourse[] = userEnrolledCourses.map(course => ({
           id: course._id,
           name: course.title,
-          progress: 0, // Initialize or fetch progress if available
+          progress: 0,
         }));
-
-        // Map available courses to FrontendCourse interface
+        
         const mappedAvailableCourses: FrontendCourse[] = available.map(course => ({
           id: course._id,
           name: course.title,
-          progress: 0, // Not enrolled yet
+          progress: 0,
         }));
+        
 
         // Debugging: Log mapped courses
         console.log('Mapped Enrolled Courses:', mappedEnrolledCourses);
@@ -167,7 +162,7 @@ const StudentCourses = () => {
                 key={course.id}
                 course={course}
                 isEnrolled={true}
-                onViewCourse={() => handleViewCourse(course.id)}
+                onViewCourse={() => handleViewCourse(course.id)} // Pass course ID
               />
             ))}
           </div>

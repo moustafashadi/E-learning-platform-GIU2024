@@ -1,7 +1,7 @@
 // /app/store/slices/authSlice.ts
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { User } from '@/app/types/index';
+import { User } from '../../types/index';
 
 export interface AuthState {
   isAuthenticated: boolean;

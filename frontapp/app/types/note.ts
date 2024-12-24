@@ -1,3 +1,5 @@
+export * from './note';
+
 export interface Note {
   _id: string;
   content: string;

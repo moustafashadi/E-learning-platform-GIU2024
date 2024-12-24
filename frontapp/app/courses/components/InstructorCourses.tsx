@@ -23,6 +23,10 @@ interface Course {
   updatedAt: string;
 }
 
+interface InstructorCoursesProps {
+  courseId: string;
+}
+
 interface UpdateCourseDto {
   title: string;
   description: string;

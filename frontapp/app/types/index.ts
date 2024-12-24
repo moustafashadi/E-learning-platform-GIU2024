@@ -1,5 +1,5 @@
 // /app/types/index.ts
-
+export * from './note';
 export interface BackendCourse {
   _id: string;
   course_code: string;
@@ -12,11 +12,18 @@ export interface BackendCourse {
   quizzes: string[];
   notes: string[];
 }
-
+export interface CourseCardProps {
+  course: FrontendCourse;
+  isEnrolled: boolean;
+  onViewCourse: () => void;
+  onEnroll?: () => void;
+  isEnrolling?: boolean;
+}
 export interface FrontendCourse {
   id: string;
   name: string;
   progress: number; // Percentage
+  
 }
 
 export interface Module {
