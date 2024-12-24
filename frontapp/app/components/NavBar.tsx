@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store";
 import { logout } from "../store/slices/authSlice";
 import axios from "axios";
-import NotificationBell from "./NotificationsBell";
+//import NotificationBell from "./NotificationsBell";
 
 const Navbar = () => {
   const router = useRouter();
@@ -38,7 +38,7 @@ const Navbar = () => {
           </Link>
         ) : (
           <>
-            <NotificationBell />
+           
             <div>
               <Link href="/dashboard" className="mx-2 hover:underline">
                 Dashboard
