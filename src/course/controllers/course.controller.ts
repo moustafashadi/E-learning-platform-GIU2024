@@ -29,7 +29,10 @@ import { Response } from 'express';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { Forum } from 'src/communication/forum/forum.schema';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 
+@UseGuards(AuthorizationGuard)
+@Roles(Role.Instructor)
 @UseGuards(AuthenticationGuard)
 @Controller('courses')
 export class CourseController {
@@ -117,6 +120,8 @@ export class CourseController {
     });
   }
 
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor, Role.Admin)
   @Delete('/:id')
   async delete(@Param('id') id: string) {
     return await this.courseService.delete(id);
