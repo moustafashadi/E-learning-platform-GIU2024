@@ -1,13 +1,14 @@
 // /app/course/[courseSlug]/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import axiosInstance from '../_utils/axiosInstance';
-import toast from 'react-hot-toast';
-import StudentCourses from './components/StudentCourses';
-import InstructorCourses from './components/InstructorCourses';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
+import StudentCourses from "./components/StudentCourses"; // Import the StudentCourses component
+
+import InstructorCourses from "./components/InstructorCourses";
+import Notes from "./view/notes";
 
 function CoursePage() {
   const { courseSlug } = useParams();
