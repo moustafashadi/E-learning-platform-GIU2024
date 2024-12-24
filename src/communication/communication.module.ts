@@ -54,8 +54,8 @@ import { NotificationController } from './notifications/notification.controller'
         timeout: 5000,
     }),],
     controllers: [ChatController, MessageController, ForumController, NotificationController],
-    providers: [NotificationGateway, ChatService, NotificationService, ChatGateway, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
-    exports: [ChatService, MessageService, ForumServices, NotificationService, NotificationGateway]
+    providers: [NotificationGateway, ChatService, NotificationService, ChatGateway, MessageService, ForumService, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
+    exports: [ChatService, MessageService, ForumService, NotificationService, NotificationGateway]
 })
 
 export class CommunicationModule { }

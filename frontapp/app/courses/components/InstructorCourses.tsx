@@ -61,6 +61,11 @@ function InstructorCourses() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  
+  interface User {
+     id: string;
+    // Add other properties if needed
+  }
 
   // Close all forms function
   const closeAllForms = () => {
@@ -120,7 +125,7 @@ const handleDeleteClick = async (courseId: string) => {
     const response = await axios.delete(
       `http://localhost:3000/courses/${courseId}`,
       { withCredentials: true }
-    );
+    ); 
 
     if (response.status === 200) {
       console.log('Course deleted successfully');
@@ -186,7 +191,7 @@ const handleDeleteClick = async (courseId: string) => {
         description: formValues.description,
         category: formValues.category,
         difficulty: formValues.difficulty,
-        instructor: user?.id,
+        instructor: user?._id,
         numOfQuizzes: parseInt(formValues.quizzes) || 0
       };
 
@@ -218,7 +223,7 @@ const handleDeleteClick = async (courseId: string) => {
         description: formValues.description,
         category: formValues.category,
         difficulty: formValues.difficulty,
-        instructor: user?.id,
+        instructor: user?._id,
         course_code: `C-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
         numberofQuizzes: parseInt(formValues.quizzes) || 0
       };
