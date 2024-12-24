@@ -2,10 +2,10 @@ import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@ne
 import { ChatService } from '../chat.service';
 import { CreateChatDto } from '../dto/create-chat.dto';
 import { CreateMessageDto } from '../dto/create-message.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthenticationGuard } from '../../../auth/guards/authentication.guard';
 
 @Controller('chat')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthenticationGuard)
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
