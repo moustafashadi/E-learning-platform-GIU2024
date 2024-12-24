@@ -1,8 +1,22 @@
+// /store/slices/authSlice.ts
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface AuthState { // Export AuthState
+export interface User {
+  _id: string;
+  email: string;
+  username: string;
+  profilePicUrl: string;
+  role: 'admin' | 'student' | 'instructor';
+  enrolledCourses: string[]; // Array of course IDs
+  completedCourses: string[];
+  quizzesSolved: string[];
+  notifications: string[]; // Array of notification IDs
+}
+
+export interface AuthState {
   isAuthenticated: boolean;
-  user: any;
+  user: User | null;
   loading: boolean;
 }
 
@@ -19,7 +33,7 @@ const authSlice = createSlice({
     loginStart(state) {
       state.loading = true;
     },
-    loginSuccess(state, action: PayloadAction<any>) {
+    loginSuccess(state, action: PayloadAction<User>) {
       state.isAuthenticated = true;
       state.user = action.payload;
       state.loading = false;

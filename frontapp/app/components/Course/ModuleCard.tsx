@@ -1,7 +1,7 @@
 // /components/Course/ModuleCard.tsx
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import TakeQuizButton from '../Common/TakeQuizButton';
+import TakeQuizButton from './TakeQuizButton';
 
 interface ModuleCardProps {
   module: {

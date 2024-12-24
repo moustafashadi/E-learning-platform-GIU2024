@@ -3,11 +3,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import axiosInstance from '@/utils/axiosInstance';
+import axiosInstance from '@/app/_utils/axiosInstance';
 import toast from 'react-hot-toast';
-import BackButton from '@/components/Common/BackButton';
-import LoadingSpinner from '@/components/Common/LoadingSpinner';
-import CreateForumModal from '@/components/Course/CreateForumModal';
+import BackButton from '@/app/components/common/BackButton';
+import LoadingSpinner from '@/app/components/common/LoadingSpinner';
+import CreateForumModal from '@/app/components/Course/CreateForumModal';
 
 interface Forum {
   _id: string;
