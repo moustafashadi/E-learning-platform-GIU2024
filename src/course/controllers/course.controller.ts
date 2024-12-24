@@ -38,7 +38,6 @@ export class CourseController {
   @Post()
   async create(@Req() req: Request,
     @Body() createCourseDto: CreateCourseDto) {
-
     return await this.courseService.create(req, createCourseDto);
   }
 
@@ -102,10 +101,6 @@ export class CourseController {
   // }
 
 
-
-
-
-
   // @Get(':courseId/resource/:fileName')
   // async getResource(
   //   @Param('courseId') courseId: string,
@@ -134,6 +129,22 @@ export class CourseController {
 
 
 
+////////////////////////////////////////////////
+
+
+
+
+
 
 }
+
+
+
+
+
+
+
+
+
+
 

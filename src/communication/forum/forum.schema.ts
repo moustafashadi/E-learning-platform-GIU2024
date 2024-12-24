@@ -28,6 +28,15 @@ export class Forum {
 
   @Prop({ required: true, enum: ['Helpful', 'Frequent Questions', 'Question', 'Answer', 'Announcement'] })
   tag: string;
+
+  //forums
+  @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Forum'}], default: [] })
+  forums: MongooseSchema.Types.ObjectId[];
+
+    //forums
+    @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Thread'}], default: [] })
+    thread: MongooseSchema.Types.ObjectId[];
+
 }
 
 export type ForumDocument = Forum & Document;

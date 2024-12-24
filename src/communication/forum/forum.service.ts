@@ -2,11 +2,13 @@ import {
     Injectable,
     NotFoundException,
     BadRequestException,
+    UnauthorizedException,
   } from '@nestjs/common';
   import { InjectModel } from '@nestjs/mongoose';
-  import { Model } from 'mongoose';
+  import mongoose, { Model } from 'mongoose';
   import { Forum , ForumDocument } from './forum.schema';
   import { Thread, ThreadDocument } from './Thread.schema';
+
   
   // We assume you have a Course schema in 'course.schema' 
   // with a forums array of Forum refs
@@ -20,17 +22,126 @@ import {
       @InjectModel(Course.name) private readonly courseModel: Model<CourseDocument>,
     ) {}
   
-    /**
-     * CREATE Forum => 
-     *   1) create new Forum doc,
-     *   2) push the forum._id into the Course.forums array
-     */
-
+    async createForum(courseId: string, payload: { title: string; content: string; tag: string; createdBy: string }): Promise<Forum> {
+      const course = await this.courseModel.findById(courseId).exec();
+      if (!course) {
+        throw new NotFoundException(`Course with ID ${courseId} not found`);
+      }
   
-    /**
-     * GET all forums for a *particular course* 
-     * by looking at the course's `forums` array.
-     */
+      const newForum = new this.forumModel({
+        course: courseId,
+        title: payload.title || `${course.title} Forum`, // Use provided title or default
+        description: `Discussion forum for the course ${course.title}`,
+        content: payload.content,
+        tag: payload.tag,
+        createdBy: payload.createdBy,
+      });
+  
+      const createdForum = await newForum.save();
+  
+      // Link the forum to the course
+      course.forums.push(createdForum._id as unknown as mongoose.ObjectId);
+      await course.save();
+  
+      return createdForum;
+    }
+  
+      // Delete a forum
+  async deleteForum(courseId: string, forumId: string): Promise<void> {
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    const forum = await this.forumModel.findById(forumId).exec();
+    if (!forum) {
+      throw new NotFoundException(`Forum with ID ${forumId} not found`);
+    }
+
+    // Recursively delete threads within the forum
+    for (const threadId of forum.threads) {
+      await this.deleteThreadRecursively(threadId.toString());
+    }
+
+    // Delete the forum
+    await this.forumModel.findByIdAndDelete(forumId).exec();
+
+    // Remove the forum reference from the course's forums array
+    course.forums = course.forums.filter((id) => id.toString() !== forumId.toString());
+    await course.save();
+  }
+
+  // Instructor deletes a student's forum
+  async instructordeleteStudentForum(courseId: string, forumId: string, instructorId: string): Promise<void> {
+    console.log('Instructor ID:', instructorId); // Log instructor ID
+    console.log('Course ID:', courseId); // Log course ID
+    console.log('Forum ID:', forumId); // Log forum ID
+  
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      console.log('Course not found');
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+    console.log('Course Found:', course); // Log course object
+  
+    // Verify that the logged-in user is the instructor of the course
+    
+    
+  
+    const forum = await this.forumModel.findById(forumId).exec();
+    if (!forum) {
+      console.log('Forum not found');
+      throw new NotFoundException(`Forum with ID ${forumId} not found`);
+    }
+    console.log('Forum Found:', forum); // Log forum object
+  
+    // Ensure the forum is not created by the instructor
+    if (forum.createdBy.toString() === instructorId) {
+      console.log('Unauthorized: Instructors cannot delete their own forums'); // Log unauthorized
+      throw new UnauthorizedException('Instructors cannot delete their own forums using this API');
+    }
+  
+    // Proceed with forum deletion
+    await this.forumModel.findByIdAndDelete(forumId).exec();
+    course.forums = course.forums.filter((id) => id.toString() !== forumId);
+    await course.save();
+    console.log('Forum deleted successfully'); // Log success
+  }
+  
+  
+  
+
+  // Recursively delete threads within a forum
+  private async deleteThreadRecursively(threadId: string): Promise<void> {
+    const thread = await this.threadModel.findById(threadId).exec();
+    if (!thread) {
+      throw new NotFoundException(`Thread with ID ${threadId} not found`);
+    }
+
+    // Recursively delete replies or other nested structures if applicable
+    for (const replyId of thread.threads) {
+      await this.deleteReply(replyId.toString());
+    }
+
+    // Delete the thread
+    await this.threadModel.findByIdAndDelete(threadId).exec();
+  }
+
+  // Helper method: Delete a reply (if applicable)
+  private async deleteReply(replyId: string): Promise<void> {
+    const thread = await this.threadModel.findById(replyId).exec();
+    if (!thread) {
+      return; // Skip if the reply does not exist
+    }
+
+    // Recursively delete nested replies
+    for (const nestedReplyId of thread.threads) {
+      await this.deleteReply(nestedReplyId.toString());
+    }
+
+    // Delete the reply itself
+    await this.threadModel.findByIdAndDelete(replyId).exec();
+  }
     async getForumsForCourse(courseId: string): Promise<Forum[]> {
       const course = await this.courseModel
         .findById(courseId)
@@ -199,17 +310,17 @@ import {
     /**
      * Recursively delete a Thread and sub-threads
      */
-    async deleteThreadRecursively(threadId: string): Promise<void> {
-      const t = await this.threadModel.findById(threadId).exec();
-      if (!t) return; // already removed
+    // async deleteThreadRecursively(threadId: string): Promise<void> {
+    //   const t = await this.threadModel.findById(threadId).exec();
+    //   if (!t) return; // already removed
   
-      // delete sub-threads
-      for (const subTId of t.threads) {
-        await this.deleteThreadRecursively(subTId.toString());
-      }
-      // now remove self
-      await this.threadModel.findByIdAndDelete(threadId).exec();
-    }
+    //   // delete sub-threads
+    //   for (const subTId of t.threads) {
+    //     await this.deleteThreadRecursively(subTId.toString());
+    //   }
+    //   // now remove self
+    //   await this.threadModel.findByIdAndDelete(threadId).exec();
+    // }
   
     /**
      * Delete a single thread 

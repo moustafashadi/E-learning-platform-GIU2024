@@ -15,11 +15,17 @@ import { Quiz } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { Request } from 'express';
 import { Server } from 'http';
+import { Forum } from 'src/communication/forum/forum.schema';
 
 
 @Injectable()
 export class CourseService {
+  deleteStudentForum(courseId: string, forumId: string, instructorId: any) {
+    throw new Error('Method not implemented.');
+  }
   replyModel: any;
+  forumModel: any;
+  threadModel: any;
   constructor(
     //quiz service
     private quizService: QuizService,
@@ -242,6 +248,7 @@ export class CourseService {
   async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
     return this.courseModel.find({ keywords: keyword }).exec();
   }
-  
+  //////////////////////////////////////////////////////////////////////
+
 
 }

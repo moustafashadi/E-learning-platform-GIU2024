@@ -9,6 +9,8 @@ import {
    UseGuards,
    BadRequestException,
    NotFoundException,
+   Req,
+   UnauthorizedException,
  } from '@nestjs/common';
  
  import { ForumService } from './forum.service'; 
@@ -21,11 +23,60 @@ import {
  export class ForumController {
    constructor(private readonly forumService: ForumService) {}
 
+   @Delete(':courseId/deleteStudentForum/:forumId')
+   @UseGuards(AuthenticationGuard, AuthorizationGuard)
+   @Roles(Role.Instructor)
+   async deleteStudentForum(
+    @Param('courseId') courseId: string,
+    @Param('forumId') forumId: string,
+    @Req() req: any
+  ) {
+    console.log('Request User:', req.user); // Log user object
+    console.log('Course ID:', courseId); // Log course ID
+    console.log('Forum ID:', forumId); // Log forum ID
+  
+   
+    const instructorId = req.user.id;
+    return this.forumService.instructordeleteStudentForum(courseId, forumId, instructorId);
+  }
+   
+
+  
+    //TESTED WORKIG
+   // API to delete a forum from a course
+   @Delete(':courseId/forum/:forumId')
+   async deleteForum(@Param('courseId') courseId: string, @Param('forumId') forumId: string) {
+     try {
+       await this.forumService.deleteForum(courseId, forumId);
+       return { message: 'Forum deleted successfully' };
+     } catch (error) {
+       throw new NotFoundException(error.message);
+     }
+   }
+
+   //TESTED WORKIG
+   @Post(':courseId/forum')
+     async createForum(
+       @Param('courseId') courseId: string,
+       @Body() payload: { title: string; content: string; tag: string; createdBy: string }
+     ) {
+       try {
+         const forum = await this.forumService.createForum(courseId, payload);
+         return { message: 'Forum created successfully', forum };
+       } catch (error) {
+         throw new BadRequestException(error.message);
+       }
+     }
+
+
+    //TESTED WORKIG
    @Get('course/:courseId')
    async getForumsForCourse(@Param('courseId') courseId: string) {
      return this.forumService.getForumsForCourse(courseId);
    }
 
+
+   //TESTED WORKIG
    @UseGuards(AuthorizationGuard)
    @Roles(Role.Student, Role.Instructor)
    @Post(':forumId/addThread')
@@ -39,6 +90,8 @@ import {
      return this.forumService.addThreadToForum(forumId, content, createdBy);
    }
 
+
+//TESTED WORKING
    @UseGuards(AuthorizationGuard)
    @Roles(Role.Student, Role.Instructor)
    @Post('thread/:threadId/addSubThread')
@@ -51,8 +104,10 @@ import {
      }
      return this.forumService.addThreadToThread(threadId, content, createdBy);
    }
- 
 
+
+ 
+//TESTED WORKIG
    @UseGuards(AuthorizationGuard)
    @Roles(Role.Instructor, Role.Student)
    @Put(':forumId')
@@ -66,7 +121,7 @@ import {
      return this.forumService.updateForum(forumId, title, content);
    }
  
-
+//estana
    @UseGuards(AuthorizationGuard)
    @Roles(Role.Student, Role.Instructor)
    @Put('thread/:threadId')
@@ -80,6 +135,9 @@ import {
      return this.forumService.updateThread(threadId, content);
    }
 
+
+
+   //TESTED WORKIG
    @Get(':forumId')
    async getForum(@Param('forumId') forumId: string) {
      return this.forumService.getForumById(forumId);
@@ -90,9 +148,6 @@ import {
      return this.forumService.getThreadById(threadId);
    }
 
-  //  @UseGuards(AuthorizationGuard)
-  //  @Roles(Role.Instructor)
-  //  @Delete(':forumId')
 
    @UseGuards(AuthorizationGuard)
    @Roles(Role.Student, Role.Instructor)
@@ -101,5 +156,12 @@ import {
      await this.forumService.deleteThread(threadId);
      return { message: 'Thread deleted' };
    }
+
+
+
+
+
+
+
  }
  
