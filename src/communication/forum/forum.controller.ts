@@ -54,7 +54,7 @@ import {
  
 
    @UseGuards(AuthorizationGuard)
-   @Roles(Role.Instructor)
+   @Roles(Role.Instructor, Role.Student)
    @Put(':forumId')
    async updateForum(
      @Param('forumId') forumId: string,
@@ -90,9 +90,9 @@ import {
      return this.forumService.getThreadById(threadId);
    }
 
-   @UseGuards(AuthorizationGuard)
-   @Roles(Role.Instructor)
-   @Delete(':forumId')
+  //  @UseGuards(AuthorizationGuard)
+  //  @Roles(Role.Instructor)
+  //  @Delete(':forumId')
 
    @UseGuards(AuthorizationGuard)
    @Roles(Role.Student, Role.Instructor)

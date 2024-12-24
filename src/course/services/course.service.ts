@@ -16,10 +16,12 @@ import { QuizService } from 'src/quiz/services/quiz.service';
 import { Request } from 'express';
 import { Forum } from 'src/communication/forum/forum.schema';
 import { Thread } from 'src/communication/forum/Thread.schema';
+import { threadId } from 'worker_threads';
 
 
 @Injectable()
 export class CourseService {
+  replyModel: any;
   constructor(
     //quiz service
     private quizService: QuizService,
@@ -84,12 +86,80 @@ export class CourseService {
 
     return createdForum;
   }
-
+///////////////////////////////////////////////////////////////////////////
   // Method to delete a forum from a course
   async deleteForum(courseId: string, forumId: string): Promise<void> {
+      const course = await this.courseModel.findById(courseId).exec();
+      if (!course) {
+        throw new NotFoundException(`Course with ID ${courseId} not found`);
+      }
+    
+      const forum = await this.forumModel.findById(forumId).exec();
+      if (!forum) {
+        throw new NotFoundException(`Forum with ID ${forumId} not found`);
+      }
+    
+      // Recursively delete threads within the forum
+      for (const threadId of forum.threads) {
+        await this.deleteThreadRecursively(threadId.toString());
+      }
+    
+      // Delete the forum
+      await this.forumModel.findByIdAndDelete(forumId).exec();
+    
+      // Remove the forum reference from the course's forums array
+      course.forums = course.forums.filter((id) => id.toString() !== forumId.toString());
+      await course.save();
+    }
+    
+    
+    
+    
+    // Helper Method: Remove Forum from Users
+  
+    // Helper Method: Recursively Delete Threads
+    private async deleteThreadRecursively(threadId: string): Promise<void> {
+      const thread = await this.threadModel.findById(threadId).exec();
+      if (!thread) {
+        throw new NotFoundException(`Thread with ID ${threadId} not found`);
+      }
+    
+      // Recursively delete sub-threads
+      for (const subThreadId of thread.threads) { // Correct field name: "threads"
+        await this.deleteThreadRecursively(subThreadId.toString());
+      }
+    
+      // Delete the thread itself
+      await this.threadModel.findByIdAndDelete(threadId).exec();
+    }
+    
+    
+    // Helper Method: Delete Reply
+    private async deleteReply(replyId: string): Promise<void> {
+      const thread = await this.threadModel.findById(replyId).exec(); // Correct parameter name
+      if (!thread) {
+        return; // If the reply doesn't exist, skip deletion
+      }
+    
+      // Recursively delete nested replies
+      for (const nestedReplyId of thread.threads) { // Correct field name: "threads"
+        await this.deleteReply(nestedReplyId.toString());
+      }
+    
+      // Delete the reply itself
+      await this.threadModel.findByIdAndDelete(replyId).exec();
+    } 
+  ///////////////////////////////////////////////////////////////////
+
+  async deleteStudentForum(courseId: string, forumId: string, instructorId: string): Promise<void> {
     const course = await this.courseModel.findById(courseId).exec();
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+  
+    // Verify that the logged-in user is the instructor of the course
+    if (course.instructor.toString() !== instructorId) {
+      throw new UnauthorizedException('You are not authorized to delete forums in this course');
     }
   
     const forum = await this.forumModel.findById(forumId).exec();
@@ -97,9 +167,14 @@ export class CourseService {
       throw new NotFoundException(`Forum with ID ${forumId} not found`);
     }
   
+    // Ensure the forum is not created by the instructor
+    if (forum.createdBy.toString() === instructorId) {
+      throw new UnauthorizedException('Instructors cannot delete their own forums using this API');
+    }
+  
     // Recursively delete threads within the forum
-    for (const tId of forum.threads) {
-      await this.deleteThreadRecursively(tId.toString());
+    for (const threadId of forum.threads) {
+      await this.deleteThreadRecursively(threadId.toString());
     }
   
     // Delete the forum
@@ -110,31 +185,8 @@ export class CourseService {
     await course.save();
   }
   
-  
-  // Helper Method: Remove Forum from Users
 
-  // Helper Method: Recursively Delete Threads
-  private async deleteThreadRecursively(threadId: string): Promise<void> {
-    const thread = await this.threadModel.findById(threadId).exec();
-    if (!thread) {
-      throw new NotFoundException(`Thread with ID ${threadId} not found`);
-    }
-  
-    // Recursively delete replies or other nested structures if applicable
-    for (const replyId of thread.replies) {
-      await this.deleteReply(replyId.toString());
-    }
-  
-    // Delete the thread
-    await this.threadModel.findByIdAndDelete(threadId).exec();
-  }
-  
-  // Helper Method: Delete Reply
-  private async deleteReply(replyId: string): Promise<void> {
-    // Implement logic to delete a reply if necessary
 
-  }
-  
   
 //-------------------------------------
 

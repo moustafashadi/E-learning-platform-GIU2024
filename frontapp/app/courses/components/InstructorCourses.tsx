@@ -71,41 +71,7 @@ function InstructorCourses() {
   const handleRedirectToForums = (courseId: string) => {
     router.push(`/forums/${courseId}/`);
   };
-  const handleCreateAndRedirectToForum = async (courseId: string, courseTitle: string) => {
-    try {
-      const authToken = localStorage.getItem("authToken");
-      if (!authToken) {
-        toast.error("You must be logged in to create a forum.");
-        router.push("/login");
-        return;
-      }
-  
-      const response = await axios.post(
-        `/forums/${courseId}/create`,
-        {
-          title: `${courseTitle} Forum`,
-          description: `Discussion forum for the course ${courseTitle}`,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-          withCredentials: true,
-        }
-      );
-  
-      if (response.status === 201 || response.status === 200) {
-        toast.success("Forum created successfully!");
-        router.push(`/forums/${courseId}/`); // Ensure the route matches the forums page
-      } else {
-        toast.error("Unexpected server response.");
-      }
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Failed to create the forum. Please try again."
-      );
-    }
-  };
+
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -368,12 +334,7 @@ const handleDeleteClick = async (courseId: string) => {
                       >
                         Go to Forums
                       </button>
-                      <button
-                        onClick={() => handleCreateAndRedirectToForum(course._id, course.title)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-                      >
-                        Create & Go to Forums
-                      </button>
+                      
                       </div>
                     </div>
                   </li>

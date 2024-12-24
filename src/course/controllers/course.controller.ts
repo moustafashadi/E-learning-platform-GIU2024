@@ -26,6 +26,7 @@ import { Response } from 'express';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { Forum } from 'src/communication/forum/forum.schema';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 
 @UseGuards(AuthenticationGuard)
 @Controller('courses')
@@ -176,7 +177,7 @@ export class CourseController {
   async findCoursesByInstructor(@Param('instructorId') instructorId: string) {
     return await this.courseService.findCoursesByInstructor(instructorId);
   }
-
+/////////////////////////////////////////////////////////////////////////////////////////
   // API to create a forum for a course
   @Post(':courseId/forum')
   async createForum(
@@ -200,6 +201,18 @@ export class CourseController {
     } catch (error) {
       throw new NotFoundException(error.message);
     }
+  }
+//allow instructor to delete student forum
+  @Delete(':courseId/deleteStudentForum/:forumId')
+  @Roles(Role.Instructor)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  async deleteStudentForum(
+    @Param('courseId') courseId: string,
+    @Param('forumId') forumId: string,
+    @Req() req: any
+  ) {
+    const instructorId = req.user.id; // Assuming you store the logged-in user's ID in the request object
+    return this.courseService.deleteStudentForum(courseId, forumId, instructorId);
   }
   
 }

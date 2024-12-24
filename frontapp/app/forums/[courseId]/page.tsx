@@ -4,15 +4,17 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation"; // from Next.js 13+ App Router
 import axiosInstance from "@/app/_utils/axiosInstance"; // your custom axios
 import toast from "react-hot-toast";
+//import { Role,Roles } from '/src/auth/decorators/roles.decorator';
+
 
 // Forum shape
 interface Forum {
   _id: string;
-  course: string;             // course ID
+  course: string;       // course ID
   threads: Thread[];
   title: string;
   content: string;
-  createdBy: string;          // user ID
+  createdBy: string;   // user ID
   tag: string;
 }
 
@@ -47,41 +49,72 @@ const ForumPage = () => {
   // For toggling "Load replies" (this snippet just demonstrates the idea)
   const [expandedForums, setExpandedForums] = useState<string[]>([]);
 
+    // For creating a reply (thread) - Add these here
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [newReplyContent, setNewReplyContent] = useState("");
+
+    const [userRole, setuserRole] = useState<string | null>(null);
+
+//////////////////////////////////////////////////////////////////
+
+
+
+///////////////////////////////////////////////////////////////////////////
+
   // =========== 1) On mount, fetch user ID =================
   useEffect(() => {
-    const fetchUserId = async () => {
+    const fetchUserData = async () => {
       try {
         const meResp = await axiosInstance.get("/auth/me", { withCredentials: true });
         setUserId(meResp.data.id);
+        setuserRole(meResp.data.role); // Adjust according to your API response
       } catch (err) {
-        console.error("Failed to fetch user ID:", err);
+        console.error("Failed to fetch user data:", err);
         toast.error("Not logged in?");
       }
     };
-    fetchUserId();
+    fetchUserData();
   }, []);
+  
+  
 
   // =========== 2) Load all forums for course ==============
+  const fetchForums = async () => {
+    setLoading(true);
+    try {
+      // Fetch forums for the given course
+      const resp = await axiosInstance.get(`/forum/course/${courseId}`, {
+        withCredentials: true,
+      });
+      setForums(resp.data);
+    } catch (err) {
+      console.error("Failed to load forums:", err);
+      toast.error("Failed to load forums.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // useEffect for initial loading
   useEffect(() => {
     if (!courseId) return;
-    const fetchForums = async () => {
-      setLoading(true);
-      try {
-        // e.g. GET /forum/course/:courseId
-        // or GET /courses/:courseId/forums if your code changed
-        const resp = await axiosInstance.get(`/forum/course/${courseId}`, {
-          withCredentials: true,
-        });
-        setForums(resp.data);
-      } catch (err) {
-        console.error("Failed to load forums:", err);
-        toast.error("Failed to load forums.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchForums();
   }, [courseId]);
+
+
+  ////////
+
+  const handleinstructorDeleteStudentForum = async (forumId: string) => {
+    try {
+      await axiosInstance.delete(`/courses/${courseId}/deleteStudentForum/${forumId}`, {
+        withCredentials: true,
+      });
+      toast.success('Forum deleted successfully!');
+      fetchForums(); // Re-fetch forums to update the list
+    } catch (error) {
+      toast.error('Failed to delete the forum');
+    }
+  };
 
   // =========== 3) Create Forum logic ======================
   const handleCreateForum = async () => {
@@ -89,6 +122,8 @@ const ForumPage = () => {
       toast.error("Please fill in Title and Content");
       return;
     }
+
+    
     try {
       // e.g. POST /courses/:courseId/forum
       await axiosInstance.post(
@@ -173,12 +208,54 @@ const ForumPage = () => {
         : [...prev, forumId]
     );
   };
+// =========== 7) Replies ===================================
+const handleReply = async (parentId: string, isThread: boolean = false) => {
+  if (!newReplyContent.trim()) {
+    toast.error("Reply content cannot be empty");
+    return;
+  }
 
-  // =========== 7) Render UI ===============================
+  try {
+    // Use the correct API path for replying to forums or threads
+    const endpoint = isThread
+      ? `/forum/thread/${parentId}/addSubThread`
+      : `/forum/${parentId}/addThread`;
+
+    await axiosInstance.post(
+      endpoint,
+      {
+        content: newReplyContent,
+        createdBy: userId,
+      },
+      { withCredentials: true }
+    );
+
+    toast.success("Reply added successfully!");
+    setReplyingTo(null); // Close the reply UI
+    setNewReplyContent(""); // Reset input
+
+    // Re-fetch forums to update the UI
+    const updated = await axiosInstance.get(`/forum/course/${courseId}`, {
+      withCredentials: true,
+    });
+    setForums(updated.data);
+  } catch (error) {
+    console.error("Failed to add reply:", error);
+    toast.error("Error adding reply.");
+  }
+};
+
+
+  // =========== 8) Render UI ===============================
+
+  
+  
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (loading) {
     return <p className="p-4">Loading forums...</p>;
   }
-
+  console.log('Current User Role:', userRole); // Log outside JSX
   return (
     <div className="p-4 max-w-4xl mx-auto text-black">
       <h1 className="text-2xl font-bold mb-6">
@@ -294,6 +371,31 @@ const ForumPage = () => {
           </div>
         </div>
       )}
+{/* instructor delete student forum */}
+
+
+{forums && forums.length > 0 && (
+  forums.map((forum) => (
+    <div key={forum._id} className="forum-item">
+      {/* Check if the user is an instructor */}
+      {userRole === 'instructor' && (
+        <button
+          onClick={() => handleinstructorDeleteStudentForum(forum._id)}
+          className="bg-red-500 text-white px-2 py-1 rounded"
+        >
+          Delete (Forum)
+        </button>
+      )}
+    </div>
+  ))
+)}
+
+
+
+
+
+
+
 
       {/* List of Forums */}
       {forums.length === 0 ? (
@@ -315,66 +417,133 @@ const ForumPage = () => {
                   <p className="text-gray-700 mt-1">{forum.content}</p>
                 </div>
                 {/* If I'm the creator, allow edit/delete */}
-                {forum.createdBy === userId && (
+                {(forum.createdBy === userId) && (
                   <div className="space-x-2">
                     <button
-                      onClick={() => handleEditForum(forum)}
+                      onClick={() => handleEditForum(forum)} // Add your edit logic here
                       className="bg-green-500 text-white px-2 py-1 rounded"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDeleteForum(forum._id)}
+                      onClick={() => handleDeleteForum(forum._id)} // Delete logic
                       className="bg-red-500 text-white px-2 py-1 rounded"
                     >
                       Delete
                     </button>
                   </div>
                 )}
-              </div>
+
+                        </div>  
 
               {/* "Load replies (#)" and "Reply" Link */}
-              <div className="mt-2">
-                <span
-                  onClick={() => handleToggleExpand(forum._id)}
-                  className="text-blue-600 underline cursor-pointer text-sm mr-4"
-                >
-                  Load replies ({forum.threads?.length || 0})
-                </span>
-                <span className="text-blue-600 underline cursor-pointer text-sm">
-                  Reply
-                </span>
-              </div>
+                                  <div className="mt-2">
+                      <span
+                        onClick={() => handleToggleExpand(forum._id)}
+                        className="text-blue-600 underline cursor-pointer text-sm mr-4"
+                      >
+                        Load replies ({forum.threads?.length || 0})
+                      </span>
+                      <span
+                        onClick={() => setReplyingTo(forum._id)} // Set the forum to reply to
+                        className="text-blue-600 underline cursor-pointer text-sm"
+                      >
+                        Reply
+                      </span>
+                    </div>
+
+                    {/* Reply UI */}
+                    {replyingTo === forum._id && (
+                      <div className="mt-2">
+                        <textarea
+                          value={newReplyContent}
+                          onChange={(e) => setNewReplyContent(e.target.value)}
+                          className="border w-full p-2 rounded mt-1"
+                          placeholder="Write your reply..."
+                        />
+                        <div className="flex justify-end mt-2">
+                          <button
+                            onClick={() => setReplyingTo(null)} // Close the reply UI
+                            className="bg-gray-300 text-black px-3 py-1 rounded mr-2"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleReply(forum._id)} // Trigger reply creation
+                            className="bg-blue-600 text-white px-3 py-1 rounded"
+                          >
+                            Reply
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+
+
+
+                  {/*Render recursivley the threads*/}
+                    
+                  
 
               {/* If expanded, show the threads here (just a minimal snippet) */}
+            
               {isExpanded && forum.threads?.length > 0 && (
-                <div className="mt-3 ml-4 space-y-3 border-l pl-3 border-gray-300">
-                  {forum.threads.map((thread) => (
-                    <div
-                      key={thread._id}
-                      className="bg-gray-50 p-2 rounded border border-gray-200"
-                    >
-                      <p>{thread.content}</p>
-                      <div className="mt-1 flex items-center justify-between">
-                        <span className="text-sm text-blue-600 underline cursor-pointer">
-                          Reply
-                        </span>
-                        {/* If I'm the creator of the thread => allow edit/delete */}
-                        {thread.createdBy === userId && (
-                          <div className="space-x-2 text-sm">
-                            <button className="bg-green-400 text-white px-2 py-1 rounded">
-                              Edit
-                            </button>
-                            <button className="bg-red-400 text-white px-2 py-1 rounded">
-                              Delete
-                            </button>
+                    <div className="mt-3 ml-4 space-y-3 border-l pl-3 border-gray-300">
+                      {forum.threads.map((thread) => (
+                        <div
+                          key={thread._id}
+                          className="bg-gray-50 p-2 rounded border border-gray-200"
+                        >
+                          <p>{thread.content}</p>
+                          <div className="mt-1 flex items-center justify-between">
+                            <span
+                              onClick={() => setReplyingTo(thread._id)} // Set the thread to reply to
+                              className="text-sm text-blue-600 underline cursor-pointer"
+                            >
+                              Reply
+                            </span>
+                            {/* If I'm the creator of the thread => allow edit/delete */}
+                            {thread.createdBy === userId &&(
+                              <div className="space-x-2 text-sm">
+                                <button className="bg-green-400 text-white px-2 py-1 rounded">
+                                  Edit
+                                </button>
+                                <button className="bg-red-400 text-white px-2 py-1 rounded">
+                                  Delete
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
+
+                          {/* Nested Reply UI */}
+                          {replyingTo === thread._id && (
+                            <div className="mt-2">
+                              <textarea
+                                value={newReplyContent}
+                                onChange={(e) => setNewReplyContent(e.target.value)}
+                                className="border w-full p-2 rounded mt-1"
+                                placeholder="Write your reply..."
+                              />
+                              <div className="flex justify-end mt-2">
+                                <button
+                                  onClick={() => setReplyingTo(null)} // Close the reply UI
+                                  className="bg-gray-300 text-black px-3 py-1 rounded mr-2"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => handleReply(thread._id, true)} // Pass true for thread reply
+                                  className="bg-blue-600 text-white px-3 py-1 rounded"
+                                >
+                                  Reply
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )}
             </div>
           );
         })
@@ -384,3 +553,6 @@ const ForumPage = () => {
 };
 
 export default ForumPage;
+
+
+

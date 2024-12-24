@@ -18,6 +18,8 @@ import { Course, CourseDocument } from '../../course/models/course.schema';
 import { updateStudentDto } from '../dto/update-student.dto';
 
 
+
+
 @Injectable()
 export class UserService {
   constructor(
@@ -28,6 +30,88 @@ export class UserService {
     @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
     private jwtService: JwtService,
   ) { }
+
+
+// Forums and Threads///////////////////////////////
+// async createForum(
+//   courseId: string,
+//   payload: { title: string; content: string; tag: string; createdBy: string }
+// ): Promise<Forum> {
+//   // Find the course
+//   const course = await this.courseModel.findById(courseId).exec();
+//   if (!course) {
+//     throw new NotFoundException(`Course with ID ${courseId} not found`);
+//   }
+
+//   // Create the forum
+//   const newForum = new this.forumModel({
+//     course: courseId,
+//     title: payload.title,
+//     content: payload.content,
+//     tag: payload.tag,
+//     createdBy: payload.createdBy,
+//   });
+//   const createdForum = await newForum.save();
+
+//   // Link the forum to the course
+//   course.forums.push(createdForum._id as any);
+//   await course.save();
+
+//   // Add the forum to the user's forums array
+//   const user = await this.userModel.findById(payload.createdBy).exec();
+//   if (!user) {
+//     throw new NotFoundException(`User with ID ${payload.createdBy} not found`);
+//   }
+//   user.forums.push(createdForum._id as any);
+//   await user.save();
+
+//   return createdForum;
+// }
+
+// async createThread(
+//   forumId: string,
+//   payload: { content: string; createdBy: string }
+// ): Promise<Thread> {
+//   // Find the forum
+//   const forum = await this.forumModel.findById(forumId).exec();
+//   if (!forum) {
+//     throw new NotFoundException(`Forum with ID ${forumId} not found`);
+//   }
+
+//   // Create the thread
+//   const newThread = new this.threadModel({
+//     content: payload.content,
+//     createdBy: payload.createdBy,
+//   });
+//   const createdThread = await newThread.save();
+
+//   // Link the thread to the forum
+//   forum.threads.push(createdThread._id as any);
+//   await forum.save();
+
+//   // Add the thread to the user's threads array
+//   const user = await this.userModel.findById(payload.createdBy).exec();
+//   if (!user) {
+//     throw new NotFoundException(`User with ID ${payload.createdBy} not found`);
+//   }
+//   user.threads.push(createdThread._id as any);
+//   await user.save();
+
+//   return createdThread;
+// }
+
+
+// async getUserForumsAndThreads(userId: string): Promise<User> {
+//   return this.userModel
+//     .findById(userId)
+//     .populate('forums') // Populate forums
+//     .populate('threads') // Populate threads
+//     .exec();
+// }
+
+// Forums and Threads///////////////////////////////
+
+
 
   async create(createUserDto: CreateUserDto): Promise<any> {
     try {

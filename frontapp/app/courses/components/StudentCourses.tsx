@@ -51,6 +51,13 @@ function StudentCourses() {
 
 
 
+  const handleRedirectToForums = (courseId: string) => {
+    router.push(`/forums/${courseId}/`);
+  };
+
+
+
+
   const fetchCourses = async () => {
     try {
       const { data: authData } = await axiosInstance.get("/auth/me", { withCredentials: true });
@@ -78,55 +85,7 @@ function StudentCourses() {
     }
   };
 
-  const handleCreateAndRedirectToForum = async (courseId: string) => {
-    try {
-      if (!courseId) {
-        toast.error("Course ID is required.");
-        return;
-      }
-  
-      if (!selectedCourse) {
-        toast.error("Selected course is invalid.");
-        return;
-      }
-  
-      const response = await axiosInstance.post(
-        `/api/forums/${courseId}/create`,
-        {
-          title: `${selectedCourse.title} Forum`,
-          description: `Discussion forum for the course ${selectedCourse.title}`,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-          withCredentials: true,
-        }
-      );
-  
-      if (response.status === 201 || response.status === 200) {
-        toast.success("Forum created successfully!");
-        router.push(`/forums/${courseId}/forums`);
-      } else {
-        toast.error("Unexpected server response.");
-        console.error("Response:", response);
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("Axios error response:", error.response?.data);
-        toast.error(
-          `Error: ${error.response?.status} - ${error.response?.data?.message || "Unknown error"}`
-        );
-      } else if (error instanceof Error) {
-        console.error("General error message:", error.message);
-        toast.error(error.message);
-      } else {
-        console.error("Unexpected error:", error);
-        toast.error("An unexpected error occurred.");
-      }
-    }
-  };
-  
+
   
   
 
@@ -472,22 +431,14 @@ const handleSaveClick = async (noteId: string) => {
                 </ul>
               </div>
                   {/* "Go to Forums" Button */}
-                  <div className="mt-4">
-                    <button
-                      onClick={() => {
-                        if (selectedCourse) {
-                          handleCreateAndRedirectToForum(selectedCourse._id); // Ensure selectedCourse is valid
-                        } else {
-                          console.error("No course selected for creating a forum.");
-                          toast.error("Please select a course before creating a forum.");
-                        }
-                      }}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200"
-                    >
-                      Create Forum & Go to Forums
-                    </button>
-                  </div>
-
+                  <button
+                        onClick={() => handleRedirectToForums(selectedCourse._id)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                      >
+                        Go to Forums
+                      </button>
+                  
+                  
               
               <div>
   <strong>Notes:</strong>

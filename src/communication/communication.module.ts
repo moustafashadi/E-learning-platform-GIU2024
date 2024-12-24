@@ -53,7 +53,7 @@ import { ProgressSchema } from 'src/progress/models/progress.schema';
         timeout: 5000,
     }),],
     controllers: [ChatController, NotificationController, MessageController, ForumController],
-    providers: [ChatService, NotificationService, ChatGateway, MessageService, ForumService, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService , ForumController],
+    providers: [ChatService, NotificationService, ChatGateway, MessageService, ForumService, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
 })
 
 export class CommunicationModule { }

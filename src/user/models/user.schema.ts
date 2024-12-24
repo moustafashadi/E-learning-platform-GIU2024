@@ -21,6 +21,15 @@ export class User {
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Notification' }], default: [] })
   notifications: MongooseSchema.Types.ObjectId[];
+
+ // Array to store forums created by the user
+ @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Forum' }], default: [] })
+ forums: MongooseSchema.Types.ObjectId[];
+
+ // Array to store threads created by the user
+ @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Thread' }], default: [] })
+ threads: MongooseSchema.Types.ObjectId[];
+
 }
 
 export type UserDocument = User & Document;
