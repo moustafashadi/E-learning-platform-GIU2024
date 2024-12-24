@@ -31,7 +31,7 @@ const Navbar = () => {
           E-Learning Platform
         </Link>
       </div>
-      <div>
+      <div className="flex items-center">
         {!loading && !isAuthenticated ? (
           <Link href="/login" className="mx-2 hover:underline">
             Login
@@ -39,14 +39,15 @@ const Navbar = () => {
         ) : (
           <>
             <NotificationBell />
-            <div>
-              <Link href="/dashboard" className="mx-2 hover:underline">
-                Dashboard
-              </Link>
-              <button onClick={handleLogout} className="mx-2 hover:underline">
-                Logout
-              </button>
-            </div>
+            <Link href="/dashboard" className="mx-2 hover:underline">
+              Dashboard
+            </Link>
+            <Link href="/quiz" className="mx-2 hover:underline">
+              Quizzes
+            </Link>
+            <button onClick={handleLogout} className="mx-2 hover:underline">
+              Logout
+            </button>
           </>
         )}
       </div>

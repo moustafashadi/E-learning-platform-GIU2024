@@ -28,6 +28,9 @@ export class Course {
   })
   resources: string[];
   
+  @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Forum'}], default: [] })
+  forums: MongooseSchema.Types.ObjectId[];
+
   //number of quizzes
   @Prop({ default: 0 })
   numOfQuizzes: number;

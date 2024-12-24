@@ -76,7 +76,7 @@ function InstructorCourses() {
     const fetchCourses = async () => {
       try {
         const { data: authData } = await axios.get("/auth/me", { withCredentials: true });
-        const response = await axios.get(`http://localhost:3000/courses/teacher/${authData.id}`, {
+        const response = await axios.get(`http://localhost:3000/courses/`, {
           withCredentials: true,
         });
         setTeachingCourses(response.data);
@@ -133,10 +133,6 @@ const handleDeleteClick = async (courseId: string) => {
     alert('Failed to delete course');
   }
 };
-
-const handleRedirectToForums = (courseId: string) => {
-  router.push(`/forums/${courseId}/`);
-  };
 
 
   const handleViewCourseDetails = (course: Course) => {
@@ -313,12 +309,6 @@ const handleRedirectToForums = (courseId: string) => {
 
                       
                       <div className="flex space-x-2">
-                      <button
-    onClick={() => handleRedirectToForums(course._id)}
-    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-  >
-    Go to Forums
-  </button>
                         
                         <button
                           onClick={() => handleEditClick(course)}

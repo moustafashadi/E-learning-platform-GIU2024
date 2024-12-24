@@ -59,7 +59,7 @@ export class ForumServices {
         })
         const forum = await this.findOne(forumid);
         const savedThread = await newThread.save();
-        forum.Threads.push(savedThread.id);
+        forum.threads.push(savedThread.id);
         return (forum as ForumDocument).save();
     }
 

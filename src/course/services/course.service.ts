@@ -14,6 +14,8 @@ import * as path from 'path';
 import { Quiz } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { Request } from 'express';
+import { Forum } from 'src/communication/forum/forum.schema';
+import { Thread } from 'src/communication/forum/Thread.schema';
 
 
 @Injectable()
@@ -23,6 +25,8 @@ export class CourseService {
     private quizService: QuizService,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
+    @InjectModel(Forum.name) private forumModel: Model<Forum>,
+    @InjectModel(Thread.name) private threadModel: Model<Thread>,
     @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
   ) { }
 
@@ -216,6 +220,109 @@ export class CourseService {
     return quizzes;
   }
 
+  // Method to create a forum for a course
+  async createForum(courseId: string, payload: { title: string; content: string; tag: string; createdBy: string }): Promise<Forum> {
+    // Find the course by its ID
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    // Check if a forum already exists for the course
+
+
+    // Create a new forum
+    const newForum = new this.forumModel({
+      course : courseId,
+      title: payload.title || `${course.title} Forum`, // Use provided title or default
+      description: `Discussion forum for the course ${course.title}`,
+      content: payload.content,
+      tag: payload.tag,
+      createdBy: payload.createdBy,
+    });
+
+    const createdForum = await newForum.save();
+
+    // Link the forum to the course
+    const forum = await this.forumModel.findById(createdForum._id).exec();
+    course.forums.push(forum as unknown as mongoose.ObjectId);
+
+    
+    await course.save();
+
+    return createdForum;
+  }
+
+  async findOneByCourseId(course_id: string): Promise<Course> {
+    const course = await this.courseModel.findById(course_id).populate('instructor').exec();
+
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${course_id} not found`);
+    }
+
+    return course;
+  }
+
+
+  // Method to delete a forum from a course
+  async deleteForum(courseId: string): Promise<void> {
+    // Find the course by its ID
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
   
+    // Check if the course has associated forums
+    if (!course.forums || course.forums.length === 0) {
+      throw new BadRequestException('No forums exist for this course');
+    }
+  
+    // Find the forum by its ID (assuming only one forum is being deleted)
+    const forumId = course.forums[0]; // Adjust based on how forums are handled
+    const forum = await this.forumModel.findById(forumId).exec();
+    if (!forum) {
+      throw new NotFoundException(`Forum with ID ${forumId} not found`);
+    }
+  
+    // Recursively delete threads within the forum
+    for (const tId of forum.threads) {
+      await this.deleteThreadRecursively(tId.toString());
+    }
+  
+    // Remove the forum from users' arrays
+
+  
+    // Delete the forum
+    await this.forumModel.findByIdAndDelete(forumId).exec();
+  
+    // Remove the forum reference from the course's forums array
+    course.forums = course.forums.filter((id) => id.toString() !== forumId.toString());
+    await course.save();
+  }
+  
+  // Helper Method: Remove Forum from Users
+
+  // Helper Method: Recursively Delete Threads
+  private async deleteThreadRecursively(threadId: string): Promise<void> {
+    const thread = await this.threadModel.findById(threadId).exec();
+    if (!thread) {
+      throw new NotFoundException(`Thread with ID ${threadId} not found`);
+    }
+  
+    // Recursively delete replies or other nested structures if applicable
+    for (const replyId of thread.replies) {
+      await this.deleteReply(replyId.toString());
+    }
+  
+    // Delete the thread
+    await this.threadModel.findByIdAndDelete(threadId).exec();
+  }
+  
+  // Helper Method: Delete Reply
+  private async deleteReply(replyId: string): Promise<void> {
+    // Implement logic to delete a reply if necessary
+
+  }
+
 
 }

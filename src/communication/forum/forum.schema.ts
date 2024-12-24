@@ -9,7 +9,7 @@ export class Forum {
   course: Types.ObjectId;
 
   @Prop({type: [{type:Types.ObjectId, ref:'Thread'}]})
-  Threads: Types.ObjectId[];
+  threads: Types.ObjectId[];
 
   @Prop({ required: true })
   title: string;
