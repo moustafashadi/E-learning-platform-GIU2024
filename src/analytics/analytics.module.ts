@@ -26,6 +26,6 @@ import { PerformanceMatrixSchema } from 'src/analytics/models/performanceMatrix.
       MongooseModule.forFeature([{ name: 'Performance', schema: PerformanceMatrixSchema }]),
     ],
     controllers: [AnalyticsController],
-    providers: [QuizService,QuestionService, ProgressService,NotificationGateway],
+    providers: [QuizService,QuestionService, ProgressService,NotificationGateway,PerformanceMatrixService],
   })
   export class AnalyticsModule {}

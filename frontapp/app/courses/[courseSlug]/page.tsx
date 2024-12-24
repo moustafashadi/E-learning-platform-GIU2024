@@ -1,9 +1,9 @@
-// /app/course/[courseId]/page.tsx
+// /app/course/[courseSlug]/page.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import axiosInstance from '@/app/_utils/axiosInstance';
+import axiosInstance from '@/utils/axiosInstance';
 import toast from 'react-hot-toast';
 import ModuleCard from '@/components/Course/ModuleCard';
 import BackButton from '@/components/Common/BackButton';
@@ -11,6 +11,7 @@ import LoadingSpinner from '@/components/Common/LoadingSpinner';
 
 interface Module {
   id: string;
+  slug: string;
   title: string;
   pmScore: number;
   difficulty: string;
@@ -23,7 +24,7 @@ interface ModuleCategory {
 }
 
 const CoursePage = () => {
-  const { courseId } = useParams();
+  const { courseSlug } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [moduleCategories, setModuleCategories] = useState<ModuleCategory[]>([]);
@@ -31,31 +32,32 @@ const CoursePage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseSlug) return;
 
     const fetchCourseModules = async () => {
       setLoading(true);
       try {
         // Fetch course details
-        const courseResp = await axiosInstance.get(`/courses/${courseId}`, {
+        const courseResp = await axiosInstance.get(`/courses/slug/${courseSlug}`, {
           withCredentials: true,
         });
         const course = courseResp.data;
         setCourseName(course.name || 'Unnamed Course');
 
         // Fetch modules
-        const modulesResp = await axiosInstance.get(`/courses/${courseId}/modules`, {
+        const modulesResp = await axiosInstance.get(`/courses/slug/${courseSlug}/modules`, {
           withCredentials: true,
         });
         const modulesData: Module[] = await Promise.all(
           modulesResp.data.map(async (module: any) => {
             // Fetch PM score for each module
             try {
-              const pmResp = await axiosInstance.get(`/progress/${module.id}`, {
+              const pmResp = await axiosInstance.get(`/progress/module/${module.slug}`, {
                 withCredentials: true,
               });
               return {
                 id: module.id,
+                slug: module.slug,
                 title: module.title,
                 pmScore: pmResp.data.progress || 0,
                 difficulty: module.difficulty,
@@ -64,6 +66,7 @@ const CoursePage = () => {
               console.error(`Failed to fetch PM for module ${module.id}:`, pmError);
               return {
                 id: module.id,
+                slug: module.slug,
                 title: module.title,
                 pmScore: 0,
                 difficulty: module.difficulty,
@@ -105,7 +108,7 @@ const CoursePage = () => {
     };
 
     fetchCourseModules();
-  }, [courseId]);
+  }, [courseSlug]);
 
   if (loading) {
     return (
@@ -148,7 +151,7 @@ const CoursePage = () => {
       {/* Forum Button */}
       <div className="mt-10">
         <button
-          onClick={() => router.push(`/forum?courseId=${courseId}`)}
+          onClick={() => router.push(`/forum/${courseSlug}`)}
           className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
         >
           Go to Forum

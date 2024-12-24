@@ -8,6 +8,7 @@ import { Question } from '../models/question.schema';
 import { ResponseGateway } from 'src/response/gateway/response.gateway';
 import { QuestionService } from '../services/question.service';
 import { ResponseService } from 'src/response/services/response.service';
+import { PerformanceMatrixService } from 'src/analytics/services/performanceMatrix.service';
 
 @UseGuards(AuthenticationGuard)
 @Controller('quiz')
@@ -17,6 +18,7 @@ export class QuizController {
     private readonly questionService: QuestionService,
     private readonly responseGateway: ResponseGateway,
     private readonly quizService: QuizService,
+    private readonly performanceMatrixService: PerformanceMatrixService,
   ) { }
 
   //create quiz

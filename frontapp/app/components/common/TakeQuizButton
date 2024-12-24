@@ -3,14 +3,14 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 
 interface TakeQuizButtonProps {
-  moduleId: string;
+  moduleSlug: string;
 }
 
-const TakeQuizButton: React.FC<TakeQuizButtonProps> = ({ moduleId }) => {
+const TakeQuizButton = ({ moduleSlug }: TakeQuizButtonProps) => {
   const router = useRouter();
 
   const handleTakeQuiz = () => {
-    router.push(`/quiz?moduleId=${moduleId}`);
+    router.push(`/quiz/${moduleSlug}`); // Adjust the path as per your routing
   };
 
   return (

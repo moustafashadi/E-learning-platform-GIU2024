@@ -15,6 +15,8 @@ import { QuestionController } from './controllers/question.controller';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { ProgressSchema } from 'src/progress/models/progress.schema';
 import { NotificationGateway } from 'src/communication/notifications/notification.gateway';
+import { PerformanceMatrixService } from 'src/analytics/services/performanceMatrix.service';
+import { PerformanceMatrixSchema } from 'src/analytics/models/performanceMatrix.schema';
 
 @Module({
   imports: [
@@ -25,12 +27,13 @@ import { NotificationGateway } from 'src/communication/notifications/notificatio
     MongooseModule.forFeature([{ name: 'Response', schema: ResponseSchema }]),
     MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),
     MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
+    MongooseModule.forFeature([{ name: 'PerformanceMatrix', schema: PerformanceMatrixSchema }]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
      })],
   controllers: [QuizController, QuestionController],
-  providers: [QuizService, ResponseService, ResponseGateway, QuestionService, ProgressService, NotificationGateway],
+  providers: [QuizService, ResponseService,ResponseGateway,PerformanceMatrixService, QuestionService, ProgressService, NotificationGateway],
   exports: [QuizService],
 })
 export class QuizModule {}
