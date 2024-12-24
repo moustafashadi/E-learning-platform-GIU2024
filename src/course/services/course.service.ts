@@ -225,10 +225,7 @@ async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
   //   return fs.createReadStream(fullPath);
   // }
 
-  //get enrolled students
-
-
-
+  
   
   // //GET COURSE QUIZZES
   // async getCourseQuizzes(courseId: string): Promise<Quiz[]> {

@@ -14,7 +14,7 @@ export class Module {
   questions: MongooseSchema.Types.ObjectId[];
 
   @Prop({ type: [Resource], default: [] })
-  resources: Resource[]; // URLs for multimedia content (videos, PDFs)
+  resources: MongooseSchema.Types.ObjectId[]; 
 
   //difficulty level
   @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced'] })

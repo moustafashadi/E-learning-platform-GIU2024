@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CourseSchema } from '../course/models/course.schema';
 import { JwtModule } from '@nestjs/jwt';
-import { InstructorSchema, StudentSchema, UserSchema } from 'src/user/models/user.schema';
+import { InstructorSchema, StudentSchema, UserSchema, AdminSchema } from 'src/user/models/user.schema';
 import { CourseController } from '../course/controllers/course.controller';
 import { CourseService } from '../course/services/course.service';
 import { QuizSchema } from 'src/quiz/models/quiz.schema';
@@ -17,7 +17,6 @@ import { NotificationGateway } from 'src/communication/notifications/notificatio
 import { CommunicationModule } from 'src/communication/communication.module';
 import { NotificationSchema } from 'src/communication/notifications/notification.schema';
 import { UserService } from 'src/user/services/user.service';
-import { AdminSchema } from 'src/user/models/user.schema';
 
 @Module({
   imports: [
@@ -46,8 +45,8 @@ import { AdminSchema } from 'src/user/models/user.schema';
     ProgressService,
     NotificationService,
     NotificationGateway,
-    NotificationService,
-    UserService],
-  exports: [CourseService],
+    UserService,
+  ],
+  exports: [CourseService, MongooseModule], // Export MongooseModule to make CourseModel available
 })
-export class CourseModule { }
+export class CourseModule {}
