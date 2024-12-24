@@ -29,50 +29,42 @@ import { Course } from '../models/course.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 
 @UseGuards(AuthenticationGuard)
 @Controller('courses')
 export class CourseController {
   constructor(private readonly courseService: CourseService) { }
 
+  //TESTED -WORKING
+  @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
-    @Body() 
-    { title, description, category, difficulty, course_code, numberofQuizzes }: 
-    { title: string, description: string, category: string, difficulty: string, course_code: string, numberofQuizzes: number }) {
-    console.log("createCourseDto");
-  
-    // Add additional validation if needed
-    if (!course_code || !title || !description || !category || !difficulty) {
-      throw new BadRequestException("Missing required fields");
-    }
-  
-    return await this.courseService.create(req, { course_code, title, description, numberofQuizzes, category, difficulty });
+    @Body() createCourseDto: CreateCourseDto) {
+
+    return await this.courseService.create(req, createCourseDto);
   }
-  
 
   @Get()
   async findAll() {
     return await this.courseService.findAll();
   }
 
-
-
-
   @Get('/:id')
   async findOne(@Param('id') id: string) {
-    // This method looks up the course by the MongoDB _id
     return await this.courseService.findOne(id);
   }
 
+  //TESTED -WORKING
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
   @Patch('/:id')
   async update(
     @Req() req: Request,
     @Param('id') courseId: string,
-    @Body() updateCourseDto:UpdateCourseDto
+    @Body() updateCourseDto: UpdateCourseDto
   ) {
-    console.log('gets called')
     console.log(courseId);
     return await this.courseService.update(req, courseId, updateCourseDto);
   }
@@ -86,6 +78,12 @@ export class CourseController {
   @Get('/:id/students')
   async getEnrolledStudents(@Param('id') id: string) {
     return await this.courseService.getEnrolledStudents(id);
+  }
+
+  // Search Courses by Keyword
+  @Get('search/keyword')
+  async searchByKeyword(@Query('keyword') keyword: string) {
+    return await this.courseService.searchCoursesByKeyword(keyword);
   }
 
   @Get('search/category')
@@ -141,12 +139,6 @@ export class CourseController {
     return await this.courseService.findCoursesByInstructor(instructorId);
   }
 
-   // Search Courses by Keyword
-   @Get('search/keyword')
-   async searchByKeyword(@Query('keyword') keyword: string) {
-     //return await this.courseService.searchCoursesByKeyword(keyword);
-   }
- 
 
 
 

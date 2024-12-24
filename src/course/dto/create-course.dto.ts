@@ -19,29 +19,8 @@ export class CreateCourseDto {
   @IsString({ each: true })
   keywords?: string[];
 
-  @IsMongoId()
-  instructor: MongooseSchema.Types.ObjectId;
-
-  @IsOptional()
-  @IsArray()
-  @IsMongoId({ each: true })
-  students?: MongooseSchema.Types.ObjectId[];
-
-  @IsOptional()
-  @IsArray()
-  @IsMongoId({ each: true })
-  modules?: MongooseSchema.Types.ObjectId[];
-
-  @IsOptional()
-  @IsArray()
-  @IsMongoId({ each: true })
-  forums?: MongooseSchema.Types.ObjectId[];
-
   @IsEnum(['Public', 'Private'])
   @IsNotEmpty()
   availability: string;
 
-  @IsOptional()
-  @IsNumber()
-  rating?: number;
 }

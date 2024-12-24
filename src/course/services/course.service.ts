@@ -117,19 +117,23 @@ export class CourseService {
     return course.students;
   }
 
-  async create(@Req() req : Request, {course_code, title, description, numberofQuizzes, category, difficulty }): Promise<Course> {
+
+//create course
+  async create(@Req() req : Request, createCourseDto: CreateCourseDto): Promise<Course> {
     try {
       const course = new this.courseModel({
-        course_code: course_code,
-        title,
-        description,
-        numOfQuizzes: numberofQuizzes,
-        category,
-        difficulty,
+        title: createCourseDto.title,
+        description: createCourseDto.description,
+        category : createCourseDto.category,
+        keywords: createCourseDto.keywords,
         instructor: req.user['sub'],
+        students: [],
+        modules: [],
+        forums: [],
+        availability: 'Public',
+        ratings: [],  
       });
       //update the instructor's courses taught
-      
       const instructor = await this.instructorModel.findById(course.instructor);
       instructor.coursesTaught.push(course._id as unknown as mongoose.ObjectId);
       await instructor.save();
@@ -153,19 +157,24 @@ export class CourseService {
     return course;
   }
 
-  async update(req: Request, courseId: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
-    const course = await this.courseModel.findById(courseId);
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
-    }
 
-    // Update the course fields
-    course.title = updateCourseDto.title;
-    course.description = updateCourseDto.description;
-    course.category = updateCourseDto.category;
-    course.keywords = updateCourseDto.keywords;
-    return await course.save();
+
+
+  async update(req : Request, courseId: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
+    const updatedCourse = await this.courseModel
+      .findOneAndUpdate({ _id: courseId }, updateCourseDto, { new: true })
+      .populate('instructor')
+      .exec();
+    if (!updatedCourse) {
+      throw new NotFoundException(`Course with id ${courseId} not found`);
+    }
+    return updatedCourse;
   }
+
+
+
+
+
 
   async delete(id: string): Promise<void> {
     try {
@@ -174,6 +183,7 @@ export class CourseService {
         throw new NotFoundException(`Course with ID ${id} not found`);
       }
       course.availability = 'Private';
+      await course.save();
     } catch (error) {
       throw new InternalServerErrorException('Error deleting course', error);
     }
@@ -228,9 +238,9 @@ export class CourseService {
   // }
 
 
-  // async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
-  //   return this.courseModel.find({ keywords: keyword }).exec();
-  // }
+  async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
+    return this.courseModel.find({ keywords: keyword }).exec();
+  }
   
 
 }
