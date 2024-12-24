@@ -52,7 +52,6 @@ export class AuthController {
   async getMe(@Req() req: Request, @Res() res: Response) {
     const id = req.user['sub'];
     const user = await this.userService.findOne(req.user['sub']);
-    console.log(user);
     return res.send({ id, user });
   }
 

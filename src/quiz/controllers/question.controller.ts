@@ -150,9 +150,10 @@ export class QuestionController {
         userId,
         parsedQuizId,
       );
+      const quiz = await this.quizService.getQuiz(parsedQuizId);
      
       const correctAnswers = responses.filter((r) => r.isCorrect).length;
-      const totalQuestions = responses.length;
+      const totalQuestions = quiz.questions.length;
       const grade = (correctAnswers / totalQuestions) * 100;
       student.quizGrades.set(parsedQuizId, grade);
       await student.save();

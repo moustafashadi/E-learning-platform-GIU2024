@@ -28,6 +28,7 @@ export class CourseService {
     @InjectModel(Forum.name) private forumModel: Model<Forum>,
     @InjectModel(Thread.name) private threadModel: Model<Thread>,
     @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
+    @InjectModel(Student.name) private studentModel: Model<Student>,
   ) { }
 
   static get storage() {
@@ -48,52 +49,66 @@ export class CourseService {
     });
   }
   
+ 
   // Upload Resource Method
-  async uploadResource(courseCode: string, file: Express.Multer.File): Promise<Course> {
+  async uploadResource(courseId: string, file: Express.Multer.File): Promise<Course> {
     console.log('File received:', file);
-  
+
     // Ensure that file is provided
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-  
+
     // Ensure the filename is set properly
     if (!file.filename) {
       throw new BadRequestException('File is missing or filename not set properly');
     }
-  
+
     console.log('File upload initiated:', file);
-  
-    // Find the course by course code
-    const course = await this.courseModel.findOne({ course_code: courseCode });
+
+    // Find the course by course ID
+    const course = await this.courseModel.findById(courseId);
     if (!course) {
-      throw new NotFoundException(`Course with code ${courseCode} not found`);
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
     }
-  
+
     // Save the file metadata to the course
-    const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
-    course.resources.push(filePath);
-  
+   // const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
+    course.resources.push(file.filename);
+
     // Save the course after updating resources
     await course.save();
-    console.log('Resource added to course:', filePath);
+    console.log('Resource added to course:', file.filename);
     
     return course;
   }
+
   
   // Get Resource Method
-  async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> {
+  async getResource(courseId: string, fileName: string): Promise<fs.ReadStream> {
+    // Find the course by course ID
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    // Check if the file exists in the course resources
+    const filePath = fileName;
+    if (!course.resources.includes(filePath)) {
+      throw new NotFoundException(`File not found in course resources: ${fileName}`);
+    }
+
     // Construct the file path to the 'uploads' directory in your server
-    const filePath = path.join(__dirname, '../../../uploads', fileName);
-  
+    const fullPath = path.join(__dirname, '../../../uploads', fileName);
+
     // Check if the file exists in the filesystem
-    if (!fs.existsSync(filePath)) {
+    if (!fs.existsSync(fullPath)) {
       // If the file doesn't exist, throw a NotFoundException
       throw new NotFoundException(`File not found: ${fileName}`);
     }
-  
+
     // Return the file stream if the file exists
-    return fs.createReadStream(filePath);
+    return fs.createReadStream(fullPath);
   }
   //get enrolled students
   async getEnrolledStudents(course_id: string): Promise<mongoose.ObjectId[]> {
@@ -159,6 +174,19 @@ export class CourseService {
   async delete(id: string): Promise<void> {
     try {
       const course = await this.courseModel.findById(id).exec();
+      //remove course from instructor's courses taught
+      const instructor = await this.instructorModel.findById(course.instructor);
+      instructor.coursesTaught = instructor.coursesTaught.filter(courseId => courseId.toString() !== id);
+      await instructor.save();
+
+      //remove course from students' enrolled courses
+      const students = await this.getEnrolledStudents(id);
+      students.forEach(async (studentId) => {
+        const student = await this.studentModel.findById(studentId);
+        student.enrolledCourses = student.enrolledCourses.filter(courseId => courseId.toString() !== id);
+        await student.save();
+      });
+      
       //delete all quizzes in this course
       const quizzes = course.quizzes;
       await this.quizService.deleteQuizzes(quizzes);
@@ -322,6 +350,10 @@ export class CourseService {
   private async deleteReply(replyId: string): Promise<void> {
     // Implement logic to delete a reply if necessary
 
+  }
+
+  async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
+    return this.courseModel.find({ keywords: keyword }).exec();
   }
 
 

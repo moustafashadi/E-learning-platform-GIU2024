@@ -370,11 +370,11 @@ const handleSaveClick = async (noteId: string) => {
 
         // If the resource is not a full URL or path, create the correct URL
         if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
-          viewUrl = `http://localhost:3000/courses/${selectedCourse.course_code}/resource/${encodeURIComponent(viewUrl)}`;
+          viewUrl = `http://localhost:3000/courses/${selectedCourse._id}/resource/${encodeURIComponent(viewUrl)}`;
         } else {
           // If it's already a full URL, no need to modify it
           if (!viewUrl.startsWith("http")) {
-            viewUrl = `http://localhost:3000/courses/${selectedCourse.course_code}/resource${encodeURIComponent(viewUrl)}`;
+            viewUrl = `http://localhost:3000/courses/${selectedCourse._id}/resource${encodeURIComponent(viewUrl)}`;
           }
         }
 

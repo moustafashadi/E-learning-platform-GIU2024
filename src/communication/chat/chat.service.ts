@@ -1,76 +1,143 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Chat } from './chat.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
+import { ChatDocument } from './chat.model';
+import { MessageDocument } from './message.model';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { GetChatsDto } from './dto/get-chat.dto';
-import { SearchChatsDto } from './dto/search-chats.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(Chat.name) private chatModel: Model<Chat>,
+    @InjectModel('Chat') private chatModel: Model<ChatDocument>,
+    @InjectModel('Message') private messageModel: Model<MessageDocument>,
   ) {}
 
-  getChats(getChatsDto: GetChatsDto ) {
-    return this.chatModel.find({
-      skip: getChatsDto.skip,
-      take: getChatsDto.take,
-      order: { createdAt: 'DESC' },
+  async createChat(createChatDto: CreateChatDto): Promise<ChatDocument> {
+    try {
+      const chat = new this.chatModel({
+        ...createChatDto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return await chat.save();
+    } catch (error) {
+      throw new BadRequestException('Failed to create chat: ' + error.message);
+    }
+  }
+
+  async getChatByUserId(userId: string): Promise<ChatDocument[]> {
+    try {
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new BadRequestException('Invalid user ID');
+      }
+
+      const chats = await this.chatModel
+        .find({ users: userId })
+        .populate('users', 'username email profilePicUrl')
+        .populate({
+          path: 'messages',
+          populate: {
+            path: 'senderId',
+            select: 'username email profilePicUrl'
+          },
+          options: { sort: { timestamp: -1 } }
+        })
+        .sort({ updatedAt: -1 });
+
+      if (!chats || chats.length === 0) {
+        return [];
+      }
+
+      return chats;
+    } catch (error) {
+      throw new BadRequestException('Failed to get user chats: ' + error.message);
+    }
+  }
+
+  async getUserChats(userId: string): Promise<ChatDocument[]> {
+    try {
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new BadRequestException('Invalid user ID');
+      }
+
+      return await this.chatModel
+        .find({ users: userId })
+        .populate('users', 'username email profilePicUrl')
+        .populate({
+          path: 'messages',
+          options: { 
+            sort: { timestamp: -1 },
+            limit: 1 // Only get the latest message for each chat
+          },
+          populate: {
+            path: 'senderId',
+            select: 'username email profilePicUrl'
+          }
+        })
+        .sort({ updatedAt: -1 }); // Sort chats by most recent activity
+    } catch (error) {
+      throw new BadRequestException('Failed to get user chats: ' + error.message);
+    }
+  }
+
+  async addMembers(chatId: string, userIds: string[]): Promise<ChatDocument> {
+    try {
+      // Verify all userIds are valid ObjectIds
+      const validUserIds = userIds.every(id => Types.ObjectId.isValid(id));
+      if (!validUserIds) {
+        throw new BadRequestException('Invalid user ID(s) provided');
+      }
+
+      const updatedChat = await this.chatModel.findByIdAndUpdate(
+        chatId,
+        { 
+          $addToSet: { users: { $each: userIds } },
+          $set: { updatedAt: new Date() }
+        },
+        { new: true }
+      ).populate('users', 'username email profilePicUrl');
+
+      if (!updatedChat) {
+        throw new NotFoundException(`Chat with ID ${chatId} not found`);
+      }
+
+      return updatedChat;
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to add members: ' + error.message);
+    }
+  }
+
+  // Additional helper methods
+  async isChatMember(chatId: string, userId: string): Promise<boolean> {
+    const chat = await this.chatModel.findOne({
+      _id: chatId,
+      users: userId
     });
+    return !!chat;
   }
 
-  getChat(id: number) {
-    return this.chatModel.findOne({ id });
-  }
+  async removeMembers(chatId: string, userIds: string[]): Promise<ChatDocument> {
+    try {
+      const updatedChat = await this.chatModel.findByIdAndUpdate(
+        chatId,
+        { 
+          $pull: { users: { $in: userIds } },
+          $set: { updatedAt: new Date() }
+        },
+        { new: true }
+      ).populate('users', 'username email profilePicUrl');
 
-  async searchChats(searchChatsDto: SearchChatsDto) {
-    const query = this.chatModel.find();
-    if (searchChatsDto.skip) {
-      query.skip(searchChatsDto.skip);
-    }
-    if (searchChatsDto.take) {
-      query.limit(searchChatsDto.take);
-    }
-    if (searchChatsDto.title) {
-      query.where('title', new RegExp(searchChatsDto.title, 'i'));
-    }
-    if (searchChatsDto.ownerId) {
-      query.where('owner.id', searchChatsDto.ownerId);
-    }
-    const items = await query.exec();
-    const count = await this.chatModel.countDocuments(query.getFilter());
-    return { items, count };
-  }
+      if (!updatedChat) {
+        throw new NotFoundException(`Chat with ID ${chatId} not found`);
+      }
 
-  async createChat(createChatDto: CreateChatDto, userId: string) {
-    const chat = new this.chatModel({
-      title: createChatDto.title,
-      description: createChatDto.description,
-      owner: { id: userId },
-    });
-    await chat.save();
-  }
-
-  async updateChat(id: string, updateChatDto: UpdateChatDto, userId: string) {
-    const result = await this.chatModel.updateOne(
-      { id, owner: { id: userId } },
-      updateChatDto,
-    );
-    if (!result.acknowledged) {
-      throw new NotFoundException(`chat with id ${id} not found`);
-    }
-  }
-
-  async deleteChat(id: string, userId: string) {
-    const result = await this.chatModel.deleteOne({
-      id,
-      owner: { id: userId },
-    });
-    if (!result.acknowledged) {
-      throw new NotFoundException(`chat with id ${id} not found`);
+      return updatedChat;
+    } catch (error) {
+      throw new BadRequestException('Failed to remove members: ' + error.message);
     }
   }
 }

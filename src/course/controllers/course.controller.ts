@@ -138,33 +138,30 @@ export class CourseController {
     return await this.courseService.searchCoursesByDifficulty(difficulty);
   }
 
-  @Post(':courseCode/upload-resource')
+
+  @Post(':courseId/upload-resource')
   @UseInterceptors(FileInterceptor('file', { storage: CourseService.storage }))
   async uploadResource(
-    @Param('courseCode') courseCode: string,
-    @UploadedFile() file: Express.Multer.File,
+    @Param('courseId') courseId: string,
+    @UploadedFile() file: Express.Multer.File
   ) {
-    console.log('Received file in controller:', file);
-    return this.courseService.uploadResource(courseCode, file);
+    return this.courseService.uploadResource(courseId, file);
   }
 
-  @Get(':courseCode/resource/:fileName')
+
+  @Get(':courseId/resource/:fileName')
   async getResource(
-    @Param('courseCode') courseCode: string,
+    @Param('courseId') courseId: string,
     @Param('fileName') fileName: string,
     @Res() res: Response,
   ) {
     try {
-      const fileStream = await this.courseService.getResource(
-        courseCode,
-        fileName,
-      );
+      const fileStream = await this.courseService.getResource(courseId, fileName);
 
       // Pipe the file stream to the response
       fileStream.pipe(res);
     } catch (error) {
-      throw new NotFoundException(
-        `Resource not found for course: ${courseCode}, file: ${fileName}`);
+      throw new NotFoundException(`Resource not found for course: ${courseId}, file: ${fileName}`);
     }
   }
 
@@ -178,6 +175,15 @@ export class CourseController {
   async findCoursesByInstructor(@Param('instructorId') instructorId: string) {
     return await this.courseService.findCoursesByInstructor(instructorId);
   }
+
+   // Search Courses by Keyword
+   @Get('search/keyword')
+   async searchByKeyword(@Query('keyword') keyword: string) {
+     return await this.courseService.searchCoursesByKeyword(keyword);
+   }
+ 
+
+
 
   // API to create a forum for a course
   @Post(':courseId/forum')

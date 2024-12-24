@@ -45,6 +45,14 @@ export class Course {
   //array of students
   @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'User'}], default: [] })
   students: MongooseSchema.Types.ObjectId[];
+
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  keywords: string[];
+
+
 }
 
 export type CourseDocument = Course & Document;
