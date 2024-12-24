@@ -5,7 +5,7 @@ import { Resource } from 'src/resources/resources.schema';
 
 @Schema({ timestamps: true }) // Date for creation and updates
 export class Module {
-  
+
   @Prop({ required: true })
   title: string;
 
@@ -13,12 +13,20 @@ export class Module {
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Question' }], default: [] })
   questions: MongooseSchema.Types.ObjectId[];
 
+  @Prop({ type: Object })
+  quizBlueprint: {
+    number_of_questions: number;
+    quiz_type: string;
+    //set default value to false
+    used: boolean;
+  }
+
   @Prop({ type: [Resource], default: [] })
   resources: Resource[]; // URLs for multimedia content (videos, PDFs)
 
   //difficulty level
   @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced'] })
-  difficulty: string; 
+  difficulty: string;
 
   //rating
   @Prop({ default: [] })

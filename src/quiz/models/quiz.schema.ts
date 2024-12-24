@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Schema as MongooseSchema } from 'mongoose';
 import { Document } from 'mongoose';
 import { Types } from 'mongoose';
+import { Question } from './question.schema';
 
 
 
@@ -11,13 +12,10 @@ export class Quiz {
   _id: MongooseSchema.Types.ObjectId;
 
   @Prop({type: {type: MongooseSchema.Types.ObjectId, ref: 'Module'} })
-  module_id: MongooseSchema.Types.ObjectId; 
-
-  @Prop({ type: Types.ObjectId, ref: 'Course', required: true })
-  course: Types.ObjectId;
+  moduleId: MongooseSchema.Types.ObjectId; 
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Question' }], default: [] })
-  questions: MongooseSchema.Types.ObjectId[];
+  questions: Question[];
 
   //number of questions
   @Prop({ required: true })
@@ -27,10 +25,17 @@ export class Quiz {
   @Prop({ default: 0})
   quizGrade: number;
 
-  
+  //chosen answers
+  @Prop({ default: [] })
+  chosenAnswers: string[];
+
   //quiz type (multiple choice, true/false, mixed)
   @Prop({ required: true, enum: ['Multiple Choice', 'True/False', 'Mixed'] })
   quiz_type: string;
+
+  //quiz status (done, in progress)
+  @Prop({ default: 'in progress' , enum: ['done', 'in progress'] })
+  status: string;
 
 }
 

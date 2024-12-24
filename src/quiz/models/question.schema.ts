@@ -21,9 +21,9 @@ export class Question {
   @Prop({ required: true, enum: ["MCQ", "True/False"] })
   type: string;
 
-  //weight of question
-  @Prop({ required: true, enum: [1, 1.4, 1.8] })
-  weight: number;
+  //difficulty level
+  @Prop({ required: true, enum: ["Easy", "Medium", "Hard"] })
+  difficulty: string;
 
   /**
    * Store multiple-choice options as an array,

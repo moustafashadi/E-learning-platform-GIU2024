@@ -9,11 +9,14 @@ export class Progress {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   userId: MongooseSchema.Types.ObjectId;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Course', required: true })
-  courseId: MongooseSchema.Types.ObjectId;
+  //module
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Module', required: true })
+  moduleId: MongooseSchema.Types.ObjectId;
 
-  @Prop({ required: true, default: 0 })
-  completionPercentage: number;
+  //user progress enum
+  @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced' , 'Expert'] })
+  level: string;
+
 }
 export type ProgressDocument = Progress&Document;
 export const ProgressSchema = SchemaFactory.createForClass(Progress);

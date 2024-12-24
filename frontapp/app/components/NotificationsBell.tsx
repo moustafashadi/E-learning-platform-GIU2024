@@ -16,8 +16,12 @@ export default function NotificationBell() {
   useEffect(() => {
     if (user && user.sub) {
       const socket = websocketService.connect(user.sub);
+      socket.on('notification', (notification: any) => {
+        dispatch({ type: 'notifications/add', payload: notification });
+      });
       return () => {
         websocketService.disconnect();
+        console.log('disconnected');
       };
     }
   }, [user]);

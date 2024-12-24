@@ -9,6 +9,7 @@ import { ResponseGateway } from 'src/response/gateway/response.gateway';
 import { QuestionService } from '../services/question.service';
 import { ResponseService } from 'src/response/services/response.service';
 import { PerformanceMatrixService } from 'src/analytics/services/performanceMatrix.service';
+import { CreateQuizDto } from '../dto/create-quiz.dto';
 
 @UseGuards(AuthenticationGuard)
 @Controller('quiz')
@@ -22,16 +23,18 @@ export class QuizController {
   ) { }
 
   //create quiz
-  @Post('/:courseId')
+  @Post('/:moduleId')
   async createQuiz(
-    @Body('title') title: string, // Extract `title` directly
-    @Req() req,
-    @Param('courseId') courseId: string,
+    @Body() createQuizDto : CreateQuizDto , // Extract `title` directly
+    @Param('moduleId') moduleId : string,
   ) {
-    if (!title) {
-      throw new Error('Quiz title is required');
-    }
-    //return await this.quizService.createQuiz(title, req.user.sub, courseId);
+    return await this.quizService.createQuizBlueprint(moduleId ,createQuizDto);
+  }
+
+  //generate quiz
+  @Post('/:moduleId/generate')
+  async generateQuiz(@Param('moduleId') moduleId: string, @Req() req) {
+    return await this.quizService.generateQuiz(moduleId, req);
   }
 
 
