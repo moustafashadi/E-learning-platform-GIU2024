@@ -23,17 +23,18 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-100 mt-16"> {/* Added mt-16 for navbar space */}
       <div className="p-4 border-b bg-white">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Messages</h1>
-          <MultiUserSearchBar onUserSelect={handleUserSelect} />
+        <div className="max-w-4xl mx-auto flex items-center justify-between space-x-4">
+          <h1 className="text-2xl font-bold shrink-0">Messages</h1>
+          <div className="flex-1 z-50"> {/* Added z-50 to ensure visibility */}
+            <MultiUserSearchBar onUserSelect={handleUserSelect} />
+          </div>
           <ReturnButton />
         </div>
-        
       </div>
-      <div className="flex-1 max-w-4xl mx-auto w-full bg-white shadow-lg rounded-lg my-4">
-      <ChatComponent activeChat={activeChat} selectedUserId={null} />
+      <div className="flex-1">
+        <ChatComponent selectedUserId={null} activeChat={activeChat} />
       </div>
     </div>
   );

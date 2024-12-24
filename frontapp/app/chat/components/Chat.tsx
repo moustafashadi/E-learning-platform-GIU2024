@@ -15,7 +15,7 @@ export const ChatComponent: React.FC<ChatComponentProps> = ({ selectedUserId, ac
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await axiosInstance.get('/chats');
+        const response = await axiosInstance.get('/chat');
         setChats(response.data);
       } catch (error) {
         console.error('Failed to fetch chats:', error);
