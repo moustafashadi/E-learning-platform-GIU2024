@@ -1,6 +1,5 @@
 export class CreateChatDto {
-    users: string[];
-    isGroup: boolean;
-    name?: string;
-  }
-  
+  users: string[];
+  isGroup: boolean;
+  name?: string;
+}
