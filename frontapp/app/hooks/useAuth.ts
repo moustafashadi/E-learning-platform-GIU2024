@@ -1,10 +1,12 @@
-// /hooks/useAuth.ts
+// /app/hooks/useAuth.ts
+
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import axiosInstance from '@/app/_utils/axiosInstance';
-import { loginSuccess, logout } from '@/app/store/slices/authSlice';
+import { loginStart, loginSuccess, loginFailure } from '@/app/store/slices/authSlice';
 import { RootState } from '@/app/store';
 import toast from 'react-hot-toast';
+import { User } from '../types';
 
 const useAuth = () => {
   const dispatch = useDispatch();
@@ -12,25 +14,23 @@ const useAuth = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
+      dispatch(loginStart());
       try {
         const response = await axiosInstance.get('/auth/me', {
           withCredentials: true,
         });
-        const userData = response.data.user;
-        if (userData) {
-          dispatch(loginSuccess(userData));
-        } else {
-          dispatch(logout());
-        }
+        const userData: User = response.data.user;
+        dispatch(loginSuccess(userData));
       } catch (error) {
-        dispatch(logout());
-        toast.error('Authentication failed.');
-        console.error('Authentication Error:', error);
+        dispatch(loginFailure());
+        toast.error('Failed to authenticate user.');
       }
     };
 
-    fetchUser();
-  }, [dispatch]);
+    if (!isAuthenticated && !loading) {
+      fetchUser();
+    }
+  }, [isAuthenticated, loading, dispatch]);
 
   return { isAuthenticated, user, loading };
 };
