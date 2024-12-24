@@ -14,9 +14,7 @@ import * as path from 'path';
 import { Quiz } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { Request } from 'express';
-import { Forum } from 'src/communication/forum/forum.schema';
-import { Thread } from 'src/communication/forum/Thread.schema';
-import { threadId } from 'worker_threads';
+import { Server } from 'http';
 
 
 @Injectable()
@@ -28,9 +26,7 @@ export class CourseService {
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
     @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
-    @InjectModel(Forum.name) private forumModel: Model<Forum>,
-    @InjectModel(Thread.name) private threadModel: Model<any>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Student.name) private studentModel: Model<Student>,
   ) { }
 
   static get storage() {
@@ -50,193 +46,69 @@ export class CourseService {
       },
     });
   }
-
-  //---------------------
-
-
-  // Method to create a forum for a course
-  async createForum(courseId: string, payload: { title: string; content: string; tag: string; createdBy: string }): Promise<Forum> {
-    // Find the course by its ID
-    const course = await this.courseModel.findById(courseId).exec();
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
-    }
-
-    // Check if a forum already exists for the course
-
-
-    // Create a new forum
-    const newForum = new this.forumModel({
-      course : courseId,
-      title: payload.title || `${course.title} Forum`, // Use provided title or default
-      description: `Discussion forum for the course ${course.title}`,
-      content: payload.content,
-      tag: payload.tag,
-      createdBy: payload.createdBy,
-    });
-
-    const createdForum = await newForum.save();
-
-    // Link the forum to the course
-    const forum = await this.forumModel.findById(createdForum._id).exec();
-    course.forums.push(forum as unknown as mongoose.ObjectId);
-
-    
-    await course.save();
-
-    return createdForum;
-  }
-///////////////////////////////////////////////////////////////////////////
-  // Method to delete a forum from a course
-  async deleteForum(courseId: string, forumId: string): Promise<void> {
-      const course = await this.courseModel.findById(courseId).exec();
-      if (!course) {
-        throw new NotFoundException(`Course with ID ${courseId} not found`);
-      }
-    
-      const forum = await this.forumModel.findById(forumId).exec();
-      if (!forum) {
-        throw new NotFoundException(`Forum with ID ${forumId} not found`);
-      }
-    
-      // Recursively delete threads within the forum
-      for (const threadId of forum.threads) {
-        await this.deleteThreadRecursively(threadId.toString());
-      }
-    
-      // Delete the forum
-      await this.forumModel.findByIdAndDelete(forumId).exec();
-    
-      // Remove the forum reference from the course's forums array
-      course.forums = course.forums.filter((id) => id.toString() !== forumId.toString());
-      await course.save();
-    }
-    
-    
-    
-    
-    // Helper Method: Remove Forum from Users
   
-    // Helper Method: Recursively Delete Threads
-    private async deleteThreadRecursively(threadId: string): Promise<void> {
-      const thread = await this.threadModel.findById(threadId).exec();
-      if (!thread) {
-        throw new NotFoundException(`Thread with ID ${threadId} not found`);
-      }
-    
-      // Recursively delete sub-threads
-      for (const subThreadId of thread.threads) { // Correct field name: "threads"
-        await this.deleteThreadRecursively(subThreadId.toString());
-      }
-    
-      // Delete the thread itself
-      await this.threadModel.findByIdAndDelete(threadId).exec();
-    }
-    
-    
-    // Helper Method: Delete Reply
-    private async deleteReply(replyId: string): Promise<void> {
-      const thread = await this.threadModel.findById(replyId).exec(); // Correct parameter name
-      if (!thread) {
-        return; // If the reply doesn't exist, skip deletion
-      }
-    
-      // Recursively delete nested replies
-      for (const nestedReplyId of thread.threads) { // Correct field name: "threads"
-        await this.deleteReply(nestedReplyId.toString());
-      }
-    
-      // Delete the reply itself
-      await this.threadModel.findByIdAndDelete(replyId).exec();
-    } 
-  ///////////////////////////////////////////////////////////////////
-
-  async deleteStudentForum(courseId: string, forumId: string, instructorId: string): Promise<void> {
-    const course = await this.courseModel.findById(courseId).exec();
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
-    }
-  
-    // Verify that the logged-in user is the instructor of the course
-    if (course.instructor.toString() !== instructorId) {
-      throw new UnauthorizedException('You are not authorized to delete forums in this course');
-    }
-  
-    const forum = await this.forumModel.findById(forumId).exec();
-    if (!forum) {
-      throw new NotFoundException(`Forum with ID ${forumId} not found`);
-    }
-  
-    // Ensure the forum is not created by the instructor
-    if (forum.createdBy.toString() === instructorId) {
-      throw new UnauthorizedException('Instructors cannot delete their own forums using this API');
-    }
-  
-    // Recursively delete threads within the forum
-    for (const threadId of forum.threads) {
-      await this.deleteThreadRecursively(threadId.toString());
-    }
-  
-    // Delete the forum
-    await this.forumModel.findByIdAndDelete(forumId).exec();
-  
-    // Remove the forum reference from the course's forums array
-    course.forums = course.forums.filter((id) => id.toString() !== forumId.toString());
-    await course.save();
-  }
-  
-
-
-  
-//-------------------------------------
-
+ 
   // Upload Resource Method
-  async uploadResource(courseCode: string, file: Express.Multer.File): Promise<Course> {
-    console.log('File received:', file);
-  
-    // Ensure that file is provided
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-  
-    // Ensure the filename is set properly
-    if (!file.filename) {
-      throw new BadRequestException('File is missing or filename not set properly');
-    }
-  
-    console.log('File upload initiated:', file);
-  
-    // Find the course by course code
-    const course = await this.courseModel.findOne({ course_code: courseCode });
-    if (!course) {
-      throw new NotFoundException(`Course with code ${courseCode} not found`);
-    }
-  
-    // Save the file metadata to the course
-    const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
-    course.resources.push(filePath);
-  
-    // Save the course after updating resources
-    await course.save();
-    console.log('Resource added to course:', filePath);
+  // async uploadResource(courseId: string, file: Express.Multer.File): Promise<Course> {
+  //   console.log('File received:', file);
+
+  //   // Ensure that file is provided
+  //   if (!file) {
+  //     throw new BadRequestException('No file uploaded');
+  //   }
+
+  //   // Ensure the filename is set properly
+  //   if (!file.filename) {
+  //     throw new BadRequestException('File is missing or filename not set properly');
+  //   }
+
+  //   console.log('File upload initiated:', file);
+
+  //   // Find the course by course ID
+  //   const course = await this.courseModel.findById(courseId);
+  //   if (!course) {
+  //     throw new NotFoundException(`Course with ID ${courseId} not found`);
+  //   }
+
+  //   // Save the file metadata to the course
+  //  // const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
+  //   course.resources.push(file.filename);
+
+  //   // Save the course after updating resources
+  //   await course.save();
+  //   console.log('Resource added to course:', file.filename);
     
-    return course;
-  }
+  //   return course;
+  // }
+
   
   // Get Resource Method
-  async getResource(courseCode: string, fileName: string): Promise<fs.ReadStream> {
-    // Construct the file path to the 'uploads' directory in your server
-    const filePath = path.join(__dirname, '../../../uploads', fileName);
-  
-    // Check if the file exists in the filesystem
-    if (!fs.existsSync(filePath)) {
-      // If the file doesn't exist, throw a NotFoundException
-      throw new NotFoundException(`File not found: ${fileName}`);
-    }
-  
-    // Return the file stream if the file exists
-    return fs.createReadStream(filePath);
-  }
+  // async getResource(courseId: string, fileName: string): Promise<fs.ReadStream> {
+  //   // Find the course by course ID
+  //   const course = await this.courseModel.findById(courseId);
+  //   if (!course) {
+  //     throw new NotFoundException(`Course with ID ${courseId} not found`);
+  //   }
+
+  //   // Check if the file exists in the course resources
+  //   const filePath = fileName;
+  //   if (!course.resources.includes(filePath)) {
+  //     throw new NotFoundException(`File not found in course resources: ${fileName}`);
+  //   }
+
+  //   // Construct the file path to the 'uploads' directory in your server
+  //   const fullPath = path.join(__dirname, '../../../uploads', fileName);
+
+  //   // Check if the file exists in the filesystem
+  //   if (!fs.existsSync(fullPath)) {
+  //     // If the file doesn't exist, throw a NotFoundException
+  //     throw new NotFoundException(`File not found: ${fileName}`);
+  //   }
+
+  //   // Return the file stream if the file exists
+  //   return fs.createReadStream(fullPath);
+  // }
+
   //get enrolled students
   async getEnrolledStudents(course_id: string): Promise<mongoose.ObjectId[]> {
     const course = await this.courseModel.findById(course_id).populate('students').exec();
@@ -246,19 +118,23 @@ export class CourseService {
     return course.students;
   }
 
-  async create(@Req() req : Request, {course_code, title, description, numberofQuizzes, category, difficulty }): Promise<Course> {
+
+//create course
+  async create(@Req() req : Request, createCourseDto: CreateCourseDto): Promise<Course> {
     try {
       const course = new this.courseModel({
-        course_code: course_code,
-        title,
-        description,
-        numOfQuizzes: numberofQuizzes,
-        category,
-        difficulty,
+        title: createCourseDto.title,
+        description: createCourseDto.description,
+        category : createCourseDto.category,
+        keywords: createCourseDto.keywords,
         instructor: req.user['sub'],
+        students: [],
+        modules: [],
+        forums: [],
+        availability: 'Public',
+        ratings: [],  
       });
       //update the instructor's courses taught
-      
       const instructor = await this.instructorModel.findById(course.instructor);
       instructor.coursesTaught.push(course._id as unknown as mongoose.ObjectId);
       await instructor.save();
@@ -272,18 +148,7 @@ export class CourseService {
     return await this.courseModel.find().populate('instructor').exec();
   }
 
-  async findOne(course_code: string): Promise<Course> {
-    const course = await this.courseModel.findOne({
-      _id: new Types.ObjectId(course_code), // Convert string to ObjectId
-    }).populate('instructor').exec();
-
-    if (!course) {
-      throw new NotFoundException(`Course with code ${course_code} not found`);
-    }
-
-    return course;
-  }
-  async findOneByCourseId(course_id: string): Promise<Course> {
+  async findOne(course_id: string): Promise<Course> {
     const course = await this.courseModel.findById(course_id).populate('instructor').exec();
 
     if (!course) {
@@ -293,35 +158,35 @@ export class CourseService {
     return course;
   }
 
-  async update(req: Request, courseId: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
-    const course = await this.courseModel.findById(courseId);
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
+
+
+
+  async update(req : Request, courseId: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
+    const updatedCourse = await this.courseModel
+      .findOneAndUpdate({ _id: courseId }, updateCourseDto, { new: true })
+      .populate('instructor')
+      .exec();
+    if (!updatedCourse) {
+      throw new NotFoundException(`Course with id ${courseId} not found`);
     }
-
-    // Update the course fields
-    course.title = updateCourseDto.title;
-    course.description = updateCourseDto.description;
-    course.category = updateCourseDto.category;
-    course.difficulty = updateCourseDto.difficulty;
-    course.numOfQuizzes = updateCourseDto.numOfQuizzes;
-
-    return await course.save();
+    return updatedCourse;
   }
+
+
+
+
+
 
   async delete(id: string): Promise<void> {
     try {
-      const course = await this.courseModel.findById(id).exec();
-      //delete all quizzes in this course
-      const quizzes = course.quizzes;
-      await this.quizService.deleteQuizzes(quizzes);
-      const result = await this.courseModel.findByIdAndDelete(id).exec();
-      console.log(result);
-      if (!result) {
-        throw new NotFoundException(`Course with code ${id} not found`);
+      const course = await this.courseModel.findById(id);
+      if (!course) {
+        throw new NotFoundException(`Course with ID ${id} not found`);
       }
+      course.availability = 'Private';
+      await course.save();
     } catch (error) {
-      throw new InternalServerErrorException('Error deleting course');
+      throw new InternalServerErrorException('Error deleting course', error);
     }
   }
 
@@ -360,19 +225,23 @@ export class CourseService {
     return courses;
   }
   
-  //GET COURSE QUIZZES
-  async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
-    const course = await this.courseModel.findById(courseId).populate('quizzes').exec();
+  // //GET COURSE QUIZZES
+  // async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
+  //   const course = await this.courseModel.findById(courseId).populate('quizzes').exec();
     
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
-    }
+  //   if (!course) {
+  //     throw new NotFoundException(`Course with ID ${courseId} not found`);
+  //   }
 
-    const quizIds = course.quizzes; 
-    const quizzes = await this.quizModal.find({ _id: { $in: quizIds } }).exec();
-    return quizzes;
+  //   const quizIds = course.quizzes; 
+  //   const quizzes = await this.quizModal.find({ _id: { $in: quizIds } }).exec();
+  //   return quizzes;
+  // }
+
+
+  async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
+    return this.courseModel.find({ keywords: keyword }).exec();
   }
-
   
 
 }

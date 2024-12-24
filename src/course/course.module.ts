@@ -11,9 +11,14 @@ import { QuestionService } from 'src/quiz/services/question.service';
 import { QuestionSchema } from 'src/quiz/models/question.schema';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { ProgressSchema } from 'src/progress/models/progress.schema';
-import { ForumSchema } from 'src/communication/forum/forum.schema';
-import { ThreadSchema } from 'src/communication/forum/Thread.schema';
-import ForumService from 'src/communication/forum/forum.service';
+import WebSocketService from '../../frontapp/app/_utils/websocket.service';
+import { NotificationService } from 'src/communication/notifications/notification.service';
+import { NotificationGateway } from 'src/communication/notifications/notification.gateway';
+import { CommunicationModule } from 'src/communication/communication.module';
+import { NotificationSchema } from 'src/communication/notifications/notification.schema';
+import { UserService } from 'src/user/services/user.service';
+import { AdminSchema } from 'src/user/models/user.schema';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -21,20 +26,28 @@ import ForumService from 'src/communication/forum/forum.service';
       { name: 'User', schema: UserSchema },
       { name: 'Instructor', schema: InstructorSchema },
       { name: 'Student', schema: StudentSchema },
-      { name: 'Quiz', schema: QuizSchema},
-      { name: 'Question', schema: QuestionSchema},
-      { name: 'Progress', schema: ProgressSchema},
-      { name: 'Forum', schema: ForumSchema},
-      { name: 'Thread', schema: ThreadSchema},
-      
+      { name: 'Quiz', schema: QuizSchema },
+      { name: 'Question', schema: QuestionSchema },
+      { name: 'Progress', schema: ProgressSchema },
+      { name: 'Notification', schema: NotificationSchema },
+      { name: 'Admin', schema: AdminSchema },
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
-     })
+    }),
+    CommunicationModule,
   ],
   controllers: [CourseController],
-  providers: [CourseService, QuizService, QuestionService, ProgressService, ForumService ],
-  exports: [CourseService, QuizService, QuestionService, ProgressService, ForumService],
+  providers: [
+    CourseService,
+    QuizService,
+    QuestionService,
+    ProgressService,
+    NotificationService,
+    NotificationGateway,
+    NotificationService,
+    UserService],
+  exports: [CourseService],
 })
-export class CourseModule {}
+export class CourseModule { }

@@ -9,7 +9,6 @@ import { AxiosResponse } from "axios";
 import { RootState } from "../../store";
 import { useSelector } from "react-redux";
 
-
 interface Course {
   id: string;
   name: string;
@@ -43,6 +42,8 @@ function StudentDashboard() {
         const response = await axiosInstance.get("/auth/me", {
           withCredentials: true,
         });
+
+        console.log('user', response.data.user);
 
         const userId = response.data.id;
         setUserId(userId);
@@ -80,6 +81,8 @@ function StudentDashboard() {
               }
             })
           );
+
+          console.log("Raw Courses Data:", coursesData);
 
           const formattedCourses = coursesData
             .filter((res): res is AxiosResponse => res !== null) // Remove null values
@@ -233,12 +236,14 @@ function StudentDashboard() {
         <h2 className="text-xl font-semibold mb-4">Quiz Results</h2>
         <ul>
           {quizResults.length > 0 ? (
-            quizResults.map((result, index) => (
-              <li key={`quiz-result-${index}`} className="mb-2">
-                <strong>Course ID:</strong> {result.quizId || "N/A"} -{" "}
-                <strong>Score:</strong> {result.score || 0}%
-              </li>
-            ))
+            quizResults
+              .filter((result) => result.quizId) // Filter results to only include those with quizId
+              .map((result, index) => (
+                <li key={`quiz-result-${index}`} className="mb-2">
+                  <strong>Course ID:</strong> {result.quizId || "N/A"} -{" "}
+                  <strong>Score:</strong> {result.score || 0}%
+                </li>
+              ))
           ) : (
             <p>No quiz results available.</p> // Fallback when quizResults array is empty
           )}

@@ -1,4 +1,3 @@
-// filepath: /f:/E-learning-platform-GIU2024/frontapp/store/slices/courseSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../_utils/axiosInstance';
 
@@ -8,7 +7,7 @@ interface Course {
   progress: number;
 }
 
-interface CourseState {
+export interface CourseState { // Export CourseState
   courses: Course[];
   loading: boolean;
   error: string | null;
@@ -20,7 +19,7 @@ const initialState: CourseState = {
   error: null,
 };
 
-//fetches enrolled courses
+// Fetches enrolled courses
 export const fetchCourses = createAsyncThunk('courses/fetchCourses', async (userId: string) => {
   const response = await axiosInstance.get(`/users/${userId}/enrolledCourses`, { withCredentials: true });
   return response.data;

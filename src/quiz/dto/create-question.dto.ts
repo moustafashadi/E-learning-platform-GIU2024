@@ -1,20 +1,41 @@
-import { IsString, IsNotEmpty, IsMongoId } from 'class-validator';
-import { Types } from 'mongoose';
+import { IsString, IsNotEmpty, IsMongoId, IsEnum, IsNumber, IsArray, ValidateNested, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Schema as MongooseSchema } from 'mongoose';
+
+class OptionDto {
+  @IsString()
+  @IsNotEmpty()
+  text: string;
+
+  @IsString()
+  @IsNotEmpty()
+  identifier: string;
+}
 
 export class CreateQuestionDto {
-  @IsMongoId()
-  @IsNotEmpty()
-  quiz: Types.ObjectId;
-
   @IsString()
   @IsNotEmpty()
   content: string;
 
-  @IsString()
+  @IsEnum(['A', 'B', 'C', 'D'])
   @IsNotEmpty()
   correctAnswer: string;
 
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
-  difficulty: string; // easy, medium, hard
+  module: MongooseSchema.Types.ObjectId;
+
+  @IsEnum(['MCQ', 'True/False'])
+  @IsNotEmpty()
+  type: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @Min(1)
+  weight: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OptionDto)
+  options: OptionDto[];
 }

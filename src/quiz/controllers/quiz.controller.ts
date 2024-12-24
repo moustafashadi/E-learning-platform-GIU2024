@@ -4,23 +4,36 @@ import { QuizService } from '../services/quiz.service';
 import { Role } from 'src/auth/decorators/roles.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
+import { Question } from '../models/question.schema';
+import { ResponseGateway } from 'src/response/gateway/response.gateway';
+import { QuestionService } from '../services/question.service';
+import { ResponseService } from 'src/response/services/response.service';
+import { PerformanceMatrixService } from 'src/analytics/services/performanceMatrix.service';
 
 @UseGuards(AuthenticationGuard)
 @Controller('quiz')
 export class QuizController {
   constructor(
+    private readonly responseService: ResponseService,
+    private readonly questionService: QuestionService,
+    private readonly responseGateway: ResponseGateway,
     private readonly quizService: QuizService,
+    private readonly performanceMatrixService: PerformanceMatrixService,
   ) { }
 
   //create quiz
-  @UseGuards(AuthenticationGuard)
   @Post('/:courseId')
   async createQuiz(
-    @Body() title: string,
+    @Body('title') title: string, // Extract `title` directly
     @Req() req,
-    @Param('courseId') courseId: string,) {
-    return await this.quizService.createQuiz(title, req.user.sub, courseId);
+    @Param('courseId') courseId: string,
+  ) {
+    if (!title) {
+      throw new Error('Quiz title is required');
+    }
+    //return await this.quizService.createQuiz(title, req.user.sub, courseId);
   }
+
 
   //getQuiz by id
   @Get(':quizId')
@@ -34,20 +47,12 @@ export class QuizController {
     @Param('studentId') studentId: string,
   ) {
     console.log('courseId', courseId);
-    const quizResults = await this.quizService.getStudentQuizResults(
-      courseId,
-      studentId,
-    );
-    return quizResults;
+    // const quizResults = await this.quizService.getStudentQuizResults(
+    // courseId,
+    // studentId,
+    // );
+    // return quizResults;
   }
 
-  @UseGuards(AuthorizationGuard)
-  @Roles(Role.Instructor)
-  @Delete('/:quizId')
-  async deleteQuiz(
-    @Param('quizId') quizId: string,
-  ) {
-    console.log('API called')
-    return this.quizService.deleteQuiz(quizId);
-  }
 }
+

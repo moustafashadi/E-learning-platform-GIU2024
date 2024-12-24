@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { Provider, useDispatch } from 'react-redux';
 import store from './store';
 import { rehydrateAuthState } from './store/slices/authSlice';
+import socket from './store/slices/socketSlice';
+import { setSocket } from './store/slices/notificationSlice';
 
 function RehydrateAuthState() {
   const dispatch = useDispatch();
@@ -13,6 +15,7 @@ function RehydrateAuthState() {
     if (authState) {
       dispatch(rehydrateAuthState(JSON.parse(authState)));
     }
+    dispatch(setSocket(socket));
   }, [dispatch]);
 
   return null;
