@@ -5,6 +5,7 @@ import { Resource } from 'src/resources/resources.schema';
 
 @Schema({ timestamps: true }) // Date for creation and updates
 export class Module {
+  
   @Prop({ required: true })
   title: string;
 

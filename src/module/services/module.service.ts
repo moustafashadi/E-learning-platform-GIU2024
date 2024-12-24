@@ -12,8 +12,8 @@ export class ModuleService {
   ) {}
 
   // Create a new module
-  async create(courseId: string, createModuleDto: CreateModuleDto): Promise<Module> {
-    const newModule = new this.moduleModel(courseId, createModuleDto);
+  async create(createModuleDto: CreateModuleDto): Promise<Module> {
+    const newModule = new this.moduleModel(createModuleDto);
     return await newModule.save();
   }
 
