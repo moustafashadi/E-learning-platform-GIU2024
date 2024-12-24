@@ -11,6 +11,7 @@ import { QuestionSchema } from 'src/quiz/models/question.schema';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { ProgressSchema } from 'src/progress/models/progress.schema';
 import { NotificationGateway } from 'src/communication/notifications/notification.gateway';
+import { PerformanceMatrixSchema } from 'src/analytics/models/performanceMatrix.schema';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { NotificationGateway } from 'src/communication/notifications/notificatio
       MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
       MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
       MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
+      MongooseModule.forFeature([{ name: 'Performance', schema: PerformanceMatrixSchema }]),
     ],
     controllers: [AnalyticsController],
     providers: [QuizService,QuestionService, ProgressService,NotificationGateway],

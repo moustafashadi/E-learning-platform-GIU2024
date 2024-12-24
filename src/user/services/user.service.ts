@@ -179,7 +179,7 @@ export class UserService {
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
-  
+
     // Update student model
     const updatedStudent = await this.studentModel.findByIdAndUpdate(
       id,
@@ -187,7 +187,7 @@ export class UserService {
       { new: true }  // Return the updated document
     );
     if (updatedStudent) return updatedStudent;
-  
+
     // Update instructor model
     const updatedInstructor = await this.instructorModel.findByIdAndUpdate(
       id,
@@ -195,7 +195,7 @@ export class UserService {
       { new: true }
     );
     if (updatedInstructor) return updatedInstructor;
-  
+
     // Update admin model
     const updatedAdmin = await this.adminModel.findByIdAndUpdate(
       id,
@@ -203,11 +203,11 @@ export class UserService {
       { new: true }
     );
     if (updatedAdmin) return updatedAdmin;
-  
+
     // Throw if no matching user is found
     throw new NotFoundException(`User with ID ${id} not found`);
   }
-  
+
 
   async remove(id: string): Promise<UserDocument> {
     const deletedStudent = await this.studentModel.findByIdAndDelete(id).exec();
@@ -245,20 +245,20 @@ export class UserService {
   }
 
 
-async getEnrolledCourses(userId: string): Promise<Course[]> {
-  // Fetch the student by ID, and populate the enrolledCourses field
-  const student = await this.studentModel
-    .findById(userId)
-    .populate<{ enrolledCourses: Course[] }>('enrolledCourses') 
-    .exec();
+  async getEnrolledCourses(userId: string): Promise<Course[]> {
+    // Fetch the student by ID, and populate the enrolledCourses field
+    const student = await this.studentModel
+      .findById(userId)
+      .populate<{ enrolledCourses: Course[] }>('enrolledCourses')
+      .exec();
 
-  if (!student) {
-    throw new NotFoundException(`Student with id ${userId} not found`);
+    if (!student) {
+      throw new NotFoundException(`Student with id ${userId} not found`);
+    }
+
+    // Return the populated courses (enrolledCourses is now of type Course[])
+    return student.enrolledCourses;
   }
-
-  // Return the populated courses (enrolledCourses is now of type Course[])
-  return student.enrolledCourses; 
-}
 
   async getCompletedCourses(userId: string) {
     try {
@@ -290,29 +290,29 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
     console.log(userId, courseId);
     const student = await this.studentModel.findById(userId);
     const course = await this.courseModel.findById(courseId);
-    const progress = await this.progressModel.create({ userId: student._id, courseId: course._id, 0 : Number});
-  
+    const progress = await this.progressModel.create({ userId: student._id, courseId: course._id, 0: Number });
+
     if (!student || !course) {
       throw new NotFoundException('Student or course not found');
     }
-  
+
     // Check if the student is already enrolled
     if (student.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
       throw new ConflictException('Student already enrolled in this course');
     }
-    
-  
+
+
     // Add student to course's students array
     course.students.push(student._id as any);
     await course.save(); // Ensure changes to the course are saved
-  
+
     // Add course to student's enrolled courses
     student.enrolledCourses.push(course._id as any);
     await student.save(); // Ensure changes to the student are saved
-  
+
     return student.populate('enrolledCourses');
   }
-  
+
 
   async hasRole(userId: string, role: string): Promise<boolean> {
     const user = await this.userModel.findById(userId);
@@ -330,5 +330,14 @@ async getEnrolledCourses(userId: string): Promise<Course[]> {
     }
     console.log(user.notifications);
     return user.notifications;
+  }
+
+  //
+  async getEnrolledCoursesForInstructor(userId: string) {
+    const student = await this.studentModel.findById(userId);
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    return student.enrolledCourses;
   }
 }

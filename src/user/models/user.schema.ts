@@ -43,13 +43,10 @@ export class Student extends User {
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Course' }], default: [] })
   completedCourses: MongooseSchema.Types.ObjectId[]; // List of course IDs the student completed
 
-  //map that stores completed quizzes along with their grades
-  @Prop({ type: Map, of: Number, default: {} })
-  quizGrades: Map<string, number>;
+  //quizzes solved
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Quiz' }], default: [] })
+  quizzesSolved: MongooseSchema.Types.ObjectId[];
 
-  //map that stores questions solved by the student
-  @Prop({ type: [String], default: [] })
-  questionsSolved: string[];
 }
 
 export type StudentDocument = Student & Document;

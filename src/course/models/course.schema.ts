@@ -7,9 +7,6 @@ import { User } from 'src/user/models/user.schema';
 export class Course {
   _id: MongooseSchema.Types.ObjectId;
 
-  @Prop({ required: true, unique: true })
-  course_code: string;
-
   @Prop({ required: true })
   title: string;
 
@@ -19,31 +16,36 @@ export class Course {
   @Prop({ required: true })
   category: string;
 
-  @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced'] })
-  difficulty: string;
-
-  @Prop({
-    type: [String],
-    default: [],
-  })
-  resources: string[];
-  
-  //number of quizzes
-  @Prop({ default: 0 })
-  numOfQuizzes: number;
+  //keywords
+  @Prop({ type: [String], default: [] })
+  keywords: string[];
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   instructor: MongooseSchema.Types.ObjectId; 
 
-  //quizzes
-  @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Quiz'}], default: [] })
-  quizzes: MongooseSchema.Types.ObjectId[];
-
   //array of students
   @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'User'}], default: [] })
   students: MongooseSchema.Types.ObjectId[];
+
+  //modules
+  @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Module'}], default: [] })
+  modules: MongooseSchema.Types.ObjectId[];
+
+  //forums
+  @Prop({ type: [{type : MongooseSchema.Types.ObjectId, ref : 'Forum'}], default: [] })
+  forums: MongooseSchema.Types.ObjectId[];
+
+  //availability
+  @Prop({ required: true, enum: ['Public', 'Private'] })
+  availability: string;
+
+  //rating
+  @Prop({ default: 0 })
+  rating: number;
 }
 
 export type CourseDocument = Course & Document;
 export const CourseSchema = SchemaFactory.createForClass(Course);
 
+//enable text search on the title field
+CourseSchema.index({ title: 'text' , keywords: 'text' });

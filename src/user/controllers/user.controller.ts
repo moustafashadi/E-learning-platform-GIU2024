@@ -10,10 +10,9 @@ import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 import { Request, Response } from 'express';
 
 
-
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   //TESTED - WORKING
   @Post()
@@ -51,7 +50,7 @@ export class UserController {
   }
 
   //TESTED - WORKING
-  @UseGuards(AuthenticationGuard,AuthorizationGuard)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @Delete(':id')
   @Roles(Role.Admin)
   remove(@Param('id') id: string) {
@@ -84,10 +83,17 @@ export class UserController {
   }
 
   //get notifications
+  @UseGuards(AuthenticationGuard)
   @Get(':userId/notifications')
   async getNotifications(@Param('userId') userId: string) {
     return this.userService.getNotifications(userId);
   }
 
-  
+  //get enrolled courses for a student
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
+  @Get(':userId/enrolledCourses')
+  async getEnrolledCoursesForInstructor(@Param('userId') userId: string) {
+    return this.userService.getEnrolledCoursesForInstructor(userId);
+  }
 }
