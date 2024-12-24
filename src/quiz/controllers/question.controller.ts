@@ -104,63 +104,64 @@ export class QuestionController {
     return this.questionService.getQuestionById(id);
   }
 
-  @UseGuards(AuthorizationGuard)
-  @Roles(Role.Student)
-  @Post('/:id/submit')
-  async submitAnswer(
-    @Req() req: Request,
-    @Param('id') questionId: string,
-    @Body() { chosenAnswer }: { chosenAnswer: string },
-  ) {
-    console.log(1);
-    const question = await this.questionService.getQuestionById(questionId);
-    console.log(2);
-    const userId = req.user['sub'];
-    const student = await this.studentModel.findById(userId);
-    if (!student.questionsSolved) {
-      student.questionsSolved = [];
-    }
-    console.log(3);
-    const quizId = await this.quizService.getQuiz(question.quiz.toString());
-    const parsedQuizId = quizId._id.toString();
-    console.log(4);
-    student.questionsSolved.push(questionId);
-    const savedResponse = await this.responseService.evaluateResponse(
-      userId,
-      parsedQuizId,
-      questionId,
-      chosenAnswer,
-    );
-    console.log(5);
-    // Real-time feedback
-    this.responseGateway.sendResponseToClient(userId, {
-      questionId: savedResponse.questionId,
-      isCorrect: await this.questionService.isCorrect(questionId, chosenAnswer),
-      feedbackMessage: savedResponse.feedbackMessage,
-    });
-    console.log(6);
-    // Check if quiz is done
-    const quizDone = await this.quizService.checkIfAllQuestionsSolved(req, parsedQuizId);
-    console.log(7);
-    if (quizDone) {
-      // Calculate final grade
+  // @UseGuards(AuthorizationGuard)
+  // @Roles(Role.Student)
+  // @Post('/:id/submit')
+  // async submitAnswer(
+  //   @Req() req: Request,
+  //   @Param('id') questionId: string,
+  //   @Body() { chosenAnswer }: { chosenAnswer: string },
+  // ) {
+  //   console.log(1);
+  //   const question = await this.questionService.getQuestionById(questionId);
+  //   console.log(2);
+  //   const userId = req.user['sub'];
+  //   const student = await this.studentModel.findById(userId);
+  //   if (!student.questionsSolved) {
+  //     student.questionsSolved = [];
+  //   }
+  //   console.log(3);
+  //   const quizId = await this.quizService.getQuiz(question.quiz.toString());
+  //   const parsedQuizId = quizId._id.toString();
+  //   console.log(4);
+  //   student.questionsSolved.push(questionId);
+  //   const savedResponse = await this.responseService.evaluateResponse(
+  //     userId,
+  //     parsedQuizId,
+  //     questionId,
+  //     chosenAnswer,
+  //   );
+  //   console.log(5);
+  //   // Real-time feedback
+  //   this.responseGateway.sendResponseToClient(userId, {
+  //     questionId: savedResponse.questionId,
+  //     isCorrect: await this.questionService.isCorrect(questionId, chosenAnswer),
+  //     feedbackMessage: savedResponse.feedbackMessage,
+  //   });
+  //   console.log(6);
+  //   // Check if quiz is done
+  //   const quizDone = await this.quizService.checkIfAllQuestionsSolved(req, parsedQuizId);
+  //   console.log(7);
+  //   if (quizDone) {
+  //     // Calculate final grade
 
 
-      const responses = await this.responseService.getResponsesForQuiz(
-        userId,
-        parsedQuizId,
-      );
+  //     const responses = await this.responseService.getResponsesForQuiz(
+  //       userId,
+  //       parsedQuizId,
+  //     );
+  //     const quiz = await this.quizService.getQuiz(parsedQuizId);
      
-      const correctAnswers = responses.filter((r) => r.isCorrect).length;
-      const totalQuestions = responses.length;
-      const grade = (correctAnswers / totalQuestions) * 100;
-      student.quizGrades.set(parsedQuizId, grade);
-      await student.save();
-    } else {
-      // next question
-      const nextQuestion = await this.questionService.getNextQuestion(req, parsedQuizId);
-    }
+  //     const correctAnswers = responses.filter((r) => r.isCorrect).length;
+  //     const totalQuestions = quiz.questions.length;
+  //     const grade = (correctAnswers / totalQuestions) * 100;
+  //     student.quizGrades.set(parsedQuizId, grade);
+  //     await student.save();
+  //   } else {
+  //     // next question
+  //     const nextQuestion = await this.questionService.getNextQuestion(req, parsedQuizId);
+  //   }
 
-    return { status: 'ok' };
-  }
+  //   return { status: 'ok' };
+  // }
 }

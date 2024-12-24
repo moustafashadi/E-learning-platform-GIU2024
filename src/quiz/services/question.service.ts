@@ -95,50 +95,50 @@ export class QuestionService {
     return question.correctAnswer === chosenAnswer;
   }
 
-  async getNextQuestion(req: Request, quizId: string): Promise<Question> {
-    try {
-      const quiz = await this.quizModel.findById(quizId);
-      const questions = await this.questionModel.find({ _id: { $in: quiz.questions } });
+  // async getNextQuestion(req: Request, quizId: string): Promise<Question> {
+  //   try {
+  //     const quiz = await this.quizModel.findById(quizId);
+  //     const questions = await this.questionModel.find({ _id: { $in: quiz.questions } });
 
-      const userId = req.user['sub'];
-      const student = await this.studentModel.findById(userId);
+  //     const userId = req.user['sub'];
+  //     const student = await this.studentModel.findById(userId);
 
-      const unsolved = questions.filter(
-        (q) => !student.questionsSolved.includes(q._id as any),
-      );
-      if (unsolved.length === 0) {
-        return null;
-      }
-      return unsolved[0];
-    } catch (error) {
-      console.log(error.message);
-      throw new InternalServerErrorException('Error getting next question');
-    }
-  }
+  //     const unsolved = questions.filter(
+  //       (q) => !student.questionsSolved.includes(q._id as any),
+  //     );
+  //     if (unsolved.length === 0) {
+  //       return null;
+  //     }
+  //     return unsolved[0];
+  //   } catch (error) {
+  //     console.log(error.message);
+  //     throw new InternalServerErrorException('Error getting next question');
+  //   }
+  // }
 
   async deleteQuestion(questionId: string): Promise<Question> {
     return this.questionModel.findByIdAndDelete(questionId);
   }
 
-  async deleteQuestions(questions: ObjectId[]) {
-    try {
-      for (const questionId of questions) {
-        const question = await this.questionModel.findById(questionId);
-        const quizId = question.quiz;
-        const quiz = await this.quizModel.findById(quizId);
-        const courseId = quiz.course;
-        const students = await this.studentModel.find({ enrolledCourses: courseId });
+  // async deleteQuestions(questions: ObjectId[]) {
+  //   try {
+  //     for (const questionId of questions) {
+  //       const question = await this.questionModel.findById(questionId);
+  //       const quizId = question.quiz;
+  //       const quiz = await this.quizModel.findById(quizId);
+  //       const courseId = quiz.course;
+  //       const students = await this.studentModel.find({ enrolledCourses: courseId });
 
-        for (const student of students) {
-          student.questionsSolved = student.questionsSolved.filter(
-            (qId) => qId.toString() !== questionId.toString(),
-          );
-          await student.save();
-        }
-        await this.questionModel.findByIdAndDelete(questionId).exec();
-      }
-    } catch (error) {
-      throw new InternalServerErrorException('Error deleting questions');
-    }
-  }
+  //       for (const student of students) {
+  //         student.questionsSolved = student.questionsSolved.filter(
+  //           (qId) => qId.toString() !== questionId.toString(),
+  //         );
+  //         await student.save();
+  //       }
+  //       await this.questionModel.findByIdAndDelete(questionId).exec();
+  //     }
+  //   } catch (error) {
+  //     throw new InternalServerErrorException('Error deleting questions');
+  //   }
+  // }
 }

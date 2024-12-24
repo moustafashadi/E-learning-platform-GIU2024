@@ -71,13 +71,14 @@ export class ModuleService {
     return module;
   }
 
-  // Upload resources to a module
-  async uploadResource(module_code: string, resourceUrl: string): Promise<Module> {
-    const module = await this.moduleModel.findOne({ module_code });
-    if (!module) {
-      throw new NotFoundException(`Module with code ${module_code} not found`);
-    }
-    module.resources.push(resourceUrl);
-    return await module.save();
-  }
+  // // Upload resources to a module
+  // async uploadResource(module_code: string, resourceUrl: string): Promise<Module> {
+  //   const module = await this.moduleModel.findOne({ module_code });
+  //   if (!module) {
+  //     throw new NotFoundException(`Module with code ${module_code} not found`);
+  //   }
+  //   const resource = this.resourceModel.create({ title: 'Resource', file: resourceUrl, isAvailable: true, versions: 1 });
+  //   module.resources.push(resourceUrl);
+  //   return await module.save();
+  // }
 }

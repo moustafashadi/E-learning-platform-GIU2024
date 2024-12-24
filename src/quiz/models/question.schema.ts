@@ -6,21 +6,24 @@ import { Document } from "mongoose";
 export class Question {
   _id: MongooseSchema.Types.ObjectId;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Quiz' })
-  quiz: MongooseSchema.Types.ObjectId;
-
   @Prop({ required: true })
   content: string;
 
-  // The single correct choice among A, B, C, D
+  // The single correct choice among A, B, C, D true or false
   @Prop({ enum: ["A", "B", "C", "D"], required: true })
   correctAnswer: string;
 
-  @Prop()
-  hint: string;
+  //module
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Module' })
+  module: MongooseSchema.Types.ObjectId;
 
-  @Prop({ required: true })
-  index: number;
+  //type MCQ or True/False
+  @Prop({ required: true, enum: ["MCQ", "True/False"] })
+  type: string;
+
+  //weight of question
+  @Prop({ required: true, enum: [1, 1.4, 1.8] })
+  weight: number;
 
   /**
    * Store multiple-choice options as an array,

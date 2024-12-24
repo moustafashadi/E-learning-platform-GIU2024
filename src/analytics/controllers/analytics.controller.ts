@@ -10,10 +10,10 @@ export class AnalyticsController {
     @Param('courseId') courseId: string,
     @Param('studentId') studentId: string,
   ) {
-    const quizResults = await this.quizService.getStudentQuizResults(
-      courseId,
-      studentId,
-    );
-    return quizResults;
+    // const quizResults = await this.quizService.getStudentQuizResults(
+    //   courseId,
+    //   studentId,
+    // );
+    // return quizResults;
   }
 }

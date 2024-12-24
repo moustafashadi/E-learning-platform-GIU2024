@@ -8,6 +8,8 @@ import { AdminSchema } from './models/user.schema';
 import { UserSchema } from './models/user.schema';
 import { JwtModule } from '@nestjs/jwt';
 import { CourseSchema } from '../course/models/course.schema';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { ProgressSchema } from 'src/progress/models/progress.schema';
 
 @Module({
   imports: [
@@ -17,6 +19,7 @@ import { CourseSchema } from '../course/models/course.schema';
       { name: 'Instructor', schema: InstructorSchema },
       { name: 'Student', schema: StudentSchema },
       { name: 'Course', schema: CourseSchema },
+      { name: 'Progress', schema: ProgressSchema },
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
@@ -24,7 +27,7 @@ import { CourseSchema } from '../course/models/course.schema';
     })
   ],
   controllers: [UserController],
-  providers: [UserService, JwtModule],
+  providers: [UserService, JwtModule, ProgressService],
   exports: [UserService],
 })
 export class UserModule {} 

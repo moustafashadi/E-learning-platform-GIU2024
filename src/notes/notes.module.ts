@@ -7,6 +7,7 @@ import { NotesService } from './services/notes.service';
 import { JwtModule } from '@nestjs/jwt';
 import { UserService } from 'src/user/services/user.service';
 import { UserSchema, AdminSchema, StudentSchema, InstructorSchema } from 'src/user/models/user.schema';
+import { ProgressSchema } from 'src/progress/models/progress.schema';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserSchema, AdminSchema, StudentSchema, InstructorSchema } from 'src/us
     MongooseModule.forFeature([{ name: 'Admin', schema: AdminSchema }]),
     MongooseModule.forFeature([{ name: 'Student', schema: StudentSchema }]),
     MongooseModule.forFeature([{ name: 'Instructor', schema: InstructorSchema }]),
+    MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },

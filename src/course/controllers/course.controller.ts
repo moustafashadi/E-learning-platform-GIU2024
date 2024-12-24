@@ -29,53 +29,43 @@ import { Course } from '../models/course.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 
 @UseGuards(AuthenticationGuard)
 @Controller('courses')
 export class CourseController {
   constructor(private readonly courseService: CourseService) { }
 
+  //TESTED-WORKING
+  @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
-    @Body() 
-    { title, description, category, difficulty, course_code, numberofQuizzes }: 
-    { title: string, description: string, category: string, difficulty: string, course_code: string, numberofQuizzes: number }) {
-    console.log("createCourseDto");
-  
-    // Add additional validation if needed
-    if (!course_code || !title || !description || !category || !difficulty) {
-      throw new BadRequestException("Missing required fields");
-    }
-  
-    return await this.courseService.create(req, { course_code, title, description, numberofQuizzes, category, difficulty });
+    @Body() createCourseDto: CreateCourseDto) {
+    return await this.courseService.create(req, createCourseDto);
   }
-  
 
   @Get()
   async findAll() {
     return await this.courseService.findAll();
   }
 
-
-
-
   @Get('/:id')
   async findOne(@Param('id') id: string) {
-    // This method looks up the course by the MongoDB _id
     return await this.courseService.findOne(id);
   }
 
+  //TESTED -WORKING
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
   @Patch('/:id')
   async update(
     @Req() req: Request,
     @Param('id') courseId: string,
-    @Body() { title, description, category, difficulty, numOfQuizzes }: 
-    { title: string, description: string, category: string, difficulty: string, numOfQuizzes: number }
+    @Body() updateCourseDto: UpdateCourseDto
   ) {
-    console.log('gets called')
     console.log(courseId);
-    return await this.courseService.update(req, courseId, { title, description, category, difficulty, numOfQuizzes });
+    return await this.courseService.update(req, courseId, updateCourseDto);
   }
 
   @Delete('/:id')
@@ -89,6 +79,12 @@ export class CourseController {
     return await this.courseService.getEnrolledStudents(id);
   }
 
+  // Search Courses by Keyword
+  @Get('search/keyword')
+  async searchByKeyword(@Query('keyword') keyword: string) {
+    return await this.courseService.searchCoursesByKeyword(keyword);
+  }
+
   @Get('search/category')
   async searchByCategory(@Query('category') category: string) {
     return await this.courseService.searchCoursesByCategory(category);
@@ -100,38 +96,40 @@ export class CourseController {
   }
 
 
-  @Post(':courseCode/upload-resource')
-  @UseInterceptors(FileInterceptor('file', { storage: CourseService.storage }))
-  async uploadResource(
-    @Param('courseCode') courseCode: string,
-    @UploadedFile() file: Express.Multer.File
-  ) {
-    console.log('Received file in controller:', file);
-    return this.courseService.uploadResource(courseCode, file);
-  }
+  // @Post(':courseId/upload-resource')
+  // @UseInterceptors(FileInterceptor('file', { storage: CourseService.storage }))
+  // async uploadResource(
+  //   @Param('courseId') courseId: string,
+  //   @UploadedFile() file: Express.Multer.File
+  // ) {
+  //   return this.courseService.uploadResource(courseId, file);
+  // }
 
 
-  @Get(':courseCode/resource/:fileName')
-  async getResource(
-    @Param('courseCode') courseCode: string,
-    @Param('fileName') fileName: string,
-    @Res() res: Response,
-  ) {
-    try {
-      const fileStream = await this.courseService.getResource(courseCode, fileName);
 
-      // Pipe the file stream to the response
-      fileStream.pipe(res);
-    } catch (error) {
-      throw new NotFoundException(`Resource not found for course: ${courseCode}, file: ${fileName}`);
-    }
-  }
 
-  //GET COURSE QUIZZES
-  @Get('/:id/quizzes')
-  async getCourseQuizzes(@Param('id') courseId: string) {
-    return await this.courseService.getCourseQuizzes(courseId);
-  }
+
+
+  // @Get(':courseId/resource/:fileName')
+  // async getResource(
+  //   @Param('courseId') courseId: string,
+  //   @Param('fileName') fileName: string,
+  //   @Res() res: Response,
+  // ) {
+  //   try {
+  //     const fileStream = await this.courseService.getResource(courseId, fileName);
+
+  //     // Pipe the file stream to the response
+  //     fileStream.pipe(res);
+  //   } catch (error) {
+  //     throw new NotFoundException(`Resource not found for course: ${courseId}, file: ${fileName}`);
+  //   }
+  // }
+
+
+
+
+
 
   @Get('/teacher/:instructorId')
   async findCoursesByInstructor(
@@ -139,6 +137,9 @@ export class CourseController {
   ) {
     return await this.courseService.findCoursesByInstructor(instructorId);
   }
+
+
+
 
 }
 

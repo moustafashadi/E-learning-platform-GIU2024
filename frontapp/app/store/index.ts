@@ -1,9 +1,11 @@
-"use client";
+// /store/index.ts
+'use client';
+
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer, { AuthState } from './slices/authSlice';
-import courseReducer, { CourseState } from './slices/courseSlice';
-import notificationReducer, { NotificationState } from './slices/notificationSlice';
-import quizReducer, { QuizState } from './slices/quizResultSlice';
+import authReducer from './slices/authSlice';
+import courseReducer from './slices/courseSlice';
+import notificationReducer from './slices/notificationSlice';
+import quizReducer from './slices/quizResultSlice';
 
 const store = configureStore({
   reducer: {

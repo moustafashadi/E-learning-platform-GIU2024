@@ -20,7 +20,7 @@ export class ResponseService {
     const isCorrect = question.correctAnswer === chosenAnswer;
     const feedbackMessage = isCorrect
       ? 'Correct! Great job.'
-      : `Incorrect. Hint: ${question.hint || 'Review the related material for more understanding.'}`;
+      : `Incorrect.'Review the related material for more understanding.`;
 
     const response = new this.responseModel({
       userId,

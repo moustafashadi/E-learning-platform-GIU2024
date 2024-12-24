@@ -15,32 +15,32 @@ export class ProgressService {
   ) {}
 
   //update progress
-  async updateProgress(userId: string, courseId: string) {
-    console.log("sid "+userId);
-    const user = await this.studentModal.findById(userId);
-    console.log("bid "+courseId);
-    const course = await this.courseModel.findById(courseId);
-    if (!user || !course) {
-      throw new Error('User or course not found');
-    }
-    const progress = await this.progressModel.findOne({ userId, courseId }).exec();
-    if (!progress) {
-      throw new Error('Progress record not found');
-    }
+  // async updateProgress(userId: string, courseId: string) {
+  //   console.log("sid "+userId);
+  //   const user = await this.studentModal.findById(userId);
+  //   console.log("bid "+courseId);
+  //   const course = await this.courseModel.findById(courseId);
+  //   if (!user || !course) {
+  //     throw new Error('User or course not found');
+  //   }
+  //   const progress = await this.progressModel.findOne({ userId, courseId }).exec();
+  //   if (!progress) {
+  //     throw new Error('Progress record not found');
+  //   }
 
-    const unfilteredSolvedQuizzesIds = Array.from(user.quizGrades.keys());
+  //   const unfilteredSolvedQuizzesIds = Array.from(user.quizGrades.keys());
 
-    const courseQuizzesIds = course.quizzes;
+  //   const courseQuizzesIds = course.quizzes;
 
-    const parsedCourseQuizzesIds = courseQuizzesIds.map((quizId) => quizId.toString());
+  //   const parsedCourseQuizzesIds = courseQuizzesIds.map((quizId) => quizId.toString());
 
-    const solvedQuizzesIds = unfilteredSolvedQuizzesIds.filter((quizId) => parsedCourseQuizzesIds.includes(quizId));
+  //   const solvedQuizzesIds = unfilteredSolvedQuizzesIds.filter((quizId) => parsedCourseQuizzesIds.includes(quizId));
     
 
-    progress.completionPercentage = (solvedQuizzesIds.length / courseQuizzesIds.length) * 100;
-    await progress.save();
-    return progress
-  }
+  //   progress.completionPercentage = (solvedQuizzesIds.length / courseQuizzesIds.length) * 100;
+  //   await progress.save();
+  //   return progress
+  // }
     
 
 

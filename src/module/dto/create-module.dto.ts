@@ -1,24 +1,26 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsMongoId } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, IsEnum, IsNumber } from 'class-validator';
+import { Resource } from 'src/resources/resources.schema';
+import { Types } from 'mongoose';
 
 export class CreateModuleDto {
   @IsString()
   @IsNotEmpty()
-  module_code: string;
-
-  @IsString()
-  @IsNotEmpty()
   title: string;
-
-  @IsString()
-  @IsNotEmpty()
-  content: string;
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  resources?: string[]; // Optional array of resource URLs
+  questions?: Types.ObjectId[];
 
+  @IsOptional()
   @IsArray()
-  @IsMongoId({ each: true })
-  courses: string[]; // Array of Course IDs to associate with this module
+  resources?: Resource[];
+
+  @IsNotEmpty()
+  @IsEnum(['Beginner', 'Intermediate', 'Advanced'])
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  rating?: number[];
 }
