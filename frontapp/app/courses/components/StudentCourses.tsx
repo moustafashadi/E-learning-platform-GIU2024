@@ -41,6 +41,9 @@ function StudentCourses() {
   const [content, setContent] = useState(""); 
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState<string>("");
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchResults, setSearchResults] = useState<Course[]>([]);
+    
 
 
 
@@ -119,22 +122,22 @@ function StudentCourses() {
     fetchCourses(); // Fetch courses when the component mounts
   }, []);
 
-
-
   const enrollInCourse = async (courseId: string) => {
     try {
-      const { data: authData } = await axiosInstance.get("/auth/me", { withCredentials: true });
-      await axiosInstance.post(
-        `/users/${authData.id}/enroll/${courseId}`,
+      const { data: authData } = await axios.get("http://localhost:3000/auth/me", { withCredentials: true });
+      await axios.post(
+        `http://localhost:3000/users/${authData.id}/enroll/${courseId}`,
         {},
         { withCredentials: true }
       );
       toast.success("Successfully enrolled in the course!");
-
-      const enrolledCourse = availableCourses.find((course) => course._id === courseId);
+  
+      const enrolledCourse = availableCourses.find((course) => course._id === courseId) ||
+                             searchResults.find((course) => course._id === courseId);
       if (enrolledCourse) {
         setEnrolledCourses((prev) => [...prev, enrolledCourse]);
         setAvailableCourses((prev) => prev.filter((course) => course._id !== courseId));
+        setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
       }
     } catch (error) {
       toast.error("Failed to enroll in the course.");
@@ -142,7 +145,7 @@ function StudentCourses() {
   };
 
   const viewCourseDetails = (courseId: string) => {
-    const course = enrolledCourses.concat(availableCourses).find((course) => course._id === courseId);
+    const course = enrolledCourses.concat(availableCourses, searchResults).find((course) => course._id === courseId);
     setSelectedCourse(course || null); // Set the selected course
   };
 
@@ -248,6 +251,20 @@ const handleSaveClick = async (noteId: string) => {
 };
 
 
+const handleSearch = async () => {
+  try {
+    const response = await axios.get(`http://localhost:3000/courses/search/keyword?keyword=${searchKeyword}`, { withCredentials: true });
+    setSearchResults(response.data);
+
+    if (response.data.length === 0) {
+      alert('No courses found');
+    }
+  } catch (error) {
+    console.error('Error searching courses:', error);
+    alert('Error searching courses');
+  }
+};
+
 
 
   if (loading) {
@@ -260,7 +277,57 @@ const handleSaveClick = async (noteId: string) => {
 
   return (
     <div className="mt-[2rem] p-6 space-y-6 bg-gray-100">
-      {!selectedCourse && (
+      <div className="mb-4">
+        <input
+          type="text"
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          placeholder="Search by keyword"
+          className="px-4 py-2 border rounded-md"
+        />
+        <button
+          onClick={handleSearch}
+          className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Search
+        </button>
+      </div>
+
+      {!selectedCourse && searchResults.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Search Results</h2>
+          <ul className="space-y-4">
+            {searchResults.map((course) => (
+              <li key={course._id} className="p-4 bg-white rounded shadow-md border border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-xl font-semibold">{course.title}</h3>
+                    <p className="text-gray-700">{course.description}</p>
+                  </div>
+                  <div className="flex space-x-4">
+                    {!enrolledCourses.some((enrolledCourse) => enrolledCourse._id === course._id) && (
+                      <button
+                        onClick={() => enrollInCourse(course._id)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        Enroll
+                      </button>
+                    )}
+                    <button
+                      onClick={() => viewCourseDetails(course._id)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    >
+                      View Course
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!selectedCourse && searchResults.length === 0 && (
         <>
           {/* Enrolled Courses Section */}
           <section>
@@ -351,54 +418,51 @@ const handleSaveClick = async (noteId: string) => {
                 <strong>Instructor:</strong> {instructorName}
               </div>
               <div>
-              
-                <div>
-  <strong>Resources:</strong>
-  <div className="space-y-2">
-    {Array.isArray(selectedCourse.resources) && selectedCourse.resources.length > 0 ? (
-      selectedCourse.resources.map((resource, index) => {
-        // Normalize the path to ensure it's in the correct format
-        let normalizedResource = resource.replace(/\\/g, "/");  // Convert all backslashes to forward slashes
+                <strong>Resources:</strong>
+                <div className="space-y-2">
+                  {Array.isArray(selectedCourse.resources) && selectedCourse.resources.length > 0 ? (
+                    selectedCourse.resources.map((resource, index) => {
+                      // Normalize the path to ensure it's in the correct format
+                      let normalizedResource = resource.replace(/\\/g, "/");  // Convert all backslashes to forward slashes
 
-        // Check if the resource starts with '/uploads/', and remove '/uploads/' part if it does
-        if (normalizedResource.startsWith("/uploads/")) {
-          normalizedResource = normalizedResource.replace("/uploads/", "");  // Remove '/uploads/' from the path
-        }
+                      // Check if the resource starts with '/uploads/', and remove '/uploads/' part if it does
+                      if (normalizedResource.startsWith("/uploads/")) {
+                        normalizedResource = normalizedResource.replace("/uploads/", "");  // Remove '/uploads/' from the path
+                      }
 
-        // Construct the view URL
-        let viewUrl = normalizedResource;
+                      // Construct the view URL
+                      let viewUrl = normalizedResource;
 
-        // If the resource is not a full URL or path, create the correct URL
-        if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
-          viewUrl = `http://localhost:3000/courses/${selectedCourse._id}/resource/${encodeURIComponent(viewUrl)}`;
-        } else {
-          // If it's already a full URL, no need to modify it
-          if (!viewUrl.startsWith("http")) {
-            viewUrl = `http://localhost:3000/courses/${selectedCourse._id}/resource${encodeURIComponent(viewUrl)}`;
-          }
-        }
+                      // If the resource is not a full URL or path, create the correct URL
+                      if (!viewUrl.startsWith("http") && !viewUrl.startsWith("/")) {
+                        viewUrl = `http://localhost:3000/courses/${selectedCourse._id}/resource/${encodeURIComponent(viewUrl)}`;
+                      } else {
+                        // If it's already a full URL, no need to modify it
+                        if (!viewUrl.startsWith("http")) {
+                          viewUrl = `http://localhost:3000/courses/${selectedCourse._id}/resource${encodeURIComponent(viewUrl)}`;
+                        }
+                      }
 
-        // Extract the filename from the last part of the path (no encoding here)
-        const filename = normalizedResource.split("/").pop() || "default-filename";
+                      // Extract the filename from the last part of the path (no encoding here)
+                      const filename = normalizedResource.split("/").pop() || "default-filename";
 
-        // Display the filename without encoding
-        return (
-          <a
-            key={index}
-            href={viewUrl}  // Use the constructed URL
-            target="_blank"  // Open in a new tab
-            rel="noopener noreferrer"  // Security for new tab
-            className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            View {filename}  {/* Display the filename without URL encoding */}
-          </a>
-        );
-      })
-    ) : (
-      <div>No resources available</div>
-    )}
-  </div>
-</div>
+                      // Display the filename without encoding
+                      return (
+                        <a
+                          key={index}
+                          href={viewUrl}  // Use the constructed URL
+                          target="_blank"  // Open in a new tab
+                          rel="noopener noreferrer"  // Security for new tab
+                          className="block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        >
+                          View {filename}  {/* Display the filename without URL encoding */}
+                        </a>
+                      );
+                    })
+                  ) : (
+                    <div>No resources available</div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -415,93 +479,89 @@ const handleSaveClick = async (noteId: string) => {
               </div>
 
               <div>
-  <strong>Notes:</strong>
-  <ul className="list-disc pl-5">
-    {loadingNotes ? (
-      <li>Loading notes...</li>
-    ) : courseNotes.length > 0 ? (
-      courseNotes.map((note) => (
-        <li key={note._id} className="bg-gray-50 p-4 rounded-md shadow-md mb-3">
-          {/* Note Content */}
-          {editingNoteId === note._id ? (
-            <div>
-              <textarea
-                value={editedContent}
-                onChange={(e) => setEditedContent(e.target.value)}
-                rows={3}
-                className="w-full p-2 border rounded-md"
-              />
-              <button
-                onClick={() => handleSaveClick(note._id)}
-                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md"
-              >
-                Save
-              </button>
-            </div>
-          ) : (
-            <div className="font-semibold text-lg">{note.content}</div>
-          )}
+                <strong>Notes:</strong>
+                <ul className="list-disc pl-5">
+                  {loadingNotes ? (
+                    <li>Loading notes...</li>
+                  ) : courseNotes.length > 0 ? (
+                    courseNotes.map((note) => (
+                      <li key={note._id} className="bg-gray-50 p-4 rounded-md shadow-md mb-3">
+                        {/* Note Content */}
+                        {editingNoteId === note._id ? (
+                          <div>
+                            <textarea
+                              value={editedContent}
+                              onChange={(e) => setEditedContent(e.target.value)}
+                              rows={3}
+                              className="w-full p-2 border rounded-md"
+                            />
+                            <button
+                              onClick={() => handleSaveClick(note._id)}
+                              className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="font-semibold text-lg">{note.content}</div>
+                        )}
 
-          {/* Note Metadata */}
-          <div className="text-sm text-gray-500 mt-2">
-            <div><strong>Created:</strong> {new Date(note.created_at).toLocaleString()}</div>
-            <div><strong>Last Updated:</strong> {new Date(note.last_updated).toLocaleString()}</div>
-            <div><strong>Pinned:</strong> {note.isPinned ? "Yes" : "No"}</div>
-          </div>
+                        {/* Note Metadata */}
+                        <div className="text-sm text-gray-500 mt-2">
+                          <div><strong>Created:</strong> {new Date(note.created_at).toLocaleString()}</div>
+                          <div><strong>Last Updated:</strong> {new Date(note.last_updated).toLocaleString()}</div>
+                          <div><strong>Pinned:</strong> {note.isPinned ? "Yes" : "No"}</div>
+                        </div>
 
-          {/* Action Buttons */}
-          <div className="mt-2 flex space-x-3">
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              onClick={() => editNote(note._id, note.content)} // Start editing the note
-            >
-              Edit
-            </button>
-            <button
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              onClick={() => deleteNote(note._id)} // Delete button remains the same
-            >
-              Delete
-            </button>
-          </div>
-        </li>
-      ))
-    ) : (
-      <li>No notes available</li>
-    )}
-  </ul>
+                        {/* Action Buttons */}
+                        <div className="mt-2 flex space-x-3">
+                          <button
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                            onClick={() => editNote(note._id, note.content)} // Start editing the note
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                            onClick={() => deleteNote(note._id)} // Delete button remains the same
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </li>
+                    ))
+                  ) : (
+                    <li>No notes available</li>
+                  )}
+                </ul>
 
-  {/* Create Note Button */}
-  <div className="mt-4 flex items-center space-x-4">
-  {/* Input field for note content */}
-  <textarea
-    className="w-full p-2 border rounded-md"
-    placeholder="Enter note content"
-    value={newNoteContent}
-    onChange={(e) => setNewNoteContent(e.target.value)} // Bind to state
-    rows={3} // Adjust the number of rows based on how large you want the input area
-  />
-  
-  {/* Create Note Button */}
-  <button
-    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-    onClick={() => {
-      if (selectedCourse) {
-        addNote(); // Call the function to add the note
-      } else {
-        console.error('Selected course is null');
-      }
-    }}
-    disabled={creatingNote || !newNoteContent.trim()} // Disable if creating or content is empty
-  >
-    {creatingNote ? 'Creating note...' : 'Create Note'}
-  </button>
-</div>
+                {/* Create Note Button */}
+                <div className="mt-4 flex items-center space-x-4">
+                  {/* Input field for note content */}
+                  <textarea
+                    className="w-full p-2 border rounded-md"
+                    placeholder="Enter note content"
+                    value={newNoteContent}
+                    onChange={(e) => setNewNoteContent(e.target.value)} // Bind to state
+                    rows={3} // Adjust the number of rows based on how large you want the input area
+                  />
 
-</div>
-
-
-
+                  {/* Create Note Button */}
+                  <button
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    onClick={() => {
+                      if (selectedCourse) {
+                        addNote(); // Call the function to add the note
+                      } else {
+                        console.error('Selected course is null');
+                      }
+                    }}
+                    disabled={creatingNote || !newNoteContent.trim()} // Disable if creating or content is empty
+                  >
+                    {creatingNote ? 'Creating note...' : 'Create Note'}
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </section>

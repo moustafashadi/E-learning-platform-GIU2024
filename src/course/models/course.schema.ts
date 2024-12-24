@@ -42,6 +42,14 @@ export class Course {
   //rating
   @Prop({ default: 0 })
   rating: number;
+
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  keywords: string[];
+
+
 }
 
 export type CourseDocument = Course & Document;
