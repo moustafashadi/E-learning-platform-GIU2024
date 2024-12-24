@@ -68,12 +68,12 @@ export class CourseService {
     }
 
     // Save the file metadata to the course
-    const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
-    course.resources.push(filePath);
+   // const filePath = `/uploads/${file.filename}`;  // Relative path from the public directory
+    course.resources.push(file.filename);
 
     // Save the course after updating resources
     await course.save();
-    console.log('Resource added to course:', filePath);
+    console.log('Resource added to course:', file.filename);
     
     return course;
   }
@@ -88,7 +88,7 @@ export class CourseService {
     }
 
     // Check if the file exists in the course resources
-    const filePath = `/uploads/${fileName}`;
+    const filePath = fileName;
     if (!course.resources.includes(filePath)) {
       throw new NotFoundException(`File not found in course resources: ${fileName}`);
     }
@@ -241,6 +241,10 @@ export class CourseService {
     return quizzes;
   }
 
+
+  async searchCoursesByKeyword(keyword: string): Promise<Course[]> {
+    return this.courseModel.find({ keywords: keyword }).exec();
+  }
   
 
 }

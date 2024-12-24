@@ -141,5 +141,14 @@ export class CourseController {
     return await this.courseService.findCoursesByInstructor(instructorId);
   }
 
+   // Search Courses by Keyword
+   @Get('search/keyword')
+   async searchByKeyword(@Query('keyword') keyword: string) {
+     return await this.courseService.searchCoursesByKeyword(keyword);
+   }
+ 
+
+
+
 }
 
