@@ -23,15 +23,7 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
     };
   }, [selectedUserId]);
 
-  const handleSendMessage = () => {
-    if (input.trim()) {
-      WebSocketService.socket?.emit('message', {
-        content: input,
-        senderId: selectedUserId,
-      });
-      setInput('');
-    }
-  };
+  
 
   return (
     <div className="flex flex-col h-full">
@@ -53,7 +45,6 @@ const ChatComponent: React.FC<{ selectedUserId: string | null }> = ({ selectedUs
           disabled={!selectedUserId}
         />
         <button
-          onClick={handleSendMessage}
           className="ml-2 bg-blue-600 text-white rounded p-2"
           disabled={!selectedUserId}
         >
