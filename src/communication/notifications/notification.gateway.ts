@@ -1,10 +1,8 @@
-// notification/notification.gateway.ts
 import {
   WebSocketGateway,
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Course } from '../../course/models/course.schema';
@@ -33,10 +31,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
   }
 
   async sendQuizNotification(course: Course, quizId: string) {
-    // Get all enrolled students
     const enrolledStudents = course.students;
-
-    // Send notification to each enrolled student
     enrolledStudents.forEach((studentId) => {
       const socket = this.userSockets.get(studentId.toString());
       if (socket) {
@@ -47,5 +42,26 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
         });
       }
     });
+  }
+
+  async sendMessageNotification(userId: string, message: string) {
+    const socket = this.userSockets.get(userId);
+    if (socket) {
+      socket.emit('notification', { message: `New message: ${message}` });
+    }
+  }
+
+  async sendReplyNotification(userId: string, message: string) {
+    const socket = this.userSockets.get(userId);
+    if (socket) {
+      socket.emit('notification', { message: `New reply: ${message}` });
+    }
+  }
+
+  async sendAnnouncementNotification(userId: string, message: string) {
+    const socket = this.userSockets.get(userId);
+    if (socket) {
+      socket.emit('notification', { message: `New announcement: ${message}` });
+    }
   }
 }
