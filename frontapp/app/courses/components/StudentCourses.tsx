@@ -1,4 +1,6 @@
-// /components/Course/StudentCourses.tsx
+// /app/components/Course/StudentCourses.tsx
+'use client';
+
 import { useEffect, useState } from 'react';
 import axiosInstance from '@/app/_utils/axiosInstance';
 import toast from 'react-hot-toast';
@@ -7,16 +9,18 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/app/store';
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
 import CourseCard from '@/app/components/Course/CourseCard';
-import { Course } from '@/app/types';
+import { BackendCourse, FrontendCourse } from '@/app/types';
+import useAuth from '@/app/hooks/useAuth';
 
 const StudentCourses = () => {
   const router = useRouter();
 
-  // Fetch userId from Redux store
-  const userId = useSelector((state: RootState) => state.auth.user?._id);
+  // Use the custom authentication hook
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
+  const userId = user?._id || null;
 
-  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
-  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<FrontendCourse[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<FrontendCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null); // To handle enrollment loading state
 
@@ -32,20 +36,51 @@ const StudentCourses = () => {
         const allCoursesResp = await axiosInstance.get('/courses', {
           withCredentials: true,
         });
-        const allCourses: Course[] = allCoursesResp.data;
+        const allCourses: BackendCourse[] = allCoursesResp.data;
 
-        // Fetch enrolled courses from user info
-        const userResp = await axiosInstance.get('/auth/me', {
-          withCredentials: true,
-        });
-        const userEnrolledCourses: Course[] = userResp.data.user.enrolledCourses || [];
+        // Debugging: Log all courses fetched
+        console.log('All Courses fetched:', allCourses);
 
-        // Determine available courses (not enrolled)
-        const enrolledCourseIds = new Set(userEnrolledCourses.map((course) => course._id));
-        const available = allCourses.filter((course) => !enrolledCourseIds.has(course._id));
+        // Extract enrolled course IDs from user data
+        const userEnrolledCourseIds: string[] = user?.enrolledCourses || [];
 
-        setEnrolledCourses(userEnrolledCourses);
-        setAvailableCourses(available);
+        // Debugging: Log enrolled course IDs
+        console.log('User Enrolled Course IDs:', userEnrolledCourseIds);
+
+        // Find enrolled courses by filtering all courses
+        const userEnrolledCourses: BackendCourse[] = allCourses.filter(course =>
+          userEnrolledCourseIds.includes(course._id)
+        );
+
+        // Debugging: Log enrolled courses
+        console.log('User Enrolled Courses:', userEnrolledCourses);
+
+        // Find available courses by excluding enrolled courses
+        const available = allCourses.filter(course => !userEnrolledCourseIds.includes(course._id));
+
+        // Debugging: Log available courses
+        console.log('Available Courses:', available);
+
+        // Map enrolled courses to FrontendCourse interface
+        const mappedEnrolledCourses: FrontendCourse[] = userEnrolledCourses.map(course => ({
+          id: course._id,
+          name: course.title,
+          progress: 0, // Initialize or fetch progress if available
+        }));
+
+        // Map available courses to FrontendCourse interface
+        const mappedAvailableCourses: FrontendCourse[] = available.map(course => ({
+          id: course._id,
+          name: course.title,
+          progress: 0, // Not enrolled yet
+        }));
+
+        // Debugging: Log mapped courses
+        console.log('Mapped Enrolled Courses:', mappedEnrolledCourses);
+        console.log('Mapped Available Courses:', mappedAvailableCourses);
+
+        setEnrolledCourses(mappedEnrolledCourses);
+        setAvailableCourses(mappedAvailableCourses);
       } catch (error) {
         toast.error('Failed to fetch courses.');
         console.error('Error fetching courses:', error);
@@ -55,19 +90,28 @@ const StudentCourses = () => {
     };
 
     // Only fetch courses if user is authenticated and userId is available
-    if (userId) {
+    if (isAuthenticated && userId) {
       fetchCourses();
-    } else {
-      toast.error('User not authenticated.');
+    } else if (!authLoading) {
+      // If not authenticated and not loading, show error
+      if (!isAuthenticated) {
+        toast.error('User not authenticated.');
+      }
       setLoading(false);
     }
-  }, [userId]);
+  }, [isAuthenticated, userId, user?.enrolledCourses, authLoading]);
 
-  const handleViewCourse = (courseSlug: string) => {
-    router.push(`/course/${courseSlug}`);
+  const handleViewCourse = (courseId: string) => {
+    if (!courseId) {
+      toast.error('Course ID is undefined.');
+      console.error('Course ID is undefined.');
+      return;
+    }
+    console.log(`Navigating to course: ${courseId}`);
+    router.push(`/course/${courseId}`);
   };
 
-  const handleEnroll = async (courseId: string, courseSlug: string) => {
+  const handleEnroll = async (courseId: string) => {
     if (!userId) {
       toast.error('User not authenticated.');
       return;
@@ -81,11 +125,19 @@ const StudentCourses = () => {
       });
       toast.success('Enrolled successfully.');
 
-      // Update the enrolled and available courses lists
-      const enrolledCourse = availableCourses.find((course) => course._id === courseId);
+      // Find the enrolled course from availableCourses
+      const enrolledCourse = availableCourses.find(course => course.id === courseId);
+
       if (enrolledCourse) {
-        setEnrolledCourses([...enrolledCourses, { ...enrolledCourse}]);
-        setAvailableCourses(availableCourses.filter((course) => course._id !== courseId));
+        // Add to enrolledCourses with initial progress
+        setEnrolledCourses([...enrolledCourses, { ...enrolledCourse, progress: 0 }]);
+
+        // Remove from availableCourses
+        setAvailableCourses(availableCourses.filter(course => course.id !== courseId));
+
+        // Debugging: Log updated courses
+        console.log('Enrolled Courses after enrollment:', [...enrolledCourses, { ...enrolledCourse, progress: 0 }]);
+        console.log('Available Courses after enrollment:', availableCourses.filter(course => course.id !== courseId));
       }
     } catch (error) {
       toast.error('Failed to enroll in the course.');
@@ -95,7 +147,7 @@ const StudentCourses = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <LoadingSpinner />
@@ -110,17 +162,12 @@ const StudentCourses = () => {
         <h2 className="text-2xl font-semibold mb-6">Enrolled Courses</h2>
         {enrolledCourses.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {enrolledCourses.map((course) => (
+            {enrolledCourses.map(course => (
               <CourseCard
-                key={course._id}
-                course={{
-                  id: course._id,
-                  slug: course.course_code, // Assuming `slug` corresponds to `course_code`
-                  name: course.title,
-                  progress: 0, // Initialize progress or fetch if available
-                }}
+                key={course.id}
+                course={course}
                 isEnrolled={true}
-                onViewCourse={() => handleViewCourse(course.course_code)}
+                onViewCourse={() => handleViewCourse(course.id)}
               />
             ))}
           </div>
@@ -134,19 +181,14 @@ const StudentCourses = () => {
         <h2 className="text-2xl font-semibold mb-6">Available Courses</h2>
         {availableCourses.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableCourses.map((course) => (
+            {availableCourses.map(course => (
               <CourseCard
-                key={course._id}
-                course={{
-                  id: course._id,
-                  slug: course.course_code, // Assuming `slug` corresponds to `course_code`
-                  name: course.title,
-                  progress: 0, // Not enrolled yet
-                }}
+                key={course.id}
+                course={course}
                 isEnrolled={false}
-                onViewCourse={() => handleViewCourse(course.course_code)}
-                onEnroll={() => handleEnroll(course._id, course.course_code)}
-                isEnrolling={enrollingCourseId === course._id}
+                onViewCourse={() => handleViewCourse(course.id)}
+                onEnroll={() => handleEnroll(course.id)}
+                isEnrolling={enrollingCourseId === course.id}
               />
             ))}
           </div>

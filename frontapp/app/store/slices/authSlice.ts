@@ -1,18 +1,7 @@
-// /store/slices/authSlice.ts
+// /app/store/slices/authSlice.ts
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export interface User {
-  _id: string;
-  email: string;
-  username: string;
-  profilePicUrl: string;
-  role: 'admin' | 'student' | 'instructor';
-  enrolledCourses: string[]; // Array of course IDs
-  completedCourses: string[];
-  quizzesSolved: string[];
-  notifications: string[]; // Array of notification IDs
-}
+import { User } from '@/app/types/index';
 
 export interface AuthState {
   isAuthenticated: boolean;

@@ -1,13 +1,10 @@
-// /components/Course/CourseCard.tsx
+// /app/components/Course/CourseCard.tsx
+
 import React from 'react';
+import { FrontendCourse } from '@/app/types';
 
 interface CourseCardProps {
-  course: {
-    id: string;
-    slug: string;
-    name: string;
-    progress: number; // Percentage
-  };
+  course: FrontendCourse;
   isEnrolled: boolean;
   onViewCourse: () => void;
   onEnroll?: () => void; // Optional, only for available courses
