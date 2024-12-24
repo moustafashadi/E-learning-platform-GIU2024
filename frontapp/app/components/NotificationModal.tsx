@@ -14,10 +14,10 @@ function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
   const { user } = useSelector((state: RootState) => state.auth);
 
-  console.log('user:', user);
+  console.log(user)
 
   useEffect(() => {
-    if (isOpen && user.sub) {
+    if (isOpen && user?.sub) {
       const fetchNotifications = async () => {
         try {
           const response = await axios.get(`http://localhost:3000/users/${user.sub}/notifications`, { withCredentials: true });
@@ -29,9 +29,7 @@ function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
 
       fetchNotifications();
     }
-  }, [isOpen, user.sub, dispatch]);
-
-  console.log('notifications:', notifications);
+  }, [isOpen, user?.sub, dispatch]);
 
   const handleMarkAsRead = (id: string) => {
     dispatch(markAsRead(id));

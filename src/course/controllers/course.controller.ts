@@ -36,13 +36,12 @@ import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 export class CourseController {
   constructor(private readonly courseService: CourseService) { }
 
-  //TESTED -WORKING
+  //TESTED-WORKING
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post()
   async create(@Req() req: Request,
     @Body() createCourseDto: CreateCourseDto) {
-
     return await this.courseService.create(req, createCourseDto);
   }
 
