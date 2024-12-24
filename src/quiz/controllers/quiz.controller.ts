@@ -5,23 +5,33 @@ import { Role } from 'src/auth/decorators/roles.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 import { Question } from '../models/question.schema';
+import { ResponseGateway } from 'src/response/gateway/response.gateway';
+import { QuestionService } from '../services/question.service';
+import { ResponseService } from 'src/response/services/response.service';
 
 @UseGuards(AuthenticationGuard)
 @Controller('quiz')
 export class QuizController {
   constructor(
+    private readonly responseService: ResponseService,
+    private readonly questionService: QuestionService,
+    private readonly responseGateway: ResponseGateway,
     private readonly quizService: QuizService,
   ) { }
 
   //create quiz
-  @UseGuards(AuthenticationGuard)
   @Post('/:courseId')
   async createQuiz(
-    @Body() title: string,
+    @Body('title') title: string, // Extract `title` directly
     @Req() req,
-    @Param('courseId') courseId: string,) {
-    return await this.quizService.createQuiz(title , req.user.sub, courseId);
+    @Param('courseId') courseId: string,
+  ) {
+    if (!title) {
+      throw new Error('Quiz title is required');
+    }
+    return await this.quizService.createQuiz(title, req.user.sub, courseId);
   }
+
 
   //getQuiz by id
   @Get(':quizId')
@@ -51,4 +61,6 @@ export class QuizController {
     console.log('API called')
     return this.quizService.deleteQuiz(quizId);
   }
+
 }
+

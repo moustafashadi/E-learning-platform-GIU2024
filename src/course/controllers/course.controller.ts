@@ -57,15 +57,13 @@ export class CourseController {
     return await this.courseService.findAll();
   }
 
-  @Get('/:course_code')
-  async findOne(@Param('course_code') course_code: string) {
-    return await this.courseService.findOne(course_code);
-  }
 
 
-  @Get('/:course_id')
-  async findOneByCourseId(@Param('course_id') course_id: string) {
-    return await this.courseService.findOneByCourseId(course_id);
+
+  @Get('/:id')
+  async findOne(@Param('id') id: string) {
+    // This method looks up the course by the MongoDB _id
+    return await this.courseService.findOne(id);
   }
 
   @Patch('/:id')
@@ -102,36 +100,35 @@ export class CourseController {
   }
 
 
-  @Post(':courseCode/upload-resource')
+  @Post(':courseId/upload-resource')
   @UseInterceptors(FileInterceptor('file', { storage: CourseService.storage }))
   async uploadResource(
-    @Param('courseCode') courseCode: string,
+    @Param('courseId') courseId: string,
     @UploadedFile() file: Express.Multer.File
   ) {
-    console.log('Received file in controller:', file);
-    return this.courseService.uploadResource(courseCode, file);
+    return this.courseService.uploadResource(courseId, file);
   }
 
 
-  @Get(':courseCode/resource/:fileName')
+  @Get(':courseId/resource/:fileName')
   async getResource(
-    @Param('courseCode') courseCode: string,
+    @Param('courseId') courseId: string,
     @Param('fileName') fileName: string,
     @Res() res: Response,
   ) {
     try {
-      const fileStream = await this.courseService.getResource(courseCode, fileName);
+      const fileStream = await this.courseService.getResource(courseId, fileName);
 
       // Pipe the file stream to the response
       fileStream.pipe(res);
     } catch (error) {
-      throw new NotFoundException(`Resource not found for course: ${courseCode}, file: ${fileName}`);
+      throw new NotFoundException(`Resource not found for course: ${courseId}, file: ${fileName}`);
     }
   }
 
   //GET COURSE QUIZZES
-  @Get('/:courseId/quizzes')
-  async getCourseQuizzes(@Param('courseId') courseId: string) {
+  @Get('/:id/quizzes')
+  async getCourseQuizzes(@Param('id') courseId: string) {
     return await this.courseService.getCourseQuizzes(courseId);
   }
 

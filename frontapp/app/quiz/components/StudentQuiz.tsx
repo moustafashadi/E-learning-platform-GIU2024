@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axiosInstance from "@/app/_utils/axiosInstance";
+import axiosInstance from "@/app/_utils/axiosInstance"; // or just axios
 import toast from "react-hot-toast";
-import { ObjectId } from "mongodb";
 import { useRouter } from "next/navigation";
 
 interface Course {
@@ -14,10 +13,13 @@ interface Course {
 interface Quiz {
   id: string;
   title: string;
+  isCompleted?: boolean;
+  grade?: number;
 }
 
 function StudentQuiz() {
   const router = useRouter();
+
   const [userId, setUserId] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [quizzes, setQuizzes] = useState<{ [courseId: string]: Quiz[] }>({});
@@ -25,60 +27,67 @@ function StudentQuiz() {
 
   useEffect(() => {
     const fetchEnrolledCoursesAndQuizzes = async () => {
+      setLoading(true);
       try {
-        // Fetch user ID and enrolled courses
-        const userResponse = await axiosInstance.get("/auth/me", { withCredentials: true });
-        const userId = userResponse.data.id;
-        setUserId(userId);
+        // 1) Get user info
+        const userResponse = await axiosInstance.get("/auth/me", {
+          withCredentials: true
+        });
+        const fetchedUserId = userResponse.data.id;
+        setUserId(fetchedUserId);
 
+        // 2) Get the user's enrolled courses
         const enrolledCourseIds: string[] =
-          userResponse.data.user.enrolledCourses?.map((courseId: ObjectId) =>
-            courseId.toString()
-          ) || [];
+          userResponse.data.user.enrolledCourses?.map((c: any) => c.toString()) || [];
 
         if (enrolledCourseIds.length === 0) {
-          toast.error("No enrolled courses found.");
+          toast.error("You are not enrolled in any courses.");
           setCourses([]);
+          setLoading(false);
           return;
         }
 
-        console.log("Enrolled Course IDs:", enrolledCourseIds);
-
-        // Fetch details for each course
-        const courseDetails = await Promise.all(
+        // 3) For each enrolled course, fetch course details
+        const courseDetails: (Course | null)[] = await Promise.all(
           enrolledCourseIds.map(async (courseId) => {
             try {
-              const response = await axiosInstance.get(`/courses/${courseId}`, {
-                withCredentials: true,
+              const resp = await axiosInstance.get(`/courses/${courseId}`, {
+                withCredentials: true
               });
-              return { id: courseId, name: response.data.title };
+              return {
+                id: courseId,
+                name: resp.data.title || resp.data.name || "Unnamed Course"
+              };
             } catch (err) {
-              console.error(`Error fetching course details for ${courseId}:`, err);
+              console.error("Error fetching course details for:", courseId, err);
               return null;
             }
           })
         );
 
-        const formattedCourses = courseDetails.filter((course) => course !== null) as Course[];
-        setCourses(formattedCourses);
+        const validCourses = courseDetails.filter(Boolean) as Course[];
+        setCourses(validCourses);
 
-        // Fetch quizzes for each course
+        // 4) For each course, fetch quizzes
         const quizzesByCourse: { [courseId: string]: Quiz[] } = {};
-        for (const course of formattedCourses) {
+        for (const course of validCourses) {
           try {
-            const quizResponse = await axiosInstance.get(`/courses/${course.id}/quizzes`, {
-              withCredentials: true,
+            const quizResp = await axiosInstance.get(`/courses/${course.id}/quizzes`, {
+              withCredentials: true
             });
-            quizzesByCourse[course.id] = quizResponse.data.map((quiz: any) => ({
-              id: quiz._id,
-              title: quiz.title || "Untitled Quiz",
+            // Suppose the server returns an array of quiz docs:
+            // [ { _id, title, isCompleted, grade }, ... ]
+            quizzesByCourse[course.id] = quizResp.data.map((q: any) => ({
+              id: q._id,
+              title: q.title || "Untitled Quiz",
+              isCompleted: q.isCompleted || false,
+              grade: q.grade ?? null
             }));
           } catch (err) {
             console.error(`Error fetching quizzes for course ${course.id}:`, err);
             quizzesByCourse[course.id] = [];
           }
         }
-
         setQuizzes(quizzesByCourse);
       } catch (error) {
         toast.error("Failed to fetch quizzes.");
@@ -92,22 +101,16 @@ function StudentQuiz() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="text-black mt-20 ml-2">
-        <h1>Loading Quizzes...</h1>
-      </div>
-    );
+    return <div className="text-black mt-20 ml-2">Loading Quizzes...</div>;
   }
 
   return (
     <div className="text-black mt-20 ml-2">
-      <h1 className="text-2xl font-bold mb-6">Available Quizzes</h1>
+      <h1 className="text-2xl font-bold mb-6">Your Quizzes</h1>
+
       {courses.length > 0 ? (
         courses.map((course) => (
-          <div
-            key={course.id}
-            className="bg-white shadow-md rounded-lg p-4 mb-6"
-          >
+          <div key={course.id} className="bg-white shadow-md rounded-lg p-4 mb-6">
             <h2 className="text-xl font-semibold">{course.name}</h2>
             <div className="mt-4">
               {quizzes[course.id]?.length > 0 ? (
@@ -117,16 +120,25 @@ function StudentQuiz() {
                     className="flex justify-between items-center bg-gray-100 p-3 rounded-md mb-2"
                   >
                     <span>{quiz.title}</span>
-                    <button
-                      className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                      onClick={() => {
-                       router.push(`/quiz/examination?qId=${quiz.id}`)
-                        console.log(`Entering quiz ${quiz.id}`); // Placeholder for navigation logic
-                        toast.success(`Entering quiz: ${quiz.title}`);
-                      }}
-                    >
-                      Enter Quiz
-                    </button>
+
+                    {quiz.isCompleted ? (
+                      <span className="text-green-600 font-semibold">
+                        {quiz.grade !== null
+                          ? `Grade: ${quiz.grade}%`
+                          : "Completed"}
+                      </span>
+                    ) : (
+                      <button
+                        className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                        onClick={() => {
+                          // Navigate to /quiz/examination?quizId=<quiz.id>
+                          router.push(`/quiz/examination?quizId=${quiz.id}`);
+                          toast.success(`Entering quiz: ${quiz.title}`);
+                        }}
+                      >
+                        Enter Quiz
+                      </button>
+                    )}
                   </div>
                 ))
               ) : (
@@ -136,7 +148,7 @@ function StudentQuiz() {
           </div>
         ))
       ) : (
-        <p>No courses available.</p>
+        <p>You have no enrolled courses.</p>
       )}
     </div>
   );

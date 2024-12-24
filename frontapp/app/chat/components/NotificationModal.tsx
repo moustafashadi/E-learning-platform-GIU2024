@@ -1,4 +1,8 @@
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
+import { RootState } from '../store';
+import { markAsRead, markAllAsRead, setNotifications } from '../store/slices/notificationSlice';
 import { RootState } from '../../store/index';
 import { markAsRead, markAllAsRead } from '../../store/slices/notificationSlice';
 
@@ -7,9 +11,29 @@ interface NotificationsModalProps {
   onClose: () => void;
 }
 
-const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, onClose }) => {
+function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
   const dispatch = useDispatch();
   const notifications = useSelector((state: RootState) => state.notifications.notifications);
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  console.log('user:', user);
+
+  useEffect(() => {
+    if (isOpen && user.sub) {
+      const fetchNotifications = async () => {
+        try {
+          const response = await axios.get(`http://localhost:3000/users/${user.sub}/notifications`, { withCredentials: true });
+          dispatch(setNotifications(response.data));
+        } catch (error) {
+          console.error('Failed to fetch notifications:', error);
+        }
+      };
+
+      fetchNotifications();
+    }
+  }, [isOpen, user.sub, dispatch]);
+
+  console.log('notifications:', notifications);
 
   const handleMarkAsRead = (id: string) => {
     dispatch(markAsRead(id));
@@ -48,6 +72,6 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, onClose
       </div>
     </div>
   );
-};
+}
 
 export default NotificationsModal;

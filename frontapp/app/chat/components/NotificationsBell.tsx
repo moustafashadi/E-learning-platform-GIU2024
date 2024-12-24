@@ -14,13 +14,13 @@ export default function NotificationBell() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    if (user?.id) {
-      const socket = websocketService.connect(user.id);
+    if (user && user.sub) {
+      const socket = websocketService.connect(user.sub);
       return () => {
         websocketService.disconnect();
       };
     }
-  }, [user?.id]);
+  }, [user]);
 
   const handleClick = () => {
     setIsModalOpen(true);

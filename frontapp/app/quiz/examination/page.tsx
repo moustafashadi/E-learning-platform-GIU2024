@@ -1,29 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import QuizPage from "../components/QuizPage";
+import StudentExam from "../components/QuizPage";// We'll create this component below
 
-function ExaminationPage() {
+export default function ExaminationPage() {
   const searchParams = useSearchParams();
-  const qId = searchParams.get("qId"); // Extract `qId` from the query string
-  const [quizId, setQuizId] = useState<string | null>(qId);
+  const quizIdParam = searchParams.get("quizId");
 
-  useEffect(() => {
-    if (!quizId && qId) {
-      setQuizId(qId); // Update state if query changes
-    }
-  }, [qId]);
-
-  if (!quizId) {
-    return <p>Invalid or missing quiz ID.</p>;
+  if (!quizIdParam) {
+    return <p>No quizId provided in the URL!</p>;
   }
 
   return (
     <div className="container mx-auto p-6">
-      <QuizPage qId={quizId} /> {/* Pass qId explicitly */}
+      <StudentExam quizId={quizIdParam} />
     </div>
   );
 }
-
-export default ExaminationPage;
