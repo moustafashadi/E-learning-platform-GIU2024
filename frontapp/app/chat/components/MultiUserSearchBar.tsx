@@ -26,7 +26,6 @@ const MultiUserSearchBar = ({ onUserSelect }: MultiUserSearchBarProps) => {
       setIsLoading(true);
       try {
         const response = await axiosInstance.get("/users");
-        console.log('API Response:', response.data); // Debug log
         if (Array.isArray(response.data)) {
           setUsers(response.data);
         } else if (response.data.users) {
@@ -48,19 +47,49 @@ const MultiUserSearchBar = ({ onUserSelect }: MultiUserSearchBarProps) => {
        user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const handleUserSelect = (user: User) => {
+    const newSelected = [...selectedUsers, user];
+    setSelectedUsers(newSelected);
+    onUserSelect(newSelected);
+    setSearchTerm("");
+    setShowDropdown(false);
+  };
+
+  const handleRemoveUser = (userId: string) => {
+    const newSelected = selectedUsers.filter(user => user._id !== userId);
+    setSelectedUsers(newSelected);
+    onUserSelect(newSelected);
+  };
+
   return (
     <div className="relative w-full">
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-          setShowDropdown(true);
-        }}
-        onFocus={() => setShowDropdown(true)}
-        placeholder="Search users..."
-        className="w-full px-4 py-2 border rounded-lg"
-      />
+      <div className="flex flex-wrap gap-2 p-2 border rounded-lg bg-white">
+        {selectedUsers.map(user => (
+          <div 
+            key={user._id}
+            className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-full"
+          >
+            <span>{user.username}</span>
+            <button 
+              onClick={() => handleRemoveUser(user._id)}
+              className="text-blue-500 hover:text-blue-700"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setShowDropdown(true);
+          }}
+          onFocus={() => setShowDropdown(true)}
+          placeholder={selectedUsers.length === 0 ? "Search users..." : "Add more users..."}
+          className="flex-1 min-w-[200px] outline-none border-0"
+        />
+      </div>
 
       {showDropdown && (
         <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg">
@@ -71,13 +100,7 @@ const MultiUserSearchBar = ({ onUserSelect }: MultiUserSearchBarProps) => {
               <div
                 key={user._id}
                 className="p-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => {
-                  const newSelected = [...selectedUsers, user];
-                  setSelectedUsers(newSelected);
-                  onUserSelect(newSelected);
-                  setSearchTerm("");
-                  setShowDropdown(false);
-                }}
+                onClick={() => handleUserSelect(user)}
               >
                 <div className="font-medium">{user.username}</div>
                 <div className="text-sm text-gray-500">{user.email}</div>
@@ -89,6 +112,18 @@ const MultiUserSearchBar = ({ onUserSelect }: MultiUserSearchBarProps) => {
             </div>
           )}
         </div>
+      )}
+      
+      {selectedUsers.length > 0 && (
+        <button
+          onClick={() => {
+            onUserSelect(selectedUsers);
+            setSelectedUsers([]);
+          }}
+          className="mt-2 w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          Start {selectedUsers.length > 1 ? 'Group ' : ''}Chat
+        </button>
       )}
     </div>
   );

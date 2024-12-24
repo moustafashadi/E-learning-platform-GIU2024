@@ -4,7 +4,8 @@ import Providers from './providers';
 import Navbar from './components/NavBar';
 import Footer from './components/Footer';
 import './globals.css';
-
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function RootLayout({
   children,
@@ -19,6 +20,7 @@ export default function RootLayout({
           <main>{children}</main>
           <Footer />
         </Providers>
+        <ToastContainer />
       </body>
     </html>
   );

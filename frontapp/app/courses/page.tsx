@@ -1,16 +1,15 @@
 // /app/course/[courseSlug]/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import axiosInstance from '@/app/_utils/axiosInstance';
-import toast from 'react-hot-toast';
-import StudentCourses from './components/StudentCourses'; // Updated import path
-import InstructorCourses from './components/InstructorCourses';
-import LoadingSpinner from '@/app/components/common/LoadingSpinner';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
+import StudentCourses from "./components/StudentCourses"; // Import the StudentCourses component
 
+import useAuth from "../hooks/useAuth"; // Assume this hook handles authentication
+import InstructorCourses from "./components/InstructorCourses";
+import Notes from "./view/notes";
 
 function CoursePage() {
   const { courseSlug } = useParams();
