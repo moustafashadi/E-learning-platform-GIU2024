@@ -127,19 +127,42 @@ export class CourseController {
   // }
 
 
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Student)
+  @Post(':id/enroll/:courseId')
+  async enrollCourse(
+    @Param('id') userId: string,
+    @Param('courseId') courseId: string
+  ) {
+    return await this.courseService.enrollCourse(userId, courseId);
+  }
 
-
-
-
-  @Get('/teacher/:instructorId')
+  @Get('/:instructorId')
   async findCoursesByInstructor(
     @Param('instructorId') instructorId: string,
   ) {
     return await this.courseService.findCoursesByInstructor(instructorId);
   }
 
+  @UseGuards(AuthenticationGuard)
+  @Get('/:userId/completedCourses')
+  getCompletedCourses(@Param('userId') userId: string) {
+    return this.courseService.getCompletedCourses(userId);
+  }
 
+  //get enrolled courses of a student
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
+  @Get('/instructor/:userId/enrolledCourses')
+  async getEnrolledCoursesForInstructor(@Param('userId') userId: string) {
+    return this.courseService.getEnrolledCoursesForInstructor(userId);
+  }
 
+  @UseGuards(AuthenticationGuard)
+  @Get(':userId/enrolledCourses')
+  async getEnrolledCourses(@Param('userId') userId: string) {
+    return this.courseService.getEnrolledCourses(userId);
+  }
 
 }
 

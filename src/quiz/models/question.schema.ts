@@ -29,15 +29,7 @@ export class Question {
    * Store multiple-choice options as an array,
    * e.g. [ { text: "...", identifier: "A" }, ... ]
    */
-  @Prop({
-    type: [
-      {
-        text: { type: String, required: true },
-        identifier: { type: String, required: true },
-      },
-    ],
-    default: [],
-  })
+  @Prop({type: [{text: { type: String, required: true }, identifier: { type: String, required: true },}], default: [],})
   options: { text: string; identifier: string }[];
 }
 

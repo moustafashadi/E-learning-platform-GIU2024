@@ -37,6 +37,10 @@ export class Quiz {
   @Prop({ default: 'in progress' , enum: ['done', 'in progress'] })
   status: string;
 
+  //quiz difficulty (easy, medium, hard)
+  @Prop({ required: true, enum: ['easy', 'medium', 'hard'] })
+  difficulty: string;
+
 }
 
 

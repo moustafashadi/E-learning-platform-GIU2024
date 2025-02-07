@@ -23,12 +23,13 @@ import { HttpModule } from '@nestjs/axios';
 import { AuthService } from 'src/auth/auth.service';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { QuizSchema } from 'src/quiz/models/quiz.schema';
-import { Question } from 'src/quiz/models/question.schema';
+import { QuestionSchema } from 'src/quiz/models/question.schema';
 import { QuestionService } from 'src/quiz/services/question.service';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { ProgressSchema } from 'src/progress/models/progress.schema';
 import { NotificationGateway } from './notifications/notification.gateway';
 import { NotificationController } from './notifications/notification.controller';
+import { ModuleSchema } from 'src/module/models/module.schema';
 
 @Module({
 
@@ -43,8 +44,10 @@ import { NotificationController } from './notifications/notification.controller'
     MongooseModule.forFeature([{ name: 'Instructor', schema: InstructorSchema }]),
     MongooseModule.forFeature([{ name: 'Student', schema: StudentSchema }]),
     MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
-    MongooseModule.forFeature([{ name: 'Question', schema: Question }]),
-    MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
+    MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
+    MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema },
+    { name: 'Module', schema: ModuleSchema }
+    ]),
 
         UserModule, JwtModule.register({
             secret: process.env.JWT_SECRET,

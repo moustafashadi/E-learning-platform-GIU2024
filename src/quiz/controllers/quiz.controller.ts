@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, UseGuards, Param, Get, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards, Param, Get, Delete, Patch } from '@nestjs/common';
 import { AuthenticationGuard } from '../../auth/guards/authentication.guard';
 import { QuizService } from '../services/quiz.service';
 import { Role } from 'src/auth/decorators/roles.decorator';
@@ -23,12 +23,25 @@ export class QuizController {
   ) { }
 
   //create quiz
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
   @Post('/:moduleId')
-  async createQuiz(
+  async createQuizBlueprint(
     @Body() createQuizDto : CreateQuizDto , // Extract `title` directly
     @Param('moduleId') moduleId : string,
   ) {
     return await this.quizService.createQuizBlueprint(moduleId ,createQuizDto);
+  }
+
+  //update quiz blueprint
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
+  @Patch('/:moduleId/updateQuizBlueprint')
+  async updateQuizBlueprint(
+    @Body() createQuizDto : CreateQuizDto , // Extract `title` directly
+    @Param('moduleId') moduleId : string,
+  ) {
+    return await this.quizService.editQuizBlueprint(moduleId ,createQuizDto);
   }
 
   //generate quiz
@@ -37,24 +50,19 @@ export class QuizController {
     return await this.quizService.generateQuiz(moduleId, req);
   }
 
-
   //getQuiz by id
   @Get(':quizId')
   async getQuiz(@Param('quizId') quizId: string) {
     return this.quizService.getQuiz(quizId);
   }
 
-  @Get('/:courseId/:studentId')
+  @Get('/:quizId/:studentId')
   async getStudentQuizResults(
-    @Param('courseId') courseId: string,
+    @Param('quizId') quizId: string,
     @Param('studentId') studentId: string,
   ) {
-    console.log('courseId', courseId);
-    // const quizResults = await this.quizService.getStudentQuizResults(
-    // courseId,
-    // studentId,
-    // );
-    // return quizResults;
+    console.log('quizId: ', quizId);
+    return await this.quizService.getStudentQuizResults(quizId,studentId);
   }
 
 }

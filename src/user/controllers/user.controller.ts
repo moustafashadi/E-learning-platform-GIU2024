@@ -57,31 +57,6 @@ export class UserController {
     return this.userService.remove(id);
   }
 
-  //TESTED - WORKING
-  @UseGuards(AuthenticationGuard)
-  @Get('/:id/completedCourses')
-  getCompletedCourses(@Param('id') id: string) {
-    return this.userService.getCompletedCourses(id);
-  }
-
-  //TESTED - WORKING
-  @UseGuards(AuthenticationGuard)
-  @Get(':userId/enrolledCourses')
-  async getEnrolledCourses(@Param('userId') userId: string) {
-    return this.userService.getEnrolledCourses(userId);
-  }
-
-  //add enroll course 
-  @UseGuards(AuthenticationGuard)
-  @Roles(Role.Student)
-  @Post(':id/enroll/:courseId')
-  async enrollCourse(
-    @Param('id') userId: string,
-    @Param('courseId') courseId: string
-  ) {
-    return await this.userService.enrollCourse(userId, courseId);
-  }
-
   //get notifications
   @UseGuards(AuthenticationGuard)
   @Get(':userId/notifications')
@@ -89,11 +64,5 @@ export class UserController {
     return this.userService.getNotifications(userId);
   }
 
-  //get enrolled courses for a student
-  @UseGuards(AuthorizationGuard)
-  @Roles(Role.Instructor)
-  @Get(':userId/enrolledCourses')
-  async getEnrolledCoursesForInstructor(@Param('userId') userId: string) {
-    return this.userService.getEnrolledCoursesForInstructor(userId);
-  }
+  
 }

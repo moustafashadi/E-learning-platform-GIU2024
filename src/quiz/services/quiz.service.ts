@@ -12,13 +12,14 @@ import { ProgressService } from 'src/progress/services/progress.service';
 import { NotificationGateway } from 'src/communication/notifications/notification.gateway';
 import { CreateQuizDto } from '../dto/create-quiz.dto';
 import { Module } from 'src/module/models/module.schema';
-
+import { ResponseService } from 'src/response/services/response.service';
 
 @Injectable()
 export class QuizService {
   constructor(
     private questionService: QuestionService,
     private progressService: ProgressService,
+    private responseService: ResponseService,
     private notificationGateway: NotificationGateway,
     @InjectModel(Instructor.name) private readonly instructorModel: Model<Instructor>,
     @InjectModel(Course.name) private readonly courseModel: Model<Course>,
@@ -78,6 +79,7 @@ export class QuizService {
   async generateQuiz(moduleId: string, req: Request) {
     try {
       const userId = req.user.id
+
       const module = await this.moduleModel.findById(moduleId);
       if (!module) {
         throw new NotFoundException('Module not found');
@@ -88,30 +90,33 @@ export class QuizService {
       const numberOfQuestions = quizBlueprint.number_of_questions;
       const quizType = quizBlueprint.quiz_type;
 
+      //mark the quiz blueprint as used
       quizBlueprint.used = true;
 
       await module.save();
 
       const userProgress = await this.progressService.getProgress(userId, moduleId);
 
+      // Get the questions from the module
+      const questionIds = module.questions;
+
+      let questions: Question[] = [];
+
+      for (const Id of questionIds) {
+        const questionArray = await this.questionService.getQuestion(Id.toString());
+        questions = questions.concat(questionArray);
+      }
+
       if (userProgress.level = 'Beginner') {
-        // Get the questions from the module
-        const questionIds = module.questions;
-
-        let questions: Question[] = [];
-
-        for (const Id of questionIds) {
-          const questionArray = await this.questionService.getQuestions(Id.toString());
-          questions = questions.concat(questionArray);
-        }
-
         //filter the questions by difficulty
         const easyQuestions = questions.filter((question) => question.difficulty === 'Easy');
 
         //generate new quiz and add the questions till the number of questions is reached. select questions randomly
         let quizQuestions: Question[] = [];
         for (let i = 0; i < numberOfQuestions; i++) {
+          //select question randomly from the easy questions array
           const randomIndex = Math.floor(Math.random() * easyQuestions.length);
+          //push the selected question to the quizQuestions array
           quizQuestions.push(easyQuestions[randomIndex]);
         }
 
@@ -121,20 +126,12 @@ export class QuizService {
           moduleId: moduleId,
           type: quizType,
           status: 'in progress',
+          difficulty: 'easy',
         });
 
         await quiz.save();
+
       } else if (userProgress.level = 'Intermediate') {
-        // Get the questions from the module
-        const questionIds = module.questions;
-
-        let questions: Question[] = [];
-
-        for (const Id of questionIds) {
-          const questionArray = await this.questionService.getQuestions(Id.toString());
-          questions = questions.concat(questionArray);
-        }
-
         //filter the questions by difficulty
         const intermediateQuestions = questions.filter((question) => question.difficulty === 'Medium');
 
@@ -151,20 +148,12 @@ export class QuizService {
           moduleId: moduleId,
           type: quizType,
           status: 'in progress',
+          difficulty: 'medium',
         });
 
         await quiz.save();
+
       } else if (userProgress.level === 'Advanced' || userProgress.level === 'Expert') {
-        // Get the questions from the module
-        const questionIds = module.questions;
-
-        let questions: Question[] = [];
-
-        for (const Id of questionIds) {
-          const questionArray = await this.questionService.getQuestions(Id.toString());
-          questions = questions.concat(questionArray);
-        }
-
         //filter the questions by difficulty
         const advancedQuestions = questions.filter((question) => question.difficulty === 'Hard');
 
@@ -181,6 +170,7 @@ export class QuizService {
           moduleId: moduleId,
           type: quizType,
           status: 'in progress',
+          difficulty: 'hard',
         });
 
         await quiz.save();
@@ -193,15 +183,18 @@ export class QuizService {
 
   //getQuiz
   async getQuiz(quizId: string) {
-    const quiz = await this.quizModel.findById(quizId);
-    if (!quiz) {
-      throw new NotFoundException('Quiz not found');
+    try {
+      const quiz = await this.quizModel.findById(quizId);
+      if (!quiz) {
+        throw new NotFoundException('Quiz not found');
+      }
+      return quiz;
+    } catch (error) {
+      throw new InternalServerErrorException('Error getting quiz');
     }
-    return quiz;
   }
 
-
-
+  //should be triggered when a student submits a quiz only
   async getStudentQuizResults(quizId: string, studentId: string) {
     const student = await this.studentModel.findById(studentId);
     const quiz = await this.quizModel.findById(quizId);
@@ -215,12 +208,24 @@ export class QuizService {
 
     //check if questions are correct one by one
     for (let i = 0; i < stringifiedQuestionIds.length; i++) {
-      const question = await this.questionService.getQuestionById(stringifiedQuestionIds[i]);
+      const question = await this.questionService.getQuestion(stringifiedQuestionIds[i]);
 
       if (question.correctAnswer === chosenAnswers[i]) {
         grade += 1;
       }
     }
+
+    const percentage = grade / quiz.questions.length * 100;
+    
+    //send response to the student
+    this.responseService.sendResponse(studentId, quizId, percentage);
+
+    //update the students progress
+    if (percentage >= 60){
+      await this.progressService.updateProgress(studentId, quizId, quiz.moduleId.toString());
+    }
+    //return the grade
+    return percentage;
 
 
 
@@ -260,8 +265,6 @@ export class QuizService {
       const Quiz = await this.quizModel.findById(quizId)
       if (Quiz.questions.length > answers.length)
         return false;
-      else if (answers.length > Quiz.questions.length)
-        throw new InternalServerErrorException(`Where did you get the extra answers from`);
       else if (Quiz.questions.length === answers.length)
         return true;
     } catch (error) {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException, BadRequestException, InternalServerErrorException, Req } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, InternalServerErrorException, Req } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Course, CourseDocument } from '../models/course.schema';
@@ -15,6 +15,7 @@ import { Quiz } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { Request } from 'express';
 import { Server } from 'http';
+import { Progress } from 'src/progress/models/progress.schema';
 
 
 @Injectable()
@@ -26,6 +27,7 @@ export class CourseService {
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
     @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
     @InjectModel(Student.name) private studentModel: Model<Student>,
+    @InjectModel(Progress.name) private progressModel: Model<Progress>,
   ) { }
 
   static get storage() {
@@ -171,11 +173,6 @@ export class CourseService {
     return updatedCourse;
   }
 
-
-
-
-
-
   async delete(id: string): Promise<void> {
     try {
       const course = await this.courseModel.findById(id);
@@ -223,6 +220,33 @@ export class CourseService {
   
     return courses;
   }
+
+  async enrollCourse(userId: string, courseId: string) {
+    console.log(userId, courseId);
+    const student = await this.studentModel.findById(userId);
+    const course = await this.courseModel.findById(courseId);
+    const progress = await this.progressModel.create({ userId: student._id, courseId: course._id, 0: Number });
+
+    if (!student || !course) {
+      throw new NotFoundException('Student or course not found');
+    }
+
+    // Check if the student is already enrolled
+    if (student.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
+      throw new ConflictException('Student already enrolled in this course');
+    }
+
+
+    // Add student to course's students array
+    course.students.push(student._id as any);
+    await course.save(); // Ensure changes to the course are saved
+
+    // Add course to student's enrolled courses
+    student.enrolledCourses.push(course._id as any);
+    await student.save(); // Ensure changes to the student are saved
+
+    return student.populate('enrolledCourses');
+  }
   
   // //GET COURSE QUIZZES
   // async getCourseQuizzes(courseId: string): Promise<Quiz[]> {
@@ -242,5 +266,44 @@ export class CourseService {
     return this.courseModel.find({ keywords: keyword }).exec();
   }
   
+  //get student's enrolled courses for instructor
+  async getEnrolledCoursesForInstructor(userId: string) {
+    const student = await this.studentModel.findById(userId);
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    return student.enrolledCourses;
+  }
+
+  async getEnrolledCourses(userId: string): Promise<Course[]> {
+    // Fetch the student by ID, and populate the enrolledCourses field
+    const student = await this.studentModel
+      .findById(userId)
+      .populate<{ enrolledCourses: Course[] }>('enrolledCourses')
+      .exec();
+
+    if (!student) {
+      throw new NotFoundException(`Student with id ${userId} not found`);
+    }
+
+    // Return the populated courses (enrolledCourses is now of type Course[])
+    return student.enrolledCourses;
+  }
+
+  async getCompletedCourses(userId: string) {
+    try {
+      const user = await this.studentModel.findById(userId).exec();
+
+      if (!user) {
+        throw new NotFoundException('Student not found');
+      }
+
+      return user.completedCourses;
+
+    } catch (error) {
+      throw new NotFoundException('Student not found');
+
+    }
+  }
 
 }

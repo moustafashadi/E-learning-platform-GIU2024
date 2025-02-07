@@ -6,6 +6,7 @@ import { Quiz } from '../models/quiz.schema';
 import { Student } from 'src/user/models/user.schema';
 import { Request } from 'express';
 import { Types } from 'mongoose';
+import { Module } from 'src/module/models/module.schema';
 
 @Injectable()
 export class QuestionService {
@@ -13,6 +14,7 @@ export class QuestionService {
     @InjectModel(Question.name) private readonly questionModel: Model<Question>,
     @InjectModel(Quiz.name) private readonly quizModel: Model<Quiz>,
     @InjectModel(Student.name) private readonly studentModel: Model<Student>,
+    @InjectModel(Module.name) private readonly moduleModel: Model<Module>,
   ) {}
 
   /**
@@ -20,69 +22,48 @@ export class QuestionService {
    * difficulty, and an array of 'options'.
    */
   async createQuestion(
-    quizId: string,
+    moduleId: string,
     content: string,
     correctAnswer: string,
     difficulty: string,
     options?: { text: string; identifier: string }[], // optional
   ): Promise<Question> {
     try {
-      const quiz = await this.quizModel.findById(quizId);
-      if (!quiz) {
-        throw new Error('Quiz not found');
+      const module = await this.moduleModel.findById(moduleId);
+      if (!module) {
+        throw new InternalServerErrorException('Module not found');
       }
 
-      const index = quiz.questions.length + 1;
-      const finalOptions = options || [];
-
-      const createdQuestion = await this.questionModel.create({
-        quiz: new Types.ObjectId(quizId),
+      const question = new this.questionModel({
         content,
         correctAnswer,
         difficulty,
-        index,
-        options: finalOptions,
+        options,
+        module: module._id,
       });
 
-      quiz.questions.push(createdQuestion._id as any);
-      await quiz.save();
+      await question.save();
 
-      return createdQuestion;
+      return question;
+      
     } catch (error) {
       console.log(error.message);
       throw new InternalServerErrorException('Error creating question');
     }
   }
 
-  async getQuestionById(questionId: string): Promise<Question> {
+  async getQuestion(questionId: string): Promise<Question> {
     return this.questionModel.findById(questionId);
   }
 
-  /**
-   * Returns all questions for an instructor or admin.
-   * Includes correctAnswer and full data.
-   */
-  async getQuestions(quizId: string): Promise<Question[]> {
+  //returns all questions for a quiz including answers for instructor
+  async getQuestionsForInstructor(quizId: string): Promise<Question[]> {
     return this.questionModel.find({ quiz: quizId });
   }
 
-  /**
-   * Returns all questions for a student
-   * WITHOUT revealing correctAnswer.
-   */
+  //returns all questions for a quiz excluding answers for students
   async getQuestionsForStudent(quizId: string) {
-    const questions = await this.questionModel
-      .find({ quiz: quizId })
-      .select('-correctAnswer'); 
-      // or do logic that sets correctAnswer = undefined
-
-    // Alternatively, we could map them to remove the field:
-    // return questions.map(q => ({
-    //    _id: q._id,
-    //    content: q.content,
-    //    options: q.options,
-    //    // no correctAnswer
-    // }));
+    const questions = await this.questionModel.find({ quiz: quizId }).select('-correctAnswer'); 
     return questions;
   }
 

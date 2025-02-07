@@ -9,6 +9,7 @@ import { UpdateModuleDto } from '../dto/update-module.dto';
 export class ModuleService {
   constructor(
     @InjectModel(Module.name) private moduleModel: Model<ModuleDocument>,
+    @InjectModel('Course') private courseModel: Model<any>,
   ) {}
 
   // Create a new module
@@ -20,6 +21,17 @@ export class ModuleService {
   // Retrieve all modules
   async findAll(): Promise<Module[]> {
     return await this.moduleModel.find().populate('courses').exec();
+  }
+
+  //find modules depending on course
+  async findModulesByCourse(courseId: string): Promise<Module[]> {
+    const course =  await this.courseModel.findById(courseId);
+
+    const moduleIds = course.modules;
+
+    const modules = await this.moduleModel.find().where('_id').in(moduleIds).exec();
+
+    return modules;
   }
 
   // Retrieve a single module by its ID

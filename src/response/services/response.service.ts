@@ -11,27 +11,19 @@ export class ResponseService {
     private questionService: QuestionService,
   ) {}
 
-  async evaluateResponse(userId: string, quizId: string, questionId: string, chosenAnswer: string): Promise<Response> {
-    const question = await this.questionService.getQuestionById(questionId);
-    if (!question) {
-      throw new NotFoundException('Question not found.');
-    }
-
-    const isCorrect = question.correctAnswer === chosenAnswer;
-    const feedbackMessage = isCorrect
-      ? 'Correct! Great job.'
-      : `Incorrect.'Review the related material for more understanding.`;
+  async sendResponse(studentId: string, quizId: string, percentage : number): Promise<Response> {
+    
+    const feedbackMessage = percentage < 60 ? 'You failed the quiz' : 'You passed the quiz';
 
     const response = new this.responseModel({
-      userId,
+      studentId,
       quizId,
-      questionId,
-      chosenAnswer,
-      isCorrect,
       feedbackMessage,
     });
 
-    return response.save();
+    response.save();
+
+    return response;
   }
 
   async getResponsesForQuiz(userId: string, quizId: string): Promise<Response[]> {

@@ -18,6 +18,7 @@ import { CommunicationModule } from 'src/communication/communication.module';
 import { NotificationSchema } from 'src/communication/notifications/notification.schema';
 import { UserService } from 'src/user/services/user.service';
 import { AdminSchema } from 'src/user/models/user.schema';
+import { ModuleSchema } from 'src/module/models/module.schema';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AdminSchema } from 'src/user/models/user.schema';
       { name: 'Progress', schema: ProgressSchema },
       { name: 'Notification', schema: NotificationSchema },
       { name: 'Admin', schema: AdminSchema },
+      { name: 'Module', schema: ModuleSchema },
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,

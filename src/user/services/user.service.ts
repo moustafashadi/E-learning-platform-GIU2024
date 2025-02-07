@@ -14,19 +14,14 @@ import { CreateAdminDto } from '../dto/create-admin.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
-import { Course, CourseDocument } from '../../course/models/course.schema';
-import { updateStudentDto } from '../dto/update-student.dto';
-import { Progress } from 'src/progress/models/progress.schema';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<InstructorDocument>,
-    @InjectModel(Progress.name) private progressModel: Model<Progress>,
     private jwtService: JwtService,
   ) { }
 
@@ -164,16 +159,6 @@ export class UserService {
     return null;
   }
 
-  async updateStudent(id: string, updateStudentDto: updateStudentDto): Promise<UserDocument> {
-    const updatedStudent = await this.studentModel
-      .findByIdAndUpdate(id, updateStudentDto, { new: true })
-      .exec();
-    if (updatedStudent) return updatedStudent;
-    else {
-      throw new NotFoundException(`Student with ID ${id} not found`);
-    }
-  }
-
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument> {
     // Hash password if it is being updated
     if (updateUserDto.password) {
@@ -244,38 +229,6 @@ export class UserService {
     }
   }
 
-
-  async getEnrolledCourses(userId: string): Promise<Course[]> {
-    // Fetch the student by ID, and populate the enrolledCourses field
-    const student = await this.studentModel
-      .findById(userId)
-      .populate<{ enrolledCourses: Course[] }>('enrolledCourses')
-      .exec();
-
-    if (!student) {
-      throw new NotFoundException(`Student with id ${userId} not found`);
-    }
-
-    // Return the populated courses (enrolledCourses is now of type Course[])
-    return student.enrolledCourses;
-  }
-
-  async getCompletedCourses(userId: string) {
-    try {
-      const user = await this.studentModel.findById(userId).exec();
-
-      if (!user) {
-        throw new NotFoundException('Student not found');
-      }
-
-      return user.completedCourses;
-
-    } catch (error) {
-      throw new NotFoundException('Student not found');
-
-    }
-  }
-
   async getCoursesTaught(userId: string) {
     try {
       const user = await this.instructorModel.findById(userId)
@@ -286,33 +239,6 @@ export class UserService {
       throw new NotFoundException('Instructor not found');
     }
   }
-  async enrollCourse(userId: string, courseId: string) {
-    console.log(userId, courseId);
-    const student = await this.studentModel.findById(userId);
-    const course = await this.courseModel.findById(courseId);
-    const progress = await this.progressModel.create({ userId: student._id, courseId: course._id, 0: Number });
-
-    if (!student || !course) {
-      throw new NotFoundException('Student or course not found');
-    }
-
-    // Check if the student is already enrolled
-    if (student.enrolledCourses.map(id => id.toString()).includes(course._id.toString())) {
-      throw new ConflictException('Student already enrolled in this course');
-    }
-
-
-    // Add student to course's students array
-    course.students.push(student._id as any);
-    await course.save(); // Ensure changes to the course are saved
-
-    // Add course to student's enrolled courses
-    student.enrolledCourses.push(course._id as any);
-    await student.save(); // Ensure changes to the student are saved
-
-    return student.populate('enrolledCourses');
-  }
-
 
   async hasRole(userId: string, role: string): Promise<boolean> {
     const user = await this.userModel.findById(userId);
@@ -332,12 +258,5 @@ export class UserService {
     return user.notifications;
   }
 
-  //
-  async getEnrolledCoursesForInstructor(userId: string) {
-    const student = await this.studentModel.findById(userId);
-    if (!student) {
-      throw new NotFoundException('Student not found');
-    }
-    return student.enrolledCourses;
-  }
+  
 }

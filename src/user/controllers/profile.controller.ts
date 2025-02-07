@@ -17,26 +17,8 @@ export class ProfileController {
         
         // Remove sensitive information
         const { password, ...profile } = user.toObject();
+        console.log(profile);
         return profile;
-    }
-
-    @Get('courses')
-    async getCourses(@Req() req) {
-        const userId = req.user.userid;
-        const user = await this.userService.findOne(userId);
-
-        if (user.role === 'student') {
-            return {
-                enrolled: await this.userService.getEnrolledCourses(userId),
-                completed: await this.userService.getCompletedCourses(userId),
-            };
-        } else if (user.role === 'instructor') {
-            return {
-                coursesTaught: await this.userService.getCoursesTaught(userId)
-            };
-        }
-
-        throw new UnauthorizedException('Invalid role for course information');
     }
 
     @Put()

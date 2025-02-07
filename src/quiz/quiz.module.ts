@@ -17,6 +17,7 @@ import { ProgressSchema } from 'src/progress/models/progress.schema';
 import { NotificationGateway } from 'src/communication/notifications/notification.gateway';
 import { PerformanceMatrixService } from 'src/analytics/services/performanceMatrix.service';
 import { PerformanceMatrixSchema } from 'src/analytics/models/performanceMatrix.schema';
+import { ModuleSchema } from 'src/module/models/module.schema';
 
 @Module({
   imports: [
@@ -27,7 +28,9 @@ import { PerformanceMatrixSchema } from 'src/analytics/models/performanceMatrix.
     MongooseModule.forFeature([{ name: 'Response', schema: ResponseSchema }]),
     MongooseModule.forFeature([{ name: 'Course', schema: CourseSchema }]),
     MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema }]),
-    MongooseModule.forFeature([{ name: 'PerformanceMatrix', schema: PerformanceMatrixSchema }]),
+    MongooseModule.forFeature([{ name: 'PerformanceMatrix', schema: PerformanceMatrixSchema },
+      { name: 'Module', schema: ModuleSchema }
+    ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },

@@ -25,7 +25,7 @@ import { Model } from 'mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 
 @UseGuards(AuthenticationGuard)
-@Controller('quiz/:quizId')
+@Controller('/:moduleId/questions')
 export class QuestionController {
   constructor(
     private readonly questionService: QuestionService,
@@ -43,7 +43,7 @@ export class QuestionController {
   @Post('/createQuestion')
   @UsePipes(new ValidationPipe({ transform: true }))
   async createQuestion(
-    @Param('quizId') quizId: string,
+    @Param('moduleId') moduleId: string,
     @Body()
     {
       content,
@@ -58,7 +58,7 @@ export class QuestionController {
     },
   ) {
     return this.questionService.createQuestion(
-      quizId,
+      moduleId,
       content,
       correctAnswer,
       difficulty,
@@ -66,20 +66,12 @@ export class QuestionController {
     );
   }
 
-  /**
-   * Instructor or admin wants to see all questions (with correct answers).
-   */
+  //get all questions for a module for instructor
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Instructor)
   @Get('/questions')
-  async getQuestions(@Param('quizId') quizId: string) {
-    return this.questionService.getQuestions(quizId);
-  }
-
-  /**
-   * Student: retrieve questions WITHOUT correctAnswer
-   */
-  @Get('/questions/student')
-  async getQuestionsForStudent(@Param('quizId') quizId: string) {
-    return this.questionService.getQuestionsForStudent(quizId);
+  async getQuestionsForInstructor(@Param('moduleId') moduleId: string) {
+    return this.questionService.getQuestionsForInstructor(moduleId);
   }
 
   @UseGuards(AuthorizationGuard)
@@ -101,7 +93,7 @@ export class QuestionController {
 
   @Get(':id')
   async getQuestion(@Param('id') id: string) {
-    return this.questionService.getQuestionById(id);
+    return this.questionService.getQuestion(id);
   }
 
   // @UseGuards(AuthorizationGuard)

@@ -10,6 +10,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { CourseSchema } from '../course/models/course.schema';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { ProgressSchema } from 'src/progress/models/progress.schema';
+import { ModuleSchema } from 'src/module/models/module.schema';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ProgressSchema } from 'src/progress/models/progress.schema';
       { name: 'Student', schema: StudentSchema },
       { name: 'Course', schema: CourseSchema },
       { name: 'Progress', schema: ProgressSchema },
+      { name: 'Module', schema: ModuleSchema }
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
