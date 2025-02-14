@@ -26,6 +26,7 @@ export class QuestionService {
     content: string,
     correctAnswer: string,
     difficulty: string,
+    type: string,
     options?: { text: string; identifier: string }[], // optional
   ): Promise<Question> {
     try {
@@ -38,9 +39,14 @@ export class QuestionService {
         content,
         correctAnswer,
         difficulty,
+        type,
         options,
         module: module._id,
       });
+
+      //push question to module questions array
+      module.questions.push(question._id);
+      await module.save();
 
       await question.save();
 

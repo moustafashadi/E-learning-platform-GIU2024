@@ -21,18 +21,13 @@ export class CreateQuestionDto {
   @IsNotEmpty()
   correctAnswer: string;
 
-  @IsMongoId()
+  @IsEnum(['Easy', 'Medium', 'Hard'])
   @IsNotEmpty()
-  module: MongooseSchema.Types.ObjectId;
+  difficulty: string;
 
   @IsEnum(['MCQ', 'True/False'])
   @IsNotEmpty()
   type: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  @Min(1)
-  weight: number;
 
   @IsArray()
   @ValidateNested({ each: true })

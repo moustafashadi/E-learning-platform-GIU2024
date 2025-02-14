@@ -30,6 +30,8 @@ import { ProgressSchema } from 'src/progress/models/progress.schema';
 import { NotificationGateway } from './notifications/notification.gateway';
 import { NotificationController } from './notifications/notification.controller';
 import { ModuleSchema } from 'src/module/models/module.schema';
+import { ResponseSchema } from 'src/response/models/response.schema';
+import { ResponseService } from 'src/response/services/response.service';
 
 @Module({
 
@@ -46,8 +48,8 @@ import { ModuleSchema } from 'src/module/models/module.schema';
     MongooseModule.forFeature([{ name: 'Quiz', schema: QuizSchema }]),
     MongooseModule.forFeature([{ name: 'Question', schema: QuestionSchema }]),
     MongooseModule.forFeature([{ name: 'Progress', schema: ProgressSchema },
-    { name: 'Module', schema: ModuleSchema }
-    ]),
+    { name: 'Module', schema: ModuleSchema },
+    { name: 'Response', schema: ResponseSchema }]),
 
         UserModule, JwtModule.register({
             secret: process.env.JWT_SECRET,
@@ -57,7 +59,20 @@ import { ModuleSchema } from 'src/module/models/module.schema';
         timeout: 5000,
     }),],
     controllers: [ChatController, MessageController, ForumController, NotificationController],
-    providers: [NotificationGateway, ChatService, NotificationService, ChatGateway, MessageService, ForumServices, ProgressService, CourseService, JwtService, AuthService, QuizService, QuestionService],
+    providers: [
+        NotificationGateway, 
+        ChatService, 
+        NotificationService, 
+        ChatGateway, 
+        MessageService, 
+        ForumServices, 
+        ProgressService, 
+        CourseService, 
+        JwtService, 
+        AuthService, 
+        QuizService, 
+        QuestionService, 
+        ResponseService],
     exports: [ChatService, MessageService, ForumServices, NotificationService, NotificationGateway]
 })
 

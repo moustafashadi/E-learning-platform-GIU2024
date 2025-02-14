@@ -25,14 +25,10 @@ import { Model } from 'mongoose';
 import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 
 @UseGuards(AuthenticationGuard)
-@Controller('/:moduleId/questions')
+@Controller('/:moduleId')
 export class QuestionController {
   constructor(
     private readonly questionService: QuestionService,
-    private readonly responseGateway: ResponseGateway,
-    private readonly quizService: QuizService,
-    private readonly responseService: ResponseService,
-    @InjectModel(Student.name) private readonly studentModel: Model<StudentDocument>,
   ) {}
 
   /**
@@ -49,12 +45,14 @@ export class QuestionController {
       content,
       correctAnswer,
       difficulty,
+      type,
       options,
     }: {
       content: string;
       correctAnswer: string;
       difficulty: string;
-      options?: { text: string; identifier: string }[];
+      type: string;
+      options: { text: string; identifier: string }[];
     },
   ) {
     return this.questionService.createQuestion(
@@ -62,6 +60,7 @@ export class QuestionController {
       content,
       correctAnswer,
       difficulty,
+      type,
       options,
     );
   }

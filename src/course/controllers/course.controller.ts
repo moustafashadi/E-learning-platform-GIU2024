@@ -31,6 +31,7 @@ import { Role, Roles } from 'src/auth/decorators/roles.decorator';
 import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
 import { AuthorizationGuard } from 'src/auth/guards/authorization.guard';
 
+
 @UseGuards(AuthenticationGuard)
 @Controller('courses')
 export class CourseController {
@@ -40,8 +41,7 @@ export class CourseController {
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Instructor)
   @Post()
-  async create(@Req() req: Request,
-    @Body() createCourseDto: CreateCourseDto) {
+  async create(@Req() req: Request, @Body() createCourseDto: CreateCourseDto) {
     return await this.courseService.create(req, createCourseDto);
   }
 
@@ -129,11 +129,12 @@ export class CourseController {
 
   @UseGuards(AuthorizationGuard)
   @Roles(Role.Student)
-  @Post(':id/enroll/:courseId')
+  @Post(':courseId/enroll')
   async enrollCourse(
-    @Param('id') userId: string,
-    @Param('courseId') courseId: string
+    @Param('courseId') courseId: string,
+    @Req() req: Request
   ) {
+    const userId = req.user['sub'];
     return await this.courseService.enrollCourse(userId, courseId);
   }
 

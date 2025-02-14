@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Module, ModuleDocument } from '../models/module.schema';
@@ -13,9 +13,16 @@ export class ModuleService {
   ) {}
 
   // Create a new module
-  async create(createModuleDto: CreateModuleDto): Promise<Module> {
-    const newModule = new this.moduleModel(createModuleDto);
-    return await newModule.save();
+  async create(courseId : string, createModuleDto: CreateModuleDto): Promise<Module> {
+    try {
+      const newModule = new this.moduleModel(createModuleDto);
+      const course = await this.courseModel.findById(courseId);
+      course.modules.push(newModule._id as any);
+      await course.save();
+      return await newModule.save();
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating module');
+    }
   }
 
   // Retrieve all modules

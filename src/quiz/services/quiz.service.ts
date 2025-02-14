@@ -76,110 +76,123 @@ export class QuizService {
     }
   }
 
-  async generateQuiz(moduleId: string, req: Request) {
+  async generateQuiz(moduleId: string, req: Request): Promise<Quiz> {
     try {
-      const userId = req.user.id
-
+      const userId = req.user['sub'];
+  
       const module = await this.moduleModel.findById(moduleId);
       if (!module) {
         throw new NotFoundException('Module not found');
       }
-
+  
       // Get the quiz blueprint from the module
       const quizBlueprint = module.quizBlueprint;
       const numberOfQuestions = quizBlueprint.number_of_questions;
       const quizType = quizBlueprint.quiz_type;
-
-      //mark the quiz blueprint as used
+  
+      // Mark the quiz blueprint as used
       quizBlueprint.used = true;
-
+  
       await module.save();
-
-      const userProgress = await this.progressService.getProgress(userId, moduleId);
-
+  
+      // Get the course of the module
+      const course = await this.courseModel.findOne({ modules: moduleId });
+      const courseId = course._id;
+      // Parse the courseId to string
+      const stringifiedCourseId = courseId.toString();
+      const userProgress = await this.progressService.getProgress(userId, stringifiedCourseId);
+  
       // Get the questions from the module
       const questionIds = module.questions;
-
+  
       let questions: Question[] = [];
-
+  
       for (const Id of questionIds) {
         const questionArray = await this.questionService.getQuestion(Id.toString());
         questions = questions.concat(questionArray);
       }
-
-      if (userProgress.level = 'Beginner') {
-        //filter the questions by difficulty
+  
+      if (userProgress.level === 'Beginner') {
+        // Filter the questions by difficulty
         const easyQuestions = questions.filter((question) => question.difficulty === 'Easy');
-
-        //generate new quiz and add the questions till the number of questions is reached. select questions randomly
+  
+        // Generate new quiz and add the questions till the number of questions is reached. Select questions randomly
         let quizQuestions: Question[] = [];
         for (let i = 0; i < numberOfQuestions; i++) {
-          //select question randomly from the easy questions array
+          // Select question randomly from the easy questions array
           const randomIndex = Math.floor(Math.random() * easyQuestions.length);
-          //push the selected question to the quizQuestions array
+          // Push the selected question to the quizQuestions array
           quizQuestions.push(easyQuestions[randomIndex]);
+          // Remove the selected question from the easyQuestions array to avoid repetition
+          easyQuestions.splice(randomIndex, 1);
         }
-
+  
         // Create the quiz
         const quiz = new this.quizModel({
           questions: quizQuestions,
           moduleId: moduleId,
-          type: quizType,
+          number_of_questions: numberOfQuestions,
+          quiz_type: quizType,
           status: 'in progress',
           difficulty: 'easy',
         });
 
-        await quiz.save();
-
-      } else if (userProgress.level = 'Intermediate') {
-        //filter the questions by difficulty
+        console.log('quiz', quiz);
+  
+        return await quiz.save();
+  
+      } else if (userProgress.level === 'Intermediate') {
+        // Filter the questions by difficulty
         const intermediateQuestions = questions.filter((question) => question.difficulty === 'Medium');
-
-        //generate new quiz and add the questions till the number of questions is reached. select questions randomly
+  
+        // Generate new quiz and add the questions till the number of questions is reached. Select questions randomly
         let quizQuestions: Question[] = [];
         for (let i = 0; i < numberOfQuestions; i++) {
           const randomIndex = Math.floor(Math.random() * intermediateQuestions.length);
           quizQuestions.push(intermediateQuestions[randomIndex]);
+          intermediateQuestions.splice(randomIndex, 1);
         }
-
+  
         // Create the quiz
         const quiz = new this.quizModel({
           questions: quizQuestions,
           moduleId: moduleId,
-          type: quizType,
+          number_of_questions: numberOfQuestions,
+          quiz_type: quizType,
           status: 'in progress',
           difficulty: 'medium',
         });
-
-        await quiz.save();
-
+  
+        return await quiz.save();
+  
       } else if (userProgress.level === 'Advanced' || userProgress.level === 'Expert') {
-        //filter the questions by difficulty
+        // Filter the questions by difficulty
         const advancedQuestions = questions.filter((question) => question.difficulty === 'Hard');
-
-        //generate new quiz and add the questions till the number of questions is reached. select questions randomly
+  
+        // Generate new quiz and add the questions till the number of questions is reached. Select questions randomly
         let quizQuestions: Question[] = [];
         for (let i = 0; i < numberOfQuestions; i++) {
           const randomIndex = Math.floor(Math.random() * advancedQuestions.length);
           quizQuestions.push(advancedQuestions[randomIndex]);
+          advancedQuestions.splice(randomIndex, 1);
         }
-
+  
         // Create the quiz
         const quiz = new this.quizModel({
           questions: quizQuestions,
           moduleId: moduleId,
-          type: quizType,
+          number_of_questions: numberOfQuestions,
+          quiz_type: quizType,
           status: 'in progress',
           difficulty: 'hard',
         });
-
-        await quiz.save();
+  
+        return await quiz.save();
       }
     } catch (error) {
       throw new InternalServerErrorException('Error generating quiz');
     }
   }
-
 
   //getQuiz
   async getQuiz(quizId: string) {
@@ -222,7 +235,15 @@ export class QuizService {
 
     //update the students progress
     if (percentage >= 60){
-      await this.progressService.updateProgress(studentId, quizId, quiz.moduleId.toString());
+      //get course
+      const quiz = await this.quizModel.findById(quizId);
+      //get the moduleId of the quiz
+      const moduleId = quiz.moduleId;
+      //get the course that has the module in the modules array
+      const course = await this.courseModel.findOne({modules: moduleId});
+      //get the courseId
+      const courseId = course._id;
+      await this.progressService.updateProgress(studentId, courseId.toString());
     }
     //return the grade
     return percentage;

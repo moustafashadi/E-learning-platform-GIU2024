@@ -11,7 +11,7 @@ export class ModuleController {
 
   @Post()
   async create(@Param('courseId') courseId: string, @Body() createModuleDto: CreateModuleDto) {
-    return await this.moduleService.create(createModuleDto);
+    return await this.moduleService.create(courseId, createModuleDto);
   }
 
   @Get()

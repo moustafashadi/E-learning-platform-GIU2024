@@ -57,12 +57,5 @@ export class UserController {
     return this.userService.remove(id);
   }
 
-  //get notifications
-  @UseGuards(AuthenticationGuard)
-  @Get(':userId/notifications')
-  async getNotifications(@Param('userId') userId: string) {
-    return this.userService.getNotifications(userId);
-  }
-
   
 }

@@ -19,6 +19,8 @@ import { NotificationSchema } from 'src/communication/notifications/notification
 import { UserService } from 'src/user/services/user.service';
 import { AdminSchema } from 'src/user/models/user.schema';
 import { ModuleSchema } from 'src/module/models/module.schema';
+import { ResponseService } from 'src/response/services/response.service';
+import { ResponseSchema } from 'src/response/models/response.schema';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { ModuleSchema } from 'src/module/models/module.schema';
       { name: 'Notification', schema: NotificationSchema },
       { name: 'Admin', schema: AdminSchema },
       { name: 'Module', schema: ModuleSchema },
+      { name: 'Response', schema: ResponseSchema },
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
@@ -49,6 +52,7 @@ import { ModuleSchema } from 'src/module/models/module.schema';
     NotificationService,
     NotificationGateway,
     NotificationService,
+    ResponseService,
     UserService],
   exports: [CourseService],
 })

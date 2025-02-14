@@ -45,6 +45,8 @@ export class QuizController {
   }
 
   //generate quiz
+  @UseGuards(AuthorizationGuard)
+  @Roles(Role.Student)
   @Post('/:moduleId/generate')
   async generateQuiz(@Param('moduleId') moduleId: string, @Req() req) {
     return await this.quizService.generateQuiz(moduleId, req);

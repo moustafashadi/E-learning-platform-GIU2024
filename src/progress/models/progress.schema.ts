@@ -10,8 +10,8 @@ export class Progress {
   userId: MongooseSchema.Types.ObjectId;
 
   //module
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Module', required: true })
-  moduleId: MongooseSchema.Types.ObjectId;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Course', required: true })
+  courseId: MongooseSchema.Types.ObjectId;
 
   //user progress enum
   @Prop({ required: true, enum: ['Beginner', 'Intermediate', 'Advanced' , 'Expert'] })

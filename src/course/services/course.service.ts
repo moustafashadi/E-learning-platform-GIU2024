@@ -14,8 +14,8 @@ import * as path from 'path';
 import { Quiz } from 'src/quiz/models/quiz.schema';
 import { QuizService } from 'src/quiz/services/quiz.service';
 import { Request } from 'express';
-import { Server } from 'http';
 import { Progress } from 'src/progress/models/progress.schema';
+import { ProgressService } from 'src/progress/services/progress.service';
 
 
 @Injectable()
@@ -23,6 +23,7 @@ export class CourseService {
   constructor(
     //quiz service
     private quizService: QuizService,
+    private progressService: ProgressService,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Instructor.name) private instructorModel: Model<Instructor>,
     @InjectModel(Quiz.name) private quizModal: Model<Quiz>,
@@ -225,7 +226,7 @@ export class CourseService {
     console.log(userId, courseId);
     const student = await this.studentModel.findById(userId);
     const course = await this.courseModel.findById(courseId);
-    const progress = await this.progressModel.create({ userId: student._id, courseId: course._id, 0: Number });
+    this.progressService.initiateProgress(userId, courseId);
 
     if (!student || !course) {
       throw new NotFoundException('Student or course not found');
